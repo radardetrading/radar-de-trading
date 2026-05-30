@@ -2134,6 +2134,13 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">BUSCAR EN NOTAS</label>
           <input type="text" id="bt_f_notes" placeholder="texto a buscar..." oninput="renderBtTable()" style="width:100%;font-size:11px;padding:5px 8px;">
         </div>
+        <div>
+          <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">ORDEN</label>
+          <select id="bt_f_order" onchange="renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
+            <option value="asc">Más viejo primero</option>
+            <option value="desc">Más nuevo primero</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -5680,7 +5687,7 @@ function progressPill(label,val,target,done,type=''){
 function resetBtFilters(){
   const ids = ['bt_f_date_from','bt_f_date_to','bt_f_type','bt_f_session','bt_f_zona',
                'bt_f_result','bt_f_risk_min','bt_f_risk_max','bt_f_pnl_min','bt_f_pnl_max',
-               'bt_f_rr_min','bt_f_rr_max','bt_f_phase','bt_f_rules','bt_f_tv','bt_f_notes'];
+               'bt_f_rr_min','bt_f_rr_max','bt_f_phase','bt_f_rules','bt_f_tv','bt_f_notes','bt_f_order'];
   ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   renderBtTable();
 }
@@ -5722,7 +5729,8 @@ function renderBtTable(){
     phase:    document.getElementById('bt_f_phase')?.value || '',
     rules:    document.getElementById('bt_f_rules')?.value || '',
     tv:       document.getElementById('bt_f_tv')?.value || '',
-    notes:    (document.getElementById('bt_f_notes')?.value || '').toLowerCase().trim()
+    notes:    (document.getElementById('bt_f_notes')?.value || '').toLowerCase().trim(),
+    order:    document.getElementById('bt_f_order')?.value || 'asc'
   };
 
   // ── Aplicar filtros ─────────────────────────────────────────
@@ -5765,6 +5773,12 @@ function renderBtTable(){
     if(f.notes && !(t.notes||'').toLowerCase().includes(f.notes)) return false;
 
     return true;
+  });
+
+  // ── Ordenar ─────────────────────────────────────────────────
+  enriched.sort((a,b)=>{
+    const da=(a.date||''), db=(b.date||'');
+    return f.order==='desc' ? db.localeCompare(da) : da.localeCompare(db);
   });
 
   // Mostrar contador
