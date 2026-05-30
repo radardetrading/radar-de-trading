@@ -454,6 +454,7 @@ tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:rgba(56,189,248,.04);}
 #histTableBody tr:hover{background:none!important;transition:none!important;}
+#page-historico .kpi-box{transition:none!important;}
 #page-historico .kpi-box:hover{transform:none!important;box-shadow:0 4px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)!important;}
 tbody td{padding:10px 13px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;}
 td.pos{color:var(--green);font-weight:700;}
@@ -10275,6 +10276,15 @@ function renderHistorico(){
   }
   if(empty) empty.style.display = 'none';
   if(content) content.style.display = 'block';
+
+  // Deshabilitar hover movement en kpi-boxes del historico
+  setTimeout(()=>{
+    document.querySelectorAll('#page-historico .kpi-box').forEach(el=>{
+      el.style.transition='none';
+      el.onmouseenter=null;
+      el.onmouseleave=null;
+    });
+  }, 50);
 
   // Set balance default si está vacío
   const balInput = document.getElementById('hist_balance');
