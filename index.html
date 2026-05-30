@@ -1786,6 +1786,10 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </select>
         <select id="jAccount" onchange="renderJournal()"><option value="">Todas las cuentas</option></select>
         <select id="jZona" onchange="renderJournal()"><option value="">Todas las zonas</option></select>
+        <select id="jOrder" onchange="renderJournal()">
+          <option value="desc">Más nuevo primero</option>
+          <option value="asc">Más viejo primero</option>
+        </select>
       </div>
       <button class="btn primary" onclick="openTradeModal()">+ Nuevo Trade</button>
     </div>
@@ -4708,7 +4712,8 @@ function renderJournal(){
   });
   const tbody=document.getElementById('journalBody'),empty=document.getElementById('journalEmpty');
   tbody.innerHTML='';empty.style.display=f.length?'none':'block';
-  f.sort((a,b)=>b.id-a.id).forEach((t,i)=>{
+  const jOrd=document.getElementById('jOrder')?.value||'desc';
+  f.sort((a,b)=>jOrd==='desc'?b.id-a.id:a.id-b.id).forEach((t,i)=>{
     const acc=accObj(t.accountId);
     const tr=document.createElement('tr');
     tr.innerHTML=`<td class="muted">${f.length-i}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:10px;">${t.pair||'EUR/USD'}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${t.sl?.toFixed(5)||'—'}</td><td class="muted">${t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${t.close?.toFixed(5)||'—'}</td><td>${t.lots?.toFixed(2)||'—'}</td><td class="${t.pips>=0?'pos':'neg'}">${t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${((t.risk||0)*100).toFixed(2)}%</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
