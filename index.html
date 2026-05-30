@@ -2327,6 +2327,10 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
               <option value="LOSS">Losses</option>
               <option value="BE">BE</option>
             </select>
+            <select id="hist_filter_order" onchange="histTablePage=1;renderHistTable()" style="font-size:11px;padding:5px 10px;">
+              <option value="desc">Más nuevo primero</option>
+              <option value="asc">Más viejo primero</option>
+            </select>
             <span id="histTableCount" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);"></span>
           </div>
         </div>
@@ -10859,8 +10863,11 @@ function renderHistTable(){
     counter.textContent = filtered.length === enriched.length ? `${enriched.length} trades` : `${filtered.length} / ${enriched.length}`;
   }
 
-  // Mostrar más recientes primero
-  const reversed = [...filtered].reverse();
+  const fOrder = document.getElementById('hist_filter_order')?.value || 'desc';
+  const reversed = [...filtered].sort((a,b)=>{
+    const da=(a.date||''), db=(b.date||'');
+    return fOrder==='desc' ? db.localeCompare(da) : da.localeCompare(db);
+  });
   const dows = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
   // Paginación
