@@ -945,32 +945,48 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   animation:lpblink 3s ease-in-out infinite;}
 @keyframes lpblink{0%,100%{opacity:.4}50%{opacity:1}}
 
-/* CARRUSEL */
-.lp-carousel-section{max-width:1100px;margin:0 auto;padding:4rem 2.4rem;border-top:1px solid var(--border);}
-.lp-carousel{position:relative;border-radius:var(--r3);overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.4),0 0 0 1px var(--border);}
-.lp-carousel-track{display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1);}
-.lp-carousel-slide{min-width:100%;position:relative;}
-.lp-carousel-slide img{width:100%;display:block;max-height:520px;object-fit:cover;object-position:top;}
-.lp-carousel-caption{
-  position:absolute;bottom:0;left:0;right:0;
-  padding:1.2rem 1.6rem;
-  background:linear-gradient(to top,rgba(2,8,20,.95) 60%,transparent);
-  font-size:.92rem;line-height:1.5;color:var(--sub);
+/* CARRUSEL COVERFLOW */
+.lp-carousel-section{max-width:1200px;margin:0 auto;padding:4rem 2.4rem;border-top:1px solid var(--border);}
+.lp-cf-wrap{position:relative;padding:1rem 0 3.5rem;}
+.lp-cf{
+  position:relative;height:400px;
+  perspective:1100px;
+  display:flex;align-items:center;justify-content:center;
 }
-.lp-carousel-caption strong{color:var(--text);font-size:1rem;}
+.lp-cf-card{
+  position:absolute;
+  width:580px;max-width:72vw;
+  border-radius:12px;overflow:hidden;
+  cursor:pointer;
+  transition:transform .52s cubic-bezier(.4,0,.2,1),opacity .52s,box-shadow .3s;
+  box-shadow:0 20px 55px rgba(0,0,0,.55);
+  border:1px solid rgba(56,189,248,.14);
+  will-change:transform,opacity;
+}
+.lp-cf-card img{width:100%;display:block;pointer-events:none;user-select:none;}
+.lp-cf-cap{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:1rem 1.3rem;
+  background:linear-gradient(to top,rgba(2,8,20,.96) 55%,transparent);
+  font-size:.86rem;line-height:1.5;color:var(--sub);
+  opacity:0;transition:opacity .3s;
+}
+.lp-cf-cap strong{color:var(--text);font-size:.94rem;display:block;margin-bottom:.2rem;}
+.lp-cf-card.active .lp-cf-cap{opacity:1;}
 .lp-car-btn{
   position:absolute;top:50%;transform:translateY(-50%);
-  background:rgba(4,18,36,.75);border:1px solid var(--border2);
-  color:var(--text);width:40px;height:40px;border-radius:50%;
+  background:rgba(4,18,36,.8);border:1px solid var(--border2);
+  color:var(--text);width:42px;height:42px;border-radius:50%;
   font-size:1.1rem;cursor:pointer;backdrop-filter:blur(8px);
   transition:background .2s,border-color .2s;display:flex;align-items:center;justify-content:center;
+  z-index:30;
 }
 .lp-car-btn:hover{background:rgba(56,189,248,.15);border-color:rgba(56,189,248,.4);}
-.lp-car-prev{left:14px;}
-.lp-car-next{right:14px;}
-.lp-car-dots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:7px;}
-.lp-car-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.25);cursor:pointer;transition:background .3s,transform .3s;}
-.lp-car-dot.active{background:var(--cyan);transform:scale(1.3);}
+.lp-car-prev{left:10px;}
+.lp-car-next{right:10px;}
+.lp-car-dots{position:absolute;bottom:0;left:50%;transform:translateX(-50%);display:flex;gap:8px;}
+.lp-car-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:background .3s,transform .3s;}
+.lp-car-dot.active{background:var(--cyan);transform:scale(1.35);}
 
 /* FEATURES */
 .lp-features{max-width:1100px;margin:0 auto;padding:4rem 2.4rem;border-top:1px solid var(--border);}
@@ -1412,52 +1428,40 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
   </div>
 
-  <!-- CARRUSEL -->
+  <!-- CARRUSEL COVERFLOW -->
   <section class="lp-carousel-section lp-reveal">
     <h2 class="lp-section-title" style="margin-bottom:.5rem;">MIRÁ POR DENTRO</h2>
     <p class="lp-section-sub">Cada sección diseñada para que tomes mejores decisiones.</p>
-    <div class="lp-carousel">
-      <div class="lp-carousel-track" id="lpCarTrack">
-        <div class="lp-carousel-slide">
+    <div class="lp-cf-wrap">
+      <div class="lp-cf" id="lpCf">
+        <div class="lp-cf-card">
           <img src="fotos/dashboad.png" alt="Dashboard" loading="lazy">
-          <div class="lp-carousel-caption">
-            <strong>Dashboard</strong> — Tu rendimiento de un vistazo: equity, P&amp;L, rachas y alertas de drawdown en tiempo real.
-          </div>
+          <div class="lp-cf-cap"><strong>Dashboard</strong>Tu rendimiento de un vistazo: equity, P&amp;L, rachas y alertas de drawdown en tiempo real.</div>
         </div>
-        <div class="lp-carousel-slide">
+        <div class="lp-cf-card">
           <img src="fotos/journal.png" alt="Journal" loading="lazy">
-          <div class="lp-carousel-caption">
-            <strong>Journal</strong> — Registrá cada operación con todos los detalles: entrada, salida, sesión, zona, screenshots y notas.
-          </div>
+          <div class="lp-cf-cap"><strong>Journal</strong>Registrá cada operación con todos los detalles: entrada, salida, sesión, zona y notas.</div>
         </div>
-        <div class="lp-carousel-slide">
+        <div class="lp-cf-card">
           <img src="fotos/backtest.png" alt="Backtest" loading="lazy">
-          <div class="lp-carousel-caption">
-            <strong>Backtest Challenge</strong> — Simulá tu estrategia contra los parámetros reales de tu prop firm antes de arriesgar capital.
-          </div>
+          <div class="lp-cf-cap"><strong>Backtest Challenge</strong>Simulá tu estrategia contra los parámetros reales de tu prop firm antes de arriesgar capital.</div>
         </div>
-        <div class="lp-carousel-slide">
+        <div class="lp-cf-card">
           <img src="fotos/estadisticas.png" alt="Estadísticas" loading="lazy">
-          <div class="lp-carousel-caption">
-            <strong>Estadísticas</strong> — Analizá tu edge real: win rate, expectancy, mejores sesiones, días y zonas de reacción.
-          </div>
+          <div class="lp-cf-cap"><strong>Estadísticas</strong>Analizá tu edge real: win rate, expectancy, mejores sesiones, días y zonas de reacción.</div>
         </div>
-        <div class="lp-carousel-slide">
+        <div class="lp-cf-card">
           <img src="fotos/cuentas.png" alt="Cuentas" loading="lazy">
-          <div class="lp-carousel-caption">
-            <strong>Cuentas Prop Firm</strong> — Gestioná todas tus cuentas fondeadas, seguí el balance y controlá el drawdown diario y máximo.
-          </div>
+          <div class="lp-cf-cap"><strong>Cuentas Prop Firm</strong>Gestioná todas tus cuentas fondeadas y controlá el drawdown diario y máximo.</div>
         </div>
-        <div class="lp-carousel-slide">
+        <div class="lp-cf-card">
           <img src="fotos/diario mental.png" alt="Diario Mental" loading="lazy">
-          <div class="lp-carousel-caption">
-            <strong>Diario Mental</strong> — Registrá tu estado emocional antes y después de operar para detectar patrones de comportamiento.
-          </div>
+          <div class="lp-cf-cap"><strong>Diario Mental</strong>Registrá tu estado emocional antes y después de operar para detectar patrones de comportamiento.</div>
         </div>
       </div>
       <button class="lp-car-btn lp-car-prev" onclick="lpCarMove(-1)" aria-label="Anterior">&#8592;</button>
       <button class="lp-car-btn lp-car-next" onclick="lpCarMove(1)" aria-label="Siguiente">&#8594;</button>
-      <div class="lp-car-dots" id="lpCarDots"></div>
+      <div class="lp-car-dots" id="lpCfDots"></div>
     </div>
   </section>
 
@@ -12188,37 +12192,54 @@ updateAutosave();
 })();
 </script>
 <script>
-// Carrusel landing
+// Coverflow 3D landing
 (function(){
-  var track = document.getElementById('lpCarTrack');
-  var dotsEl = document.getElementById('lpCarDots');
-  if(!track) return;
-  var slides = track.querySelectorAll('.lp-carousel-slide');
-  var total = slides.length;
-  var cur = 0;
+  var cards = document.querySelectorAll('.lp-cf-card');
+  var dotsEl = document.getElementById('lpCfDots');
+  if(!cards.length) return;
+  var total = cards.length;
+  var active = 0;
+  var hovered = -1;
   var timer;
 
-  // Crear dots
-  slides.forEach(function(_,i){
+  cards.forEach(function(_,i){
     var d = document.createElement('div');
-    d.className = 'lp-car-dot' + (i===0?' active':'');
+    d.className = 'lp-car-dot'+(i===0?' active':'');
     d.onclick = function(){ go(i); };
     dotsEl.appendChild(d);
   });
 
-  function go(n){
-    cur = (n + total) % total;
-    track.style.transform = 'translateX(-' + (cur * 100) + '%)';
-    dotsEl.querySelectorAll('.lp-car-dot').forEach(function(d,i){ d.classList.toggle('active', i===cur); });
-    resetTimer();
+  function update(){
+    cards.forEach(function(card,i){
+      var off = i - active;
+      if(off > total/2) off -= total;
+      if(off < -total/2) off += total;
+      var abs = Math.abs(off);
+      var ry  = off * 44;
+      var tx  = off * 54;
+      var tz  = -abs * 140;
+      var sc  = Math.max(0.55, 1 - abs * 0.19);
+      var op  = abs > 2 ? 0 : Math.max(0.35, 1 - abs * 0.3);
+      if(i === hovered && abs > 0){ sc += 0.08; op = Math.min(1, op + 0.2); }
+      card.style.transform = 'translateX('+tx+'%) rotateY('+ry+'deg) translateZ('+tz+'px) scale('+sc.toFixed(3)+')';
+      card.style.opacity   = op.toFixed(2);
+      card.style.zIndex    = 20 - abs*5;
+      card.classList.toggle('active', off===0);
+    });
+    dotsEl.querySelectorAll('.lp-car-dot').forEach(function(d,i){ d.classList.toggle('active',i===active); });
   }
 
-  function resetTimer(){
-    clearInterval(timer);
-    timer = setInterval(function(){ go(cur+1); }, 4500);
-  }
+  function go(n){ active=((n%total)+total)%total; update(); resetTimer(); }
+  function resetTimer(){ clearInterval(timer); timer=setInterval(function(){ go(active+1); },4500); }
 
-  window.lpCarMove = function(dir){ go(cur+dir); };
+  cards.forEach(function(card,i){
+    card.onclick     = function(){ var o=i-active; if(o>total/2)o-=total; if(o<-total/2)o+=total; if(o!==0) go(i); };
+    card.onmouseenter= function(){ hovered=i; update(); };
+    card.onmouseleave= function(){ hovered=-1; update(); };
+  });
+
+  window.lpCarMove = function(dir){ go(active+dir); };
+  update();
   resetTimer();
 })();
 
