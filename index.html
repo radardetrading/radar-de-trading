@@ -945,6 +945,29 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   animation:lpblink 3s ease-in-out infinite;}
 @keyframes lpblink{0%,100%{opacity:.4}50%{opacity:1}}
 
+/* TABLET MOCKUP */
+.lp-visual-wrap{position:relative;width:100%;max-width:440px;margin:0 auto;padding-bottom:30px;}
+.lp-tablet{position:absolute;bottom:-10px;right:-30px;width:215px;perspective:700px;z-index:10;}
+.lp-tablet-frame{
+  background:linear-gradient(150deg,rgba(4,16,34,.97),rgba(2,10,22,.99));
+  border:1.5px solid rgba(56,189,248,.22);border-radius:14px;padding:10px;
+  box-shadow:0 22px 55px rgba(0,0,0,.7),0 0 28px rgba(56,189,248,.07),inset 0 1px 0 rgba(255,255,255,.06);
+  transform:rotateY(-24deg) rotateX(7deg);
+  animation:tabletFloat 6s ease-in-out infinite;
+}
+@keyframes tabletFloat{
+  0%,100%{transform:rotateY(-24deg) rotateX(7deg) translateY(0);}
+  50%{transform:rotateY(-24deg) rotateX(7deg) translateY(-8px);}
+}
+.lp-tb-topbar{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 7px;border-bottom:1px solid rgba(56,189,248,.1);margin-bottom:6px;}
+.lp-tb-kpis{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:7px;}
+.lp-tb-kpi{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:6px;padding:5px 7px;}
+.lp-tb-kpi-l{font-size:6.5px;color:rgba(255,255,255,.38);letter-spacing:.06em;margin-bottom:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;}
+.lp-tb-kpi-v{font-size:13px;font-weight:800;font-family:'JetBrains Mono',monospace;}
+.lp-tb-chart{background:rgba(0,0,0,.25);border-radius:6px;height:40px;margin-bottom:7px;overflow:hidden;}
+.lp-tb-row{display:flex;justify-content:space-between;align-items:center;padding:3.5px 2px;border-bottom:1px solid rgba(255,255,255,.04);font-size:7.5px;font-family:'JetBrains Mono',monospace;}
+@media(max-width:900px){.lp-tablet{display:none;}}
+
 /* FEATURES */
 .lp-features{max-width:1100px;margin:0 auto;padding:4rem 2.4rem;border-top:1px solid var(--border);}
 .lp-section-title{text-align:center;font-size:1.9rem;font-weight:900;letter-spacing:.2px;margin:0 0 .7rem;}
@@ -1331,21 +1354,76 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
 
     <div class="lp-hero-right">
-      <div class="lp-radar">
-        <div class="lp-radar-scene">
-          <div class="lp-radar-disk">
-            <div class="lp-radar-rings"></div>
-            <div class="lp-radar-sweep"></div>
-            <span class="lp-blip" style="top:30%;left:58%">Disciplina</span>
-            <span class="lp-blip" style="top:46%;left:78%">Gestión</span>
-            <span class="lp-blip" style="top:64%;left:70%">Consistencia</span>
-            <span class="lp-blip" style="top:72%;left:42%">Paciencia</span>
-            <span class="lp-blip" style="top:34%;left:34%">Proceso</span>
-            <div class="lp-radar-core"></div>
+      <div class="lp-visual-wrap">
+        <div class="lp-radar">
+          <div class="lp-radar-scene">
+            <div class="lp-radar-disk">
+              <div class="lp-radar-rings"></div>
+              <div class="lp-radar-sweep"></div>
+              <span class="lp-blip" style="top:30%;left:58%">Disciplina</span>
+              <span class="lp-blip" style="top:46%;left:78%">Gestión</span>
+              <span class="lp-blip" style="top:64%;left:70%">Consistencia</span>
+              <span class="lp-blip" style="top:72%;left:42%">Paciencia</span>
+              <span class="lp-blip" style="top:34%;left:34%">Proceso</span>
+              <div class="lp-radar-core"></div>
+            </div>
+            <div class="lp-orbit lp-orbit-1"></div>
+            <div class="lp-orbit lp-orbit-2"></div>
+            <div class="lp-orbit lp-orbit-3"></div>
           </div>
-          <div class="lp-orbit lp-orbit-1"></div>
-          <div class="lp-orbit lp-orbit-2"></div>
-          <div class="lp-orbit lp-orbit-3"></div>
+        </div>
+        <!-- Tablet mockup -->
+        <div class="lp-tablet">
+          <div class="lp-tablet-frame">
+            <div class="lp-tb-topbar">
+              <span style="font-size:7.5px;color:rgba(56,189,248,.75);font-weight:700;letter-spacing:.1em;">DASHBOARD</span>
+              <span style="font-size:9px;font-weight:800;color:#34d399;font-family:'JetBrains Mono',monospace;">+$2,840</span>
+            </div>
+            <div class="lp-tb-kpis">
+              <div class="lp-tb-kpi">
+                <div class="lp-tb-kpi-l">Win Rate</div>
+                <div class="lp-tb-kpi-v" style="color:#34d399;">68.4%</div>
+              </div>
+              <div class="lp-tb-kpi">
+                <div class="lp-tb-kpi-l">P&amp;L</div>
+                <div class="lp-tb-kpi-v" style="color:#34d399;">+$2,840</div>
+              </div>
+              <div class="lp-tb-kpi">
+                <div class="lp-tb-kpi-l">Trades</div>
+                <div class="lp-tb-kpi-v" style="color:#f8fafc;">47</div>
+              </div>
+              <div class="lp-tb-kpi">
+                <div class="lp-tb-kpi-l">Avg R:R</div>
+                <div class="lp-tb-kpi-v" style="color:#38bdf8;">2.4×</div>
+              </div>
+            </div>
+            <div class="lp-tb-chart">
+              <svg width="100%" height="40" viewBox="0 0 195 40" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="lpTbGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#38bdf8" stop-opacity=".28"/>
+                    <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,34 L18,28 L36,24 L50,27 L68,18 L85,14 L100,19 L118,11 L138,7 L158,4 L178,2 L195,1" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M0,34 L18,28 L36,24 L50,27 L68,18 L85,14 L100,19 L118,11 L138,7 L158,4 L178,2 L195,1 L195,40 L0,40 Z" fill="url(#lpTbGrad)"/>
+              </svg>
+            </div>
+            <div>
+              <div class="lp-tb-row">
+                <span style="color:rgba(251,191,36,.9);font-weight:700;">EUR/USD</span>
+                <span style="color:#34d399;font-weight:700;">+$320</span>
+              </div>
+              <div class="lp-tb-row">
+                <span style="color:rgba(251,191,36,.9);font-weight:700;">GBP/USD</span>
+                <span style="color:#f87171;font-weight:700;">−$110</span>
+              </div>
+              <div class="lp-tb-row" style="border:none;">
+                <span style="color:rgba(251,191,36,.9);font-weight:700;">XAUUSD</span>
+                <span style="color:#34d399;font-weight:700;">+$580</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
