@@ -945,45 +945,44 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   animation:lpblink 3s ease-in-out infinite;}
 @keyframes lpblink{0%,100%{opacity:.4}50%{opacity:1}}
 
-/* CARRUSEL COVERFLOW */
-.lp-carousel-section{max-width:1200px;margin:0 auto;padding:4rem 2.4rem;border-top:1px solid var(--border);}
-.lp-cf-wrap{position:relative;padding:1rem 0 3.5rem;}
+/* CARRUSEL CROSSFADE */
+.lp-carousel-section{max-width:1100px;margin:0 auto;padding:4rem 2.4rem;border-top:1px solid var(--border);}
+.lp-cf-wrap{position:relative;padding-bottom:2.8rem;}
 .lp-cf{
-  position:relative;height:400px;
-  perspective:1100px;
-  display:flex;align-items:center;justify-content:center;
+  position:relative;border-radius:14px;overflow:hidden;
+  box-shadow:0 10px 50px rgba(0,0,0,.55),0 0 0 1px rgba(56,189,248,.12);
+  aspect-ratio:16/9;background:#020810;
 }
 .lp-cf-card{
-  position:absolute;
-  width:580px;max-width:72vw;
-  border-radius:12px;overflow:hidden;
-  cursor:pointer;
-  transition:transform .52s cubic-bezier(.4,0,.2,1),opacity .52s,box-shadow .3s;
-  box-shadow:0 20px 55px rgba(0,0,0,.55);
-  border:1px solid rgba(56,189,248,.14);
-  will-change:transform,opacity;
+  position:absolute;inset:0;opacity:0;
+  transition:opacity .75s ease;
+  pointer-events:none;
 }
-.lp-cf-card img{width:100%;display:block;pointer-events:none;user-select:none;}
+.lp-cf-card.active{opacity:1;pointer-events:auto;}
+.lp-cf-card img{
+  width:100%;height:100%;object-fit:cover;object-position:top;
+  transform:scale(1.05);
+}
+.lp-cf-card.active img{animation:lpKenBurns 9s ease-out forwards;}
+@keyframes lpKenBurns{from{transform:scale(1.05);}to{transform:scale(1);}}
 .lp-cf-desc-area{
-  position:relative;z-index:50;
-  min-height:60px;text-align:center;padding:1.2rem 2rem 0;
+  text-align:center;padding:1.1rem 2rem 0;
   font-size:.93rem;line-height:1.6;color:var(--sub);
-  transition:opacity .3s;
 }
-.lp-cf-desc-area strong{color:var(--text);font-size:1rem;display:block;margin-bottom:.25rem;}
+.lp-cf-desc-area strong{color:var(--text);font-size:1rem;display:block;margin-bottom:.2rem;}
 .lp-car-btn{
   position:absolute;top:50%;transform:translateY(-50%);
-  background:rgba(4,18,36,.8);border:1px solid var(--border2);
+  background:rgba(4,18,36,.75);border:1px solid rgba(56,189,248,.2);
   color:var(--text);width:42px;height:42px;border-radius:50%;
   font-size:1.1rem;cursor:pointer;backdrop-filter:blur(8px);
   transition:background .2s,border-color .2s;display:flex;align-items:center;justify-content:center;
   z-index:30;
 }
-.lp-car-btn:hover{background:rgba(56,189,248,.15);border-color:rgba(56,189,248,.4);}
-.lp-car-prev{left:10px;}
-.lp-car-next{right:10px;}
-.lp-car-dots{position:absolute;bottom:0;left:50%;transform:translateX(-50%);display:flex;gap:8px;}
-.lp-car-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:background .3s,transform .3s;}
+.lp-car-btn:hover{background:rgba(56,189,248,.18);border-color:rgba(56,189,248,.5);}
+.lp-car-prev{left:14px;}
+.lp-car-next{right:14px;}
+.lp-car-dots{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:20;}
+.lp-car-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:background .3s,transform .3s;}
 .lp-car-dot.active{background:var(--cyan);transform:scale(1.35);}
 
 /* FEATURES */
@@ -1426,7 +1425,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
   </div>
 
-  <!-- CARRUSEL COVERFLOW -->
+  <!-- CARRUSEL -->
   <section class="lp-carousel-section lp-reveal">
     <h2 class="lp-section-title" style="margin-bottom:.5rem;">MIRÁ POR DENTRO</h2>
     <p class="lp-section-sub">Cada sección diseñada para que tomes mejores decisiones.</p>
@@ -12173,7 +12172,7 @@ updateAutosave();
 })();
 </script>
 <script>
-// Coverflow 3D landing
+// Carrusel crossfade landing
 (function(){
   var cards = document.querySelectorAll('.lp-cf-card');
   var dotsEl = document.getElementById('lpCfDots');
@@ -12181,7 +12180,6 @@ updateAutosave();
   if(!cards.length) return;
   var total = cards.length;
   var active = 0;
-  var hovered = -1;
   var timer;
 
   var descs = [
@@ -12200,46 +12198,17 @@ updateAutosave();
     dotsEl.appendChild(d);
   });
 
-  function setDesc(i){
-    if(!descEl) return;
-    var info = descs[i] || descs[0];
-    descEl.innerHTML = '<strong>'+info.t+'</strong>'+info.d;
-  }
-
-  function update(){
-    var showIdx = hovered >= 0 ? hovered : active;
-    setDesc(showIdx);
-    cards.forEach(function(card,i){
-      var off = i - active;
-      if(off > total/2) off -= total;
-      if(off < -total/2) off += total;
-      var abs = Math.abs(off);
-      var ry  = off * 44;
-      var tx  = off * 54;
-      var tz  = -abs * 140;
-      var sc  = Math.max(0.55, 1 - abs * 0.19);
-      var op  = abs > 2 ? 0 : Math.max(0.35, 1 - abs * 0.3);
-      if(i === hovered){ sc += abs===0 ? 0.35 : 0.09; op = Math.min(1, op + 0.2); }
-      card.style.transform = 'translateX('+tx+'%) rotateY('+ry+'deg) translateZ('+tz+'px) scale('+sc.toFixed(3)+')';
-      card.style.opacity   = op.toFixed(2);
-      card.style.zIndex    = 20 - abs*5;
-      card.classList.toggle('active', off===0);
-    });
+  function go(n){
+    active = ((n%total)+total)%total;
+    cards.forEach(function(c,i){ c.classList.toggle('active', i===active); });
     dotsEl.querySelectorAll('.lp-car-dot').forEach(function(d,i){ d.classList.toggle('active',i===active); });
+    if(descEl){ var info=descs[active]; descEl.innerHTML='<strong>'+info.t+'</strong>'+info.d; }
+    clearInterval(timer);
+    timer = setInterval(function(){ go(active+1); }, 5000);
   }
-
-  function go(n){ active=((n%total)+total)%total; update(); resetTimer(); }
-  function resetTimer(){ clearInterval(timer); timer=setInterval(function(){ go(active+1); },4500); }
-
-  cards.forEach(function(card,i){
-    card.onclick     = function(){ var o=i-active; if(o>total/2)o-=total; if(o<-total/2)o+=total; if(o!==0) go(i); };
-    card.onmouseenter= function(){ hovered=i; update(); };
-    card.onmouseleave= function(){ hovered=-1; update(); };
-  });
 
   window.lpCarMove = function(dir){ go(active+dir); };
-  update();
-  resetTimer();
+  go(0);
 })();
 
 // Radar mouse tracking
