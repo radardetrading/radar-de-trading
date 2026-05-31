@@ -873,17 +873,15 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
 .lp-radar-scene{
   position:absolute;inset:0;
   transform-style:preserve-3d;
-  animation:lpScene 30s linear infinite;
+  transform:rotateX(22deg) rotateY(0deg);
   will-change:transform;
-}
-@keyframes lpScene{
-  from{transform:rotateX(22deg) rotateY(0deg);}
-  to{transform:rotateX(22deg) rotateY(360deg);}
 }
 .lp-radar-disk{
   position:absolute;inset:0;border-radius:50%;
   background:radial-gradient(circle at 50% 50%,rgba(56,189,248,.08),transparent 70%);
+  backface-visibility:hidden;
 }
+.lp-blip{backface-visibility:hidden;}
 .lp-orbit{
   position:absolute;border-radius:50%;border-style:solid;border-width:1px;pointer-events:none;
   will-change:transform;
@@ -12111,6 +12109,24 @@ updateAutosave();
     var el = e.target.closest(SEL);
     if(el) bind(el);
   }, {passive:true});
+})();
+</script>
+<script>
+(function(){
+  var scene = document.querySelector('.lp-radar-scene');
+  if(!scene) return;
+  var cx = 22, cy = 0;
+  var tx = 22, ty = 0;
+  window.addEventListener('mousemove', function(e){
+    tx = 22 + (e.clientY / window.innerHeight - 0.5) * 20;
+    ty = (e.clientX / window.innerWidth - 0.5) * 38;
+  }, {passive:true});
+  (function tick(){
+    cx += (tx - cx) * 0.055;
+    cy += (ty - cy) * 0.055;
+    scene.style.transform = 'rotateX('+cx.toFixed(2)+'deg) rotateY('+cy.toFixed(2)+'deg)';
+    requestAnimationFrame(tick);
+  })();
 })();
 </script>
 </body>
