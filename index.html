@@ -868,8 +868,52 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
 /* RADAR */
 .lp-radar{
   position:relative;width:100%;max-width:440px;aspect-ratio:1;margin:0 auto;
-  border-radius:50%;
-  background:radial-gradient(circle at 50% 50%, rgba(56,189,248,.06), transparent 70%);
+  perspective:900px;
+}
+.lp-radar-scene{
+  position:absolute;inset:0;
+  transform-style:preserve-3d;
+  animation:lpScene 30s linear infinite;
+  will-change:transform;
+}
+@keyframes lpScene{
+  from{transform:rotateX(22deg) rotateY(0deg);}
+  to{transform:rotateX(22deg) rotateY(360deg);}
+}
+.lp-radar-disk{
+  position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,rgba(56,189,248,.08),transparent 70%);
+}
+.lp-orbit{
+  position:absolute;border-radius:50%;border-style:solid;border-width:1px;pointer-events:none;
+  will-change:transform;
+}
+.lp-orbit-1{
+  inset:4%;border-color:rgba(56,189,248,.3);
+  box-shadow:0 0 10px rgba(56,189,248,.12);
+  animation:lpOrbit1 6s linear infinite;
+}
+.lp-orbit-2{
+  inset:16%;border-color:rgba(167,139,250,.24);
+  box-shadow:0 0 8px rgba(167,139,250,.1);
+  animation:lpOrbit2 11s linear infinite reverse;
+}
+.lp-orbit-3{
+  inset:28%;border-color:rgba(52,211,153,.2);
+  box-shadow:0 0 6px rgba(52,211,153,.08);
+  animation:lpOrbit3 16s linear infinite;
+}
+@keyframes lpOrbit1{
+  from{transform:rotateX(76deg) rotateZ(0deg);}
+  to{transform:rotateX(76deg) rotateZ(360deg);}
+}
+@keyframes lpOrbit2{
+  from{transform:rotateY(70deg) rotateZ(0deg);}
+  to{transform:rotateY(70deg) rotateZ(360deg);}
+}
+@keyframes lpOrbit3{
+  from{transform:rotateX(54deg) rotateY(34deg) rotateZ(0deg);}
+  to{transform:rotateX(54deg) rotateY(34deg) rotateZ(360deg);}
 }
 .lp-radar-rings{position:absolute;inset:0;border-radius:50%;
   background:
@@ -1290,14 +1334,21 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <div class="lp-hero-right">
       <div class="lp-radar">
-        <div class="lp-radar-rings"></div>
-        <div class="lp-radar-sweep"></div>
-        <span class="lp-blip" style="top:30%;left:58%">Disciplina</span>
-        <span class="lp-blip" style="top:46%;left:78%">Gestión</span>
-        <span class="lp-blip" style="top:64%;left:70%">Consistencia</span>
-        <span class="lp-blip" style="top:72%;left:42%">Paciencia</span>
-        <span class="lp-blip" style="top:34%;left:34%">Proceso</span>
-        <div class="lp-radar-core"></div>
+        <div class="lp-radar-scene">
+          <div class="lp-radar-disk">
+            <div class="lp-radar-rings"></div>
+            <div class="lp-radar-sweep"></div>
+            <span class="lp-blip" style="top:30%;left:58%">Disciplina</span>
+            <span class="lp-blip" style="top:46%;left:78%">Gestión</span>
+            <span class="lp-blip" style="top:64%;left:70%">Consistencia</span>
+            <span class="lp-blip" style="top:72%;left:42%">Paciencia</span>
+            <span class="lp-blip" style="top:34%;left:34%">Proceso</span>
+            <div class="lp-radar-core"></div>
+          </div>
+          <div class="lp-orbit lp-orbit-1"></div>
+          <div class="lp-orbit lp-orbit-2"></div>
+          <div class="lp-orbit lp-orbit-3"></div>
+        </div>
       </div>
     </div>
   </section>
