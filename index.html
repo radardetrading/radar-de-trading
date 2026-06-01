@@ -602,7 +602,11 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
 
 /* ── INACTIVIDAD MONITOR ──────────────────────────── */
 .inact-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:1.5rem;overflow:hidden;}
-.inact-head{padding:.75rem 1.2rem;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(251,191,36,.05),transparent);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.inact-head{padding:.75rem 1.2rem;background:linear-gradient(90deg,rgba(251,191,36,.05),transparent);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer;user-select:none;transition:background .2s;}
+.inact-head:hover{background:linear-gradient(90deg,rgba(251,191,36,.09),rgba(251,191,36,.02));}
+.inact-body{border-top:1px solid var(--border);}
+.inact-chevron{font-size:10px;color:var(--dim);transition:transform .25s;flex-shrink:0;}
+.inact-panel.open .inact-chevron{transform:rotate(180deg);}
 .inact-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:7px;}
 .inact-badges{display:flex;gap:5px;flex-wrap:wrap;}
 .inact-badge{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em;}
@@ -6550,6 +6554,9 @@ function renderCuentas(){
   renderInactividad();
 }
 
+let inactOpen=false;
+function toggleInact(){inactOpen=!inactOpen;renderInactividad();}
+
 function renderInactividad(){
   const panel=document.getElementById('inactividadPanel');
   if(!panel) return;
@@ -6593,7 +6600,8 @@ function renderInactividad(){
       <div class="inact-days ${r.zone}">${dLabel}</div>
     </div>`;
   }).join('');
-  panel.innerHTML=`<div class="inact-head"><div class="inact-title"><span>⏱</span> Pulso de Cuentas — 30 días de inactividad</div><div class="inact-badges">${badges}</div></div>${rowsHtml}`;
+  panel.className='inact-panel'+(inactOpen?' open':'');
+  panel.innerHTML=`<div class="inact-head" onclick="toggleInact()"><div class="inact-title"><span>⏱</span> Pulso de Cuentas — 30 días de inactividad</div><div style="display:flex;align-items:center;gap:8px;"><div class="inact-badges">${badges}</div><span class="inact-chevron">▼</span></div></div>${inactOpen?`<div class="inact-body">${rowsHtml}</div>`:''}`;
 }
 
 // ════════════════════════════════════════════════════════════
