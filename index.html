@@ -2568,11 +2568,11 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <div id="page-journal" class="page">
     <div class="journal-header">
       <div class="filters">
-        <input type="text" id="jSearch" placeholder="Setup, notas, cuenta..." oninput="renderJournal()">
-        <select id="jResult" onchange="renderJournal()"><option value="">Todos</option><option value="WIN">WIN</option><option value="LOSS">LOSS</option><option value="BE">BE</option></select>
-        <select id="jType" onchange="renderJournal()"><option value="">LONG+SHORT</option><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
-        <select id="jSession" onchange="renderJournal()"><option value="">Todas sesiones</option><option value="Londres">Londres</option><option value="NY">NY</option><option value="Asia">Asia</option><option value="Frankfurt">Frankfurt</option></select>
-        <select id="jPair" onchange="renderJournal()">
+        <input type="text" id="jSearch" placeholder="Setup, notas, cuenta..." oninput="journalPage=1;renderJournal()">
+        <select id="jResult" onchange="journalPage=1;renderJournal()"><option value="">Todos</option><option value="WIN">WIN</option><option value="LOSS">LOSS</option><option value="BE">BE</option></select>
+        <select id="jType" onchange="journalPage=1;renderJournal()"><option value="">LONG+SHORT</option><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
+        <select id="jSession" onchange="journalPage=1;renderJournal()"><option value="">Todas sesiones</option><option value="Londres">Londres</option><option value="NY">NY</option><option value="Asia">Asia</option><option value="Frankfurt">Frankfurt</option></select>
+        <select id="jPair" onchange="journalPage=1;renderJournal()">
           <option value="">Todos los pares</option>
           <option value="EUR/USD">EUR/USD</option><option value="GBP/USD">GBP/USD</option><option value="USD/JPY">USD/JPY</option>
           <option value="USD/CHF">USD/CHF</option><option value="AUD/USD">AUD/USD</option><option value="USD/CAD">USD/CAD</option>
@@ -2581,9 +2581,9 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <option value="AUD/JPY">AUD/JPY</option><option value="EUR/CAD">EUR/CAD</option><option value="GBP/CAD">GBP/CAD</option>
           <option value="XAUUSD">XAUUSD</option><option value="US30">US30</option><option value="NAS100">NAS100</option>
         </select>
-        <select id="jAccount" onchange="renderJournal()"><option value="">Todas las cuentas</option></select>
-        <select id="jZona" onchange="renderJournal()"><option value="">Todas las zonas</option></select>
-        <select id="jOrder" onchange="renderJournal()">
+        <select id="jAccount" onchange="journalPage=1;renderJournal()"><option value="">Todas las cuentas</option></select>
+        <select id="jZona" onchange="journalPage=1;renderJournal()"><option value="">Todas las zonas</option></select>
+        <select id="jOrder" onchange="journalPage=1;renderJournal()">
           <option value="desc">Más nuevo primero</option>
           <option value="asc">Más viejo primero</option>
         </select>
@@ -2597,6 +2597,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </table>
       <div id="journalEmpty" class="empty" style="display:none"><div class="empty-icon">📋</div>Sin trades registrados.</div>
     </div>
+    <div id="journalPagination"></div>
     <!-- Estadísticas por zona -->
     <div id="jZonaStats" style="margin-top:1.2rem;display:none;">
       <div class="card" style="padding:1.2rem;">
@@ -2844,15 +2845,15 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;">
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">FECHA DESDE</label>
-          <input type="date" id="bt_f_date_from" onchange="renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
+          <input type="date" id="bt_f_date_from" onchange="btPage=1;renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">FECHA HASTA</label>
-          <input type="date" id="bt_f_date_to" onchange="renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
+          <input type="date" id="bt_f_date_to" onchange="btPage=1;renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">TIPO</label>
-          <select id="bt_f_type" onchange="renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
+          <select id="bt_f_type" onchange="btPage=1;renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
             <option value="">Todos</option>
             <option value="LONG">LONG</option>
             <option value="SHORT">SHORT</option>
@@ -2860,19 +2861,19 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">SESIÓN</label>
-          <select id="bt_f_session" onchange="renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
+          <select id="bt_f_session" onchange="btPage=1;renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
             <option value="">Todas</option>
           </select>
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">ZONA</label>
-          <select id="bt_f_zona" onchange="renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
+          <select id="bt_f_zona" onchange="btPage=1;renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
             <option value="">Todas</option>
           </select>
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">RESULTADO</label>
-          <select id="bt_f_result" onchange="renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
+          <select id="bt_f_result" onchange="btPage=1;renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
             <option value="">Todos</option>
             <option value="TP">TP (Win)</option>
             <option value="SL">SL (Loss)</option>
@@ -2881,31 +2882,31 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">$ RIESGO MIN</label>
-          <input type="number" id="bt_f_risk_min" step="0.01" placeholder="0" oninput="renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
+          <input type="number" id="bt_f_risk_min" step="0.01" placeholder="0" oninput="btPage=1;renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">$ RIESGO MAX</label>
-          <input type="number" id="bt_f_risk_max" step="0.01" placeholder="∞" oninput="renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
+          <input type="number" id="bt_f_risk_max" step="0.01" placeholder="∞" oninput="btPage=1;renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">P&L MIN</label>
-          <input type="number" id="bt_f_pnl_min" step="0.01" placeholder="-∞" oninput="renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
+          <input type="number" id="bt_f_pnl_min" step="0.01" placeholder="-∞" oninput="btPage=1;renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">P&L MAX</label>
-          <input type="number" id="bt_f_pnl_max" step="0.01" placeholder="∞" oninput="renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
+          <input type="number" id="bt_f_pnl_max" step="0.01" placeholder="∞" oninput="btPage=1;renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">R:R MIN</label>
-          <input type="number" id="bt_f_rr_min" step="0.1" placeholder="-∞" oninput="renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
+          <input type="number" id="bt_f_rr_min" step="0.1" placeholder="-∞" oninput="btPage=1;renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">R:R MAX</label>
-          <input type="number" id="bt_f_rr_max" step="0.1" placeholder="∞" oninput="renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
+          <input type="number" id="bt_f_rr_max" step="0.1" placeholder="∞" oninput="btPage=1;renderBtTable()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;">
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">FASE</label>
-          <select id="bt_f_phase" onchange="renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
+          <select id="bt_f_phase" onchange="btPage=1;renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
             <option value="">Todas</option>
             <option value="fase1">F1 Challenge</option>
             <option value="fase2">F2 Verif.</option>
@@ -2915,7 +2916,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">REGLAS</label>
-          <select id="bt_f_rules" onchange="renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
+          <select id="bt_f_rules" onchange="btPage=1;renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
             <option value="">Todas</option>
             <option value="all">100% cumplidas</option>
             <option value="partial">Parcial (>50%)</option>
@@ -2925,7 +2926,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">TRADINGVIEW</label>
-          <select id="bt_f_tv" onchange="renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
+          <select id="bt_f_tv" onchange="btPage=1;renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
             <option value="">Todos</option>
             <option value="yes">Con link</option>
             <option value="no">Sin link</option>
@@ -2933,11 +2934,11 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
         <div style="grid-column:span 2;">
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">BUSCAR EN NOTAS</label>
-          <input type="text" id="bt_f_notes" placeholder="texto a buscar..." oninput="renderBtTable()" style="width:100%;font-size:11px;padding:5px 8px;">
+          <input type="text" id="bt_f_notes" placeholder="texto a buscar..." oninput="btPage=1;renderBtTable()" style="width:100%;font-size:11px;padding:5px 8px;">
         </div>
         <div>
           <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;display:block;margin-bottom:3px;">ORDEN</label>
-          <select id="bt_f_order" onchange="renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
+          <select id="bt_f_order" onchange="btPage=1;renderBtTable()" style="width:100%;font-size:10px;padding:5px 8px;">
             <option value="asc">Más viejo primero</option>
             <option value="desc">Más nuevo primero</option>
           </select>
@@ -2952,6 +2953,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </table>
       <div id="btEmpty" class="empty" style="display:none"><div class="empty-icon">🔬</div>Agregá trades para simular el challenge.</div>
     </div>
+    <div id="btPagination"></div>
   </div>
 
 
@@ -4663,6 +4665,10 @@ let histSimAccount='5k'; // cuenta para el simulador de fondeo por sesión del h
 let histEqChart=null, histDistChart=null;
 let histTablePage = 1;
 const HIST_PAGE_SIZE = 50;
+let journalPage = 1;
+const JOURNAL_PAGE_SIZE = 50;
+let btPage = 1;
+const BT_PAGE_SIZE = 50;
 let reglas = JSON.parse(localStorage.getItem('hq_reglas')||'[]');
 let reglasLog = JSON.parse(localStorage.getItem('hq_reglas_log')||'[]');
 const PILARES_EJEMPLO = [
@@ -5512,13 +5518,50 @@ function renderJournal(){
   const tbody=document.getElementById('journalBody'),empty=document.getElementById('journalEmpty');
   tbody.innerHTML='';empty.style.display=f.length?'none':'block';
   const jOrd=document.getElementById('jOrder')?.value||'desc';
-  f.sort((a,b)=>jOrd==='desc'?b.id-a.id:a.id-b.id).forEach((t,i)=>{
+  f.sort((a,b)=>jOrd==='desc'?b.id-a.id:a.id-b.id);
+  // Paginación
+  const jTotalPages = Math.max(1, Math.ceil(f.length / JOURNAL_PAGE_SIZE));
+  if(journalPage > jTotalPages) journalPage = jTotalPages;
+  if(journalPage < 1) journalPage = 1;
+  const jStart = (journalPage - 1) * JOURNAL_PAGE_SIZE;
+  const jEnd = jStart + JOURNAL_PAGE_SIZE;
+  const jPage = f.slice(jStart, jEnd);
+  jPage.forEach((t,i)=>{
+    const globalI = jStart + i;
     const acc=accObj(t.accountId);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="muted">${f.length-i}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:10px;">${t.pair||'EUR/USD'}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${t.sl?.toFixed(5)||'—'}</td><td class="muted">${t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${t.close?.toFixed(5)||'—'}</td><td>${t.lots?.toFixed(2)||'—'}</td><td class="${t.pips>=0?'pos':'neg'}">${t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${((t.risk||0)*100).toFixed(2)}%</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
+    tr.innerHTML=`<td class="muted">${f.length-globalI}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:10px;">${t.pair||'EUR/USD'}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${t.sl?.toFixed(5)||'—'}</td><td class="muted">${t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${t.close?.toFixed(5)||'—'}</td><td>${t.lots?.toFixed(2)||'—'}</td><td class="${t.pips>=0?'pos':'neg'}">${t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${((t.risk||0)*100).toFixed(2)}%</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
     tbody.appendChild(tr);
   });
+  renderJournalPagination(f.length, jTotalPages);
   renderJZonaStats();
+}
+
+function renderJournalPagination(totalRows, totalPages){
+  const container = document.getElementById('journalPagination');
+  if(!container) return;
+  if(totalRows <= JOURNAL_PAGE_SIZE){ container.innerHTML=''; return; }
+  const start = (journalPage - 1) * JOURNAL_PAGE_SIZE + 1;
+  const end = Math.min(journalPage * JOURNAL_PAGE_SIZE, totalRows);
+  let pages = [];
+  if(totalPages <= 7){ for(let i=1;i<=totalPages;i++) pages.push(i); }
+  else {
+    pages.push(1);
+    if(journalPage > 3) pages.push('...');
+    const sp = Math.max(2, journalPage-1), ep = Math.min(totalPages-1, journalPage+1);
+    for(let i=sp;i<=ep;i++) pages.push(i);
+    if(journalPage < totalPages-2) pages.push('...');
+    pages.push(totalPages);
+  }
+  const btn=(label,page,disabled,active)=>`<button onclick="${disabled?'':'goJournalPage('+page+')'}" style="background:${active?'var(--cyan)':'var(--glass2)'};color:${active?'#fff':disabled?'var(--dim)':'var(--text)'};border:1px solid var(--border);padding:5px 10px;font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:${active?'700':'500'};border-radius:6px;cursor:${disabled?'not-allowed':'pointer'};min-width:32px;${disabled?'opacity:.5;':''}">${label}</button>`;
+  container.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:.6rem 0;"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);">Mostrando ${start}–${end} de ${totalRows}</div><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">${btn('◀◀',1,journalPage===1)}${btn('◀',journalPage-1,journalPage===1)}${pages.map(p=>p==='...'?'<span style="color:var(--dim);padding:0 4px;font-size:11px;">…</span>':btn(p,p,false,p===journalPage)).join('')}${btn('▶',journalPage+1,journalPage===totalPages)}${btn('▶▶',totalPages,journalPage===totalPages)}</div></div>`;
+}
+
+function goJournalPage(p){
+  journalPage=p;
+  renderJournal();
+  const t=document.getElementById('journalBody');
+  if(t) t.closest('.table-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 // ════════════════════════════════════════════════════════════
@@ -6602,7 +6645,15 @@ function renderBtTable(){
   tbody.innerHTML='';empty.style.display=enriched.length?'none':'block';
   const phaseColors={fase1:'var(--purple)',fase2:'var(--cyan)',funded:'var(--green)',blown:'var(--red)'};
   const phaseNames={fase1:'F1 Challenge',fase2:'F2 Verif.',funded:'Funded',blown:'BLOWN'};
-  enriched.forEach((t,i)=>{
+  // Paginación
+  const btTotalPages = Math.max(1, Math.ceil(enriched.length / BT_PAGE_SIZE));
+  if(btPage > btTotalPages) btPage = btTotalPages;
+  if(btPage < 1) btPage = 1;
+  const btStart = (btPage - 1) * BT_PAGE_SIZE;
+  const btEnd = btStart + BT_PAGE_SIZE;
+  const btPageRows = enriched.slice(btStart, btEnd);
+  btPageRows.forEach((t,i)=>{
+    const globalI = btStart + i;
     const res=t.pnl>0?'WIN':t.pnl<0?'LOSS':'BE';
     const rr = typeof t.rr==='number' ? t.rr.toFixed(2) : '—';
     // Rules compliance
@@ -6620,7 +6671,7 @@ function renderBtTable(){
     const zonaBadge = t.zona ? `<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>` : '<span style="color:var(--dim);font-size:10px;">—</span>';
     const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td class="muted">${i+1}</td>
+      <td class="muted">${globalI+1}</td>
       <td class="muted">${t.date||'—'}</td>
       <td class="muted">${t.hora||'—'}</td>
       <td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td>
@@ -6644,7 +6695,35 @@ function renderBtTable(){
     `;
     tbody.appendChild(tr);
   });
+  renderBtPagination(enriched.length, btTotalPages);
   renderBtAnalytics(enriched);
+}
+
+function renderBtPagination(totalRows, totalPages){
+  const container = document.getElementById('btPagination');
+  if(!container) return;
+  if(totalRows <= BT_PAGE_SIZE){ container.innerHTML=''; return; }
+  const start = (btPage - 1) * BT_PAGE_SIZE + 1;
+  const end = Math.min(btPage * BT_PAGE_SIZE, totalRows);
+  let pages = [];
+  if(totalPages <= 7){ for(let i=1;i<=totalPages;i++) pages.push(i); }
+  else {
+    pages.push(1);
+    if(btPage > 3) pages.push('...');
+    const sp = Math.max(2, btPage-1), ep = Math.min(totalPages-1, btPage+1);
+    for(let i=sp;i<=ep;i++) pages.push(i);
+    if(btPage < totalPages-2) pages.push('...');
+    pages.push(totalPages);
+  }
+  const btn=(label,page,disabled,active)=>`<button onclick="${disabled?'':'goBtPage('+page+')'}" style="background:${active?'var(--cyan)':'var(--glass2)'};color:${active?'#fff':disabled?'var(--dim)':'var(--text)'};border:1px solid var(--border);padding:5px 10px;font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:${active?'700':'500'};border-radius:6px;cursor:${disabled?'not-allowed':'pointer'};min-width:32px;${disabled?'opacity:.5;':''}">${label}</button>`;
+  container.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:.6rem 0;"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);">Mostrando ${start}–${end} de ${totalRows}</div><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">${btn('◀◀',1,btPage===1)}${btn('◀',btPage-1,btPage===1)}${pages.map(p=>p==='...'?'<span style="color:var(--dim);padding:0 4px;font-size:11px;">…</span>':btn(p,p,false,p===btPage)).join('')}${btn('▶',btPage+1,btPage===totalPages)}${btn('▶▶',totalPages,btPage===totalPages)}</div></div>`;
+}
+
+function goBtPage(p){
+  btPage=p;
+  renderBtTable();
+  const t=document.getElementById('btBody');
+  if(t) t.closest('.table-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 function renderBtAnalytics(enriched){
