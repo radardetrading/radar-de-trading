@@ -13,7 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1369,6 +1369,334 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     transition-duration:.05ms!important;
   }
   body::before{animation:none!important;}
+}
+</style>
+
+<style id="landing-v2">
+/* ═══ LANDING V2 — Terminal × Editorial ═══════════════════
+   Palette : deep black + amber/gold primary + cyan secondary
+   Fonts   : Bebas Neue (display) · DM Mono (labels/data) · DM Sans (body)
+   ════════════════════════════════════════════════════════ */
+
+/* ── Base ────────────────────────────────────────────────── */
+#landing {
+  font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+  background:
+    repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(0,0,0,.055) 3px, rgba(0,0,0,.055) 4px),
+    linear-gradient(rgba(245,166,35,.016) 1px, transparent 1px) 0 0 / 80px 80px,
+    linear-gradient(90deg, rgba(245,166,35,.016) 1px, transparent 1px) 0 0 / 80px 80px,
+    radial-gradient(ellipse 70% 55% at 20% -5%, rgba(245,166,35,.11) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 70% at 82% 15%, rgba(0,210,100,.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% 108%, rgba(56,189,248,.05) 0%, transparent 70%),
+    #04060c;
+}
+
+/* ── Nav ─────────────────────────────────────────────────── */
+.lp-nav {
+  padding: .9rem 2.5rem;
+  background: rgba(4,6,12,.93);
+  border-bottom: 1px solid rgba(245,166,35,.1);
+}
+.lp-brand-txt {
+  font-family: 'Bebas Neue', 'Impact', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg,#f5a623,#fbbf24);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.1;
+}
+.lp-brand-sub {
+  font-family: 'DM Mono', 'JetBrains Mono', monospace;
+  font-size: .45rem;
+  letter-spacing: 5px;
+  color: rgba(245,166,35,.38);
+  font-weight: 400;
+  margin-top: 2px;
+  -webkit-text-fill-color: rgba(245,166,35,.38);
+}
+.lp-menu-link {
+  font-family: 'DM Mono', 'JetBrains Mono', monospace;
+  font-size: .7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(245,166,35,.38);
+  transition: color .2s;
+}
+.lp-menu-link:hover, .lp-menu-link.active { color: #f5a623; }
+.lp-menu-link.active::after { background: #f5a623; }
+.lp-enter-btn {
+  font-family: 'DM Mono', 'JetBrains Mono', monospace;
+  font-size: .7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #f5a623;
+  background: rgba(245,166,35,.06);
+  border: 1px solid rgba(245,166,35,.28);
+  border-radius: 5px;
+  padding: .6rem 1.5rem;
+}
+.lp-enter-btn:hover {
+  background: #f5a623;
+  border-color: #f5a623;
+  color: #06090f;
+}
+
+/* ── Hero ────────────────────────────────────────────────── */
+.lp-hero { padding: 5rem 2.5rem 6rem; gap: 3rem; }
+.lp-badge {
+  background: rgba(245,166,35,.06);
+  border: 1px solid rgba(245,166,35,.28);
+  color: #f5a623;
+  border-radius: 4px;
+  font-family: 'DM Mono', 'JetBrains Mono', monospace;
+  font-size: .63rem;
+  letter-spacing: 2.5px;
+  padding: .45rem 1.1rem;
+  margin-bottom: 2rem;
+}
+.lp-badge-dot { background: #f5a623; box-shadow: 0 0 8px #f5a623; }
+.lp-title {
+  font-family: 'Bebas Neue', 'Impact', sans-serif;
+  font-size: 7rem;
+  font-weight: 400;
+  line-height: .88;
+  letter-spacing: 3px;
+  margin: 0;
+}
+.lp-accent {
+  background: linear-gradient(135deg, #f5a623, #fbbf24, #fde68a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.lp-desc {
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-size: 1rem;
+  line-height: 1.78;
+  color: rgba(200,212,228,.65);
+  margin: 2rem 0 2.5rem;
+  max-width: 420px;
+}
+.lp-cta-btn {
+  background: linear-gradient(135deg, #d98a00, #f5a623, #fbbf24);
+  color: #06090f;
+  font-family: 'DM Mono', 'JetBrains Mono', monospace;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  padding: 1.05rem 2.6rem;
+  border-radius: 5px;
+  border: none;
+  box-shadow: 0 0 40px rgba(245,166,35,.24), 0 10px 28px rgba(0,0,0,.45);
+  transition: transform .15s, box-shadow .2s, filter .15s;
+}
+.lp-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 60px rgba(245,166,35,.44), 0 18px 48px rgba(0,0,0,.55);
+  filter: brightness(1.08);
+}
+.lp-cta-btn::after {
+  background: linear-gradient(to right, transparent, rgba(255,255,255,.2), transparent);
+}
+.lp-secure {
+  font-family: 'DM Mono', monospace;
+  font-size: .66rem;
+  letter-spacing: 1.5px;
+  color: rgba(245,166,35,.32);
+  margin-top: 1.2rem;
+}
+
+/* ── Radar (hero right) ──────────────────────────────────── */
+.lp-radar-disk {
+  background: radial-gradient(circle at 50% 50%, rgba(245,166,35,.06), transparent 70%);
+}
+.lp-orbit-1 { border-color: rgba(245,166,35,.38); box-shadow: 0 0 14px rgba(245,166,35,.12); }
+.lp-orbit-2 { border-color: rgba(251,191,36,.22); box-shadow: 0 0 10px rgba(251,191,36,.08); }
+.lp-orbit-3 { border-color: rgba(56,189,248,.18);  box-shadow: 0 0  8px rgba(56,189,248,.06); }
+
+/* ── Ticker strip ────────────────────────────────────────── */
+.lp-strip {
+  background: rgba(245,166,35,.025);
+  border-top: 1px solid rgba(245,166,35,.1);
+  border-bottom: 1px solid rgba(245,166,35,.1);
+}
+.lp-strip::before { background: linear-gradient(to right, #04060c, transparent); }
+.lp-strip::after  { background: linear-gradient(to left,  #04060c, transparent); }
+.lp-strip-item {
+  font-family: 'DM Mono', 'JetBrains Mono', monospace;
+  font-size: .72rem;
+  letter-spacing: 1.5px;
+  color: rgba(245,166,35,.38);
+  padding: .88rem 2rem;
+}
+.lp-strip-item strong { color: #f5a623; font-weight: 500; }
+.lp-strip-sep { color: rgba(245,166,35,.2); opacity: 1; }
+
+/* ── Section titles ──────────────────────────────────────── */
+.lp-section-title {
+  font-family: 'Bebas Neue', 'Impact', sans-serif;
+  font-size: 3rem;
+  font-weight: 400;
+  letter-spacing: 4px;
+}
+.lp-section-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: .9rem;
+  color: rgba(200,212,228,.55);
+}
+
+/* ── Carousel ────────────────────────────────────────────── */
+.lp-carousel-section { border-color: rgba(245,166,35,.07); }
+.lp-car-btn { border-color: rgba(245,166,35,.2); }
+.lp-car-btn:hover { background: rgba(245,166,35,.1); border-color: rgba(245,166,35,.45); }
+.lp-car-dot.active { background: #f5a623; }
+
+/* ── Features ────────────────────────────────────────────── */
+.lp-features { border-color: rgba(245,166,35,.07); }
+.lp-feat-card {
+  border-radius: 10px;
+  border-color: rgba(255,255,255,.05);
+  background: rgba(255,255,255,.018);
+  padding: 1.6rem 1.3rem;
+}
+.lp-feat-card::after {
+  background: linear-gradient(135deg, rgba(245,166,35,.07), transparent 65%);
+}
+.lp-feat-card:hover {
+  border-color: rgba(245,166,35,.28);
+  background: rgba(245,166,35,.03);
+  transform: translateY(-6px);
+}
+.lp-feat-num {
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  letter-spacing: 3px;
+  color: #f5a623;
+  opacity: .5;
+  margin-bottom: 1rem;
+}
+.lp-feat-ico {
+  background: linear-gradient(135deg, rgba(245,166,35,.12), rgba(245,166,35,.02));
+  border: 1px solid rgba(245,166,35,.2);
+  color: #f5a623;
+  border-radius: 10px;
+  margin: 0 0 1rem;
+  box-shadow: 0 0 16px rgba(245,166,35,.07);
+}
+.lp-feat-card h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--text);
+  margin: 0 0 .5rem;
+}
+.lp-feat-card p {
+  font-family: 'DM Sans', sans-serif;
+  font-size: .8rem;
+  color: rgba(200,212,228,.55);
+}
+
+/* ── Dashboard mock ──────────────────────────────────────── */
+.lp-mock { border-color: rgba(245,166,35,.12); box-shadow: 0 50px 120px rgba(0,0,0,.65), 0 0 0 1px rgba(245,166,35,.05); }
+.lp-kpi { border-color: rgba(245,166,35,.08); }
+.lp-mock-date { border-color: rgba(245,166,35,.12); }
+
+/* ── Closer ──────────────────────────────────────────────── */
+.lp-closer { border-color: rgba(245,166,35,.07); }
+.lp-closer::before {
+  background: radial-gradient(circle, rgba(245,166,35,.05) 0%, transparent 70%);
+}
+.lp-closer-title {
+  font-family: 'Bebas Neue', 'Impact', sans-serif;
+  font-size: 4rem;
+  font-weight: 400;
+  letter-spacing: 4px;
+  line-height: .9;
+}
+.lp-closer-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: .97rem;
+  color: rgba(200,212,228,.6);
+}
+.lp-stat {
+  border-color: rgba(245,166,35,.12);
+  background: rgba(245,166,35,.025);
+  border-radius: 12px;
+  padding: 1.5rem 1.4rem;
+}
+.lp-stat:hover {
+  border-color: rgba(245,166,35,.32);
+  background: rgba(245,166,35,.06);
+  transform: translateY(-3px);
+}
+.lp-stat-ico { font-size: 1.4rem; margin-bottom: .5rem; }
+.lp-stat-num {
+  font-family: 'Bebas Neue', 'Impact', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: #f5a623;
+  line-height: 1;
+}
+.lp-stat span {
+  font-family: 'DM Sans', sans-serif;
+  font-size: .8rem;
+  color: rgba(200,212,228,.5);
+  margin-top: .2rem;
+}
+
+/* ── Contact ─────────────────────────────────────────────── */
+.lp-contact { border-color: rgba(245,166,35,.07); }
+.lp-contact-title {
+  font-family: 'Bebas Neue', 'Impact', sans-serif;
+  font-size: 2.6rem;
+  font-weight: 400;
+  letter-spacing: 5px;
+}
+.lp-contact-desc {
+  font-family: 'DM Sans', sans-serif;
+  color: rgba(200,212,228,.55);
+}
+.lp-contact-item {
+  border-color: rgba(245,166,35,.14);
+  background: rgba(245,166,35,.02);
+  border-radius: 10px;
+}
+.lp-contact-item:hover { border-color: #f5a623; background: rgba(245,166,35,.07); }
+.lp-contact-ico { background: rgba(245,166,35,.1); color: #f5a623; border-radius: 10px; }
+.lp-contact-info small {
+  font-family: 'DM Mono', monospace;
+  color: rgba(245,166,35,.45);
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+.lp-footer {
+  border-color: rgba(245,166,35,.07);
+  font-family: 'DM Mono', 'JetBrains Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: 1.2px;
+  color: rgba(245,166,35,.28);
+}
+.lp-foot-brand { color: rgba(245,166,35,.38); letter-spacing: 2px; }
+.lp-foot-brand b { color: #f5a623; }
+.lp-foot-mail { color: rgba(245,166,35,.28); }
+.lp-foot-mail:hover { color: #f5a623; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 880px) {
+  .lp-title { font-size: 5rem; letter-spacing: 2px; }
+  .lp-closer-title { font-size: 2.8rem; }
+}
+@media (max-width: 520px) {
+  .lp-title { font-size: 3.5rem; letter-spacing: 1px; }
+  .lp-section-title { font-size: 2.2rem; }
+  .lp-closer-title { font-size: 2.2rem; }
+  .lp-contact-title { font-size: 2rem; }
 }
 </style>
 </head>
