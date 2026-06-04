@@ -4689,6 +4689,7 @@ if(pilares===null){
 function savePilares(){
   pilaresEsEjemplo = false; // al guardar dejan de ser ejemplo y pasan a ser del usuario
   localStorage.setItem('hq_pilares', JSON.stringify(pilares));
+  save();
 }
 let editAccId=null, updAccId=null, editParId=null, semOff=0;
 const SK={
@@ -4734,6 +4735,7 @@ function armarEstado(){
     fondCfg: loadFondeoCfg(),
     rutHabitos,
     rutDays,
+    moodQuestions,
     theme: (localStorage.getItem('rdm_theme')||'dark'),
     savedAt: new Date().toISOString()
   };
@@ -4758,8 +4760,9 @@ function aplicarEstado(d){
   if(d.btRules)    btQuickRules = d.btRules;
   if(d.btZonas)    btZonas    = d.btZonas;
   if(d.fondCfg){ try{ localStorage.setItem('hq_fond_v1', JSON.stringify(d.fondCfg)); }catch(_){} }
-  if(d.rutHabitos) rutHabitos = d.rutHabitos;
-  if(d.rutDays)    rutDays    = d.rutDays;
+  if(d.rutHabitos)     rutHabitos     = d.rutHabitos;
+  if(d.rutDays)        rutDays        = d.rutDays;
+  if(d.moodQuestions)  moodQuestions  = d.moodQuestions;
   if(d.theme){ try{ if(typeof setTheme==='function') setTheme(d.theme); else localStorage.setItem('rdm_theme', d.theme); }catch(_){} }
 }
 
@@ -5059,6 +5062,11 @@ async function handleRegister(){
   const ok = await registrarse(email, pass);
   if(ok){ await iniciarApp(); } else { msg.textContent='No se pudo crear la cuenta'; }
 }
+
+// ════════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════════
+function escHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
@@ -5369,10 +5377,10 @@ function openTradeModal(){
   document.getElementById('t_date').value=today;
   // populate account dropdown
   const sel=document.getElementById('t_account');
-  sel.innerHTML='<option value="">— Sin asignar —</option>'+accounts.map(a=>`<option value="${a.id}">${a.name} (${a.firm||''})</option>`).join('');
+  sel.innerHTML='<option value="">— Sin asignar —</option>'+accounts.map(a=>`<option value="${a.id}">${escHtml(a.name)} (${escHtml(a.firm||'')})</option>`).join('');
   // also update journal filter
   const jSel=document.getElementById('jAccount');
-  jSel.innerHTML='<option value="">Todas las cuentas</option>'+accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  jSel.innerHTML='<option value="">Todas las cuentas</option>'+accounts.map(a=>`<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
   ['t_entry','t_sl','t_tp','t_close','t_tv','t_setup','t_notes'].forEach(x=>document.getElementById(x).value='');
   document.getElementById('t_commission').value='0';
   window._jZonaSelected = '';
@@ -5391,7 +5399,7 @@ function editTrade(id){
   editTradeId=id;
   // populate account dropdown
   const sel=document.getElementById('t_account');
-  sel.innerHTML='<option value="">— Sin asignar —</option>'+accounts.map(a=>`<option value="${a.id}">${a.name} (${a.firm||''})</option>`).join('');
+  sel.innerHTML='<option value="">— Sin asignar —</option>'+accounts.map(a=>`<option value="${a.id}">${escHtml(a.name)} (${escHtml(a.firm||'')})</option>`).join('');
   // fill all fields
   document.getElementById('t_account').value=t.accountId||'';
   document.getElementById('t_date').value=t.date||'';
@@ -5500,11 +5508,11 @@ function renderJournal(){
   const zonaF=document.getElementById('jZona')?.value||'';
   // refresh account filter
   const jSel=document.getElementById('jAccount');const prev=jSel.value;
-  jSel.innerHTML='<option value="">Todas las cuentas</option>'+accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  jSel.innerHTML='<option value="">Todas las cuentas</option>'+accounts.map(a=>`<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
   jSel.value=prev;
   // refresh zona filter
   const zSel=document.getElementById('jZona');
-  if(zSel){const prevZ=zSel.value;const usedZonas=[...new Set(trades.map(t=>t.zona).filter(Boolean))].sort();zSel.innerHTML='<option value="">Todas las zonas</option>'+usedZonas.map(z=>`<option value="${z}">${z}</option>`).join('');zSel.value=prevZ;}
+  if(zSel){const prevZ=zSel.value;const usedZonas=[...new Set(trades.map(t=>t.zona).filter(Boolean))].sort();zSel.innerHTML='<option value="">Todas las zonas</option>'+usedZonas.map(z=>`<option value="${z}">${escHtml(z)}</option>`).join('');zSel.value=prevZ;}
   let f=trades.filter(t=>{
     if(res&&t.result!==res) return false;
     if(type&&t.type!==type) return false;
@@ -5575,7 +5583,7 @@ const NEOMAA_DEFAULT = {
 };
 // Cargamos config guardada o usamos defaults
 let NEOMAA = JSON.parse(localStorage.getItem('hq_bt_cfg')||'null') || JSON.parse(JSON.stringify(NEOMAA_DEFAULT));
-function saveBtCfgToStorage(){ localStorage.setItem('hq_bt_cfg', JSON.stringify(NEOMAA)); }
+function saveBtCfgToStorage(){ localStorage.setItem('hq_bt_cfg', JSON.stringify(NEOMAA)); save(); }
 
 let btAccount = '5k';
 let editingBtCfg = null;
@@ -5684,7 +5692,7 @@ let editBtTradeId=null;
 // ── Backtest Quick Rules ─────────────────────────────────────
 let btQuickRules = JSON.parse(localStorage.getItem('hq_bt_rules')||'[]');
 if(!btQuickRules.length) btQuickRules = ['Esperé confirmación','Respeté el SL','No fue por FOMO','Setup en plan'];
-function saveBtRules(){ localStorage.setItem('hq_bt_rules', JSON.stringify(btQuickRules)); }
+function saveBtRules(){ localStorage.setItem('hq_bt_rules', JSON.stringify(btQuickRules)); save(); }
 
 function renderBtQuickRules(){
   const el = document.getElementById('btQuickRules');
@@ -5724,7 +5732,7 @@ function renderBtRulesCheck(){
 const BT_ZONA_DEFAULTS = ['PDL','PDH','PWL','PWH','PMH','PML','ODL','ODH','Breaker','FVG','OB','Equilibrium','Asian High','Asian Low'];
 let btZonas = JSON.parse(localStorage.getItem('hq_bt_zonas')||'null');
 if(!btZonas) btZonas = [...BT_ZONA_DEFAULTS];
-function saveBtZonas(){ localStorage.setItem('hq_bt_zonas', JSON.stringify(btZonas)); }
+function saveBtZonas(){ localStorage.setItem('hq_bt_zonas', JSON.stringify(btZonas)); save(); }
 
 let btZonaSelected = ''; // zona actualmente seleccionada en el modal
 
@@ -6802,7 +6810,7 @@ function pickColor(el){
 
 function openParModal(id=null){
   editParId=id;
-  const opts='<option value="">— ninguna —</option>'+accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  const opts='<option value="">— ninguna —</option>'+accounts.map(a=>`<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
   document.getElementById('p_acc1').innerHTML=opts;
   document.getElementById('p_acc2').innerHTML=opts;
   if(id){
@@ -6846,7 +6854,7 @@ function deletePar(id){pares=pares.filter(p=>p.id!==id);markDirty();save();rende
 function openUsoModal(){
   document.getElementById('u2_fecha').value=todayStr();
   const sel=document.getElementById('u2_par');
-  sel.innerHTML=pares.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  sel.innerHTML=pares.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('');
   if(!sel.innerHTML) sel.innerHTML='<option>Sin pares</option>';
   document.getElementById('u2_notes').value='';
   openModal('usoModal');
@@ -7238,7 +7246,7 @@ function renderCuentas(){
     const ddColor=pct=>pct>=80?'pf-red':pct>=50?'pf-gold':'pf-green';
     const card=document.createElement('div');
     card.className=cardClass;
-    card.innerHTML=`<div class="acc-card-top"><div style="flex:1;min-width:0;"><div class="acc-firm">${a.firm||'Sin firma'}</div><div class="acc-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name}</div><div style="margin-top:6px;display:flex;align-items:center;gap:5px;">
+    card.innerHTML=`<div class="acc-card-top"><div style="flex:1;min-width:0;"><div class="acc-firm">${escHtml(a.firm||'Sin firma')}</div><div class="acc-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(a.name)}</div><div style="margin-top:6px;display:flex;align-items:center;gap:5px;">
       ${a.numFases===2
         ? `<span class="badge b-challenge" style="font-size:8px;">C1</span>
            <span style="color:var(--dim);font-size:10px;">→</span>
@@ -8072,7 +8080,7 @@ function renderSemanal(){
 // ════════════════════════════════════════════════════════════
 // MIS REGLAS
 // ════════════════════════════════════════════════════════════
-function saveReglas(){ localStorage.setItem('hq_reglas', JSON.stringify(reglas)); }
+function saveReglas(){ localStorage.setItem('hq_reglas', JSON.stringify(reglas)); save(); }
 
 const rTipoLabels = {
   max_trades_dia:'Máx trades/día', max_loss_dia:'Máx pérdida diaria ($)',
@@ -8281,7 +8289,7 @@ function checkReglasWeek(weekTrades, start, end){
     const chk=checkRegla(r,weekTrades);
     return `<div class="alert ${chk.ok?'ok':'danger'}" style="margin-bottom:6px;font-size:11px;">
       <span>${chk.ok?'✓':'⚠'}</span>
-      <div><div style="font-weight:600;">${r.desc}</div><div style="opacity:.8;font-size:10px;">${chk.msg}</div></div>
+      <div><div style="font-weight:600;">${escHtml(r.desc)}</div><div style="opacity:.8;font-size:10px;">${escHtml(chk.msg)}</div></div>
     </div>`;
   }).join('')||'<div style="color:var(--dim);font-size:12px;">Sin reglas activas.</div>';
 }
@@ -8682,11 +8690,11 @@ function renderReglas(){
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
             <span style="font-family:'JetBrains Mono',monospace;font-size:16px;color:${statusColor};">${statusIcon}</span>
-            <span style="font-size:13px;font-weight:600;">${r.desc}</span>
+            <span style="font-size:13px;font-weight:600;">${escHtml(r.desc)}</span>
           </div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:4px;">${rTipoLabels[r.tipo]||r.tipo}${r.valor?' · Límite: '+r.valor+(r.tipo==='max_loss_pct'?'%':r.tipo==='no_operar_dia'?' — '+diaLabels[r.dia]:''):''}${r.tipo==='no_operar_dia'?' — '+diaLabels[r.dia]:''}${r.tipo==='zonas_permitidas'&&r.zonas?.length?' · '+r.zonas.join(', '):''}</div>
-          ${r.activa?(isNa?`<div style="padding:4px 8px;font-size:10px;margin:0;color:var(--dim);background:rgba(255,255,255,.03);border-radius:6px;border:1px solid var(--border);">○ ${chk.msg}</div>`:`<div class="alert ${alertClass}" style="padding:4px 8px;font-size:10px;margin:0;">${chk.msg}</div>`):''}
-          ${r.consecuencia?`<div style="font-size:10px;color:var(--sub);margin-top:5px;">⚡ ${r.consecuencia}</div>`:''}
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:4px;">${escHtml(rTipoLabels[r.tipo]||r.tipo)}${r.valor?' · Límite: '+r.valor+(r.tipo==='max_loss_pct'?'%':r.tipo==='no_operar_dia'?' — '+diaLabels[r.dia]:''):''}${r.tipo==='no_operar_dia'?' — '+diaLabels[r.dia]:''}${r.tipo==='zonas_permitidas'&&r.zonas?.length?' · '+r.zonas.map(escHtml).join(', '):''}</div>
+          ${r.activa?(isNa?`<div style="padding:4px 8px;font-size:10px;margin:0;color:var(--dim);background:rgba(255,255,255,.03);border-radius:6px;border:1px solid var(--border);">○ ${escHtml(chk.msg)}</div>`:`<div class="alert ${alertClass}" style="padding:4px 8px;font-size:10px;margin:0;">${escHtml(chk.msg)}</div>`):''}
+          ${r.consecuencia?`<div style="font-size:10px;color:var(--sub);margin-top:5px;">⚡ ${escHtml(r.consecuencia)}</div>`:''}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0;">
           <button class="btn sm ghost" onclick="editRegla(${r.id})" title="Editar">✎</button>
@@ -8712,7 +8720,7 @@ function renderReglas(){
       <div class="kpi-box" style="--accent:${broken.length?'var(--red)':'var(--dim)'}"><div class="kpi-label">Rotas Hoy</div><div class="kpi-value" style="color:${broken.length?'var(--red)':'var(--dim)'}">${broken.length}</div></div>
       <div class="kpi-box" style="--accent:var(--dim)"><div class="kpi-label">Sin Operar</div><div class="kpi-value" style="color:var(--dim)">${na.length}</div></div>
     </div>
-    ${broken.length?broken.map(c=>`<div class="alert danger" style="margin-bottom:6px;font-size:11px;"><span>⚠</span><div><div style="font-weight:600;">${c.r.desc}</div><div style="font-size:10px;opacity:.8;">${c.r.consecuencia||'Revisá tu plan'}</div></div></div>`).join('')
+    ${broken.length?broken.map(c=>`<div class="alert danger" style="margin-bottom:6px;font-size:11px;"><span>⚠</span><div><div style="font-weight:600;">${escHtml(c.r.desc)}</div><div style="font-size:10px;opacity:.8;">${escHtml(c.r.consecuencia||'Revisá tu plan')}</div></div></div>`).join('')
     :na.length===active.length&&active.length>0?'<div class="alert" style="background:rgba(255,255,255,.03);border-color:var(--border);color:var(--sub);"><span>○</span><span>Todavía no operaste hoy. Las reglas diarias se evaluarán cuando cargues trades.</span></div>'
     :'<div class="alert ok"><span>✓</span><span>Estás respetando todas las reglas evaluables hoy.</span></div>'}
     <div style="margin-top:1rem;padding:1rem;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r);">
@@ -8724,7 +8732,7 @@ function renderReglas(){
 }
 
 // ── Historial de reglas rotas ──────────────────────────────
-function saveReglasLog(){ localStorage.setItem('hq_reglas_log', JSON.stringify(reglasLog)); }
+function saveReglasLog(){ localStorage.setItem('hq_reglas_log', JSON.stringify(reglasLog)); save(); }
 
 // Registra una ruptura (evita duplicar la misma regla el mismo día)
 function logReglaRota(r, msg){
@@ -8753,8 +8761,8 @@ function renderReglasHistorial(){
     return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border-bottom:1px solid var(--border);">
       <span style="color:var(--red);font-size:12px;flex-shrink:0;">⚠</span>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);">${l.desc}</div>
-        <div style="font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;">${l.msg||''}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);">${escHtml(l.desc)}</div>
+        <div style="font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;">${escHtml(l.msg||'')}</div>
       </div>
       <span style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;flex-shrink:0;white-space:nowrap;">${fecha}</span>
     </div>`;
@@ -8806,8 +8814,8 @@ function checkReglasAlert(){
     return `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(248,113,113,.06);border-radius:6px;border:1px solid rgba(248,113,113,.2);">
       <span style="color:var(--red);font-size:13px;">⚠</span>
       <div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);">${r.desc}</div>
-        <div style="font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;">${chk.msg}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);">${escHtml(r.desc)}</div>
+        <div style="font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;">${escHtml(chk.msg)}</div>
       </div>
     </div>`;
   }).join('');
@@ -9184,7 +9192,7 @@ if (!moodQuestions) {
 
 function saveMoodQuestions() {
   localStorage.setItem('rdm_mood_questions', JSON.stringify(moodQuestions));
-  dirty = true;
+  save();
 }
 
 // ── Respuestas actuales en el modal del trade ─────────────────
@@ -10062,6 +10070,7 @@ let rutCurTab  = 'hoy';
 function saveRutStorage(){
   localStorage.setItem('rdm_habitos', JSON.stringify(rutHabitos));
   localStorage.setItem('rdm_days',    JSON.stringify(rutDays));
+  save();
 }
 
 function todayKey(){
@@ -10182,8 +10191,8 @@ function renderRutHoy(){
       const pct = h.meta > 0 ? Math.min(100, val/h.meta*100) : (done?100:0);
       html += `<div style="background:${done?'rgba(52,211,153,.06)':'var(--glass)'};border:1px solid ${done?'rgba(52,211,153,.25)':'var(--border)'};border-radius:10px;padding:.8rem 1rem;transition:all .2s;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-          <span style="font-size:13px;">${h.icon}</span>
-          <span style="font-size:11px;font-weight:600;color:${done?'var(--green)':'var(--text)'};">${h.name}</span>
+          <span style="font-size:13px;">${escHtml(h.icon)}</span>
+          <span style="font-size:11px;font-weight:600;color:${done?'var(--green)':'var(--text)'};">${escHtml(h.name)}</span>
           ${done?'<span style="font-size:14px;">✅</span>':'<span style="font-size:14px;opacity:.3;">⭕</span>'}
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
@@ -10206,8 +10215,8 @@ function renderRutHoy(){
       const done = !!day[h.id];
       html += `<div onclick="toggleRutCheck('${h.id}')" style="display:flex;align-items:center;gap:10px;padding:.7rem 1rem;background:${done?'rgba(52,211,153,.06)':'var(--glass)'};border:1px solid ${done?'rgba(52,211,153,.25)':'var(--border)'};border-radius:10px;cursor:pointer;transition:all .2s;user-select:none;">
         <span style="font-size:18px;">${done?'✅':'⭕'}</span>
-        <span style="font-size:13px;">${h.icon}</span>
-        <span style="font-size:12px;font-weight:${done?'700':'400'};color:${done?'var(--green)':'var(--text)'};">${h.name}</span>
+        <span style="font-size:13px;">${escHtml(h.icon)}</span>
+        <span style="font-size:12px;font-weight:${done?'700':'400'};color:${done?'var(--green)':'var(--text)'};">${escHtml(h.name)}</span>
       </div>`;
     });
     html += `</div></div>`;
@@ -12668,7 +12677,7 @@ function exportFullExcel(){
 
 function saveMetas(){
   localStorage.setItem('rdm_metas', JSON.stringify(metas));
-  dirty = true;
+  save();
 }
 
 let _metaEditId = null;
