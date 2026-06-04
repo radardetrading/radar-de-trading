@@ -473,8 +473,10 @@ tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:rgba(56,189,248,.04);}
 #histTableBody tr:hover{background:none!important;transition:none!important;}
-#page-historico .kpi-box,#page-historico .card{transition:none!important;}
-#page-historico .kpi-box:hover,#page-historico .card:hover{transform:none!important;box-shadow:0 4px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)!important;}
+#page-historico .kpi-box{transition:none!important;}
+#page-historico .kpi-box:hover{transform:none!important;box-shadow:0 4px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)!important;}
+#histTradesCard{transition:none!important;}
+#histTradesCard:hover{transform:none!important;box-shadow:none!important;}
 tbody td{padding:10px 13px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;}
 td.pos{color:var(--green);font-weight:700;}
 td.neg{color:var(--red);font-weight:700;}
@@ -3116,7 +3118,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
 
       <!-- TABLA DE TRADES -->
-      <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
+      <div id="histTradesCard" class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
           <div class="section-label">📋 Trades Históricos</div>
           <div style="display:flex;gap:6px;align-items:center;">
