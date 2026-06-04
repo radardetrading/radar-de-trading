@@ -475,8 +475,8 @@ tbody tr:hover{background:rgba(56,189,248,.04);}
 #histTableBody tr:hover{background:none!important;transition:none!important;}
 #page-historico .kpi-box{transition:none!important;}
 #page-historico .kpi-box:hover{transform:none!important;box-shadow:0 4px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)!important;}
-#histTradesCard{transition:none!important;}
-#histTradesCard:hover{transform:none!important;box-shadow:none!important;}
+#histTradesCard,#diarioEntradasCard,#rutinaHoyCard,#perfilSetupCard,#repPreviewCard{transition:none!important;}
+#histTradesCard:hover,#diarioEntradasCard:hover,#rutinaHoyCard:hover,#perfilSetupCard:hover,#repPreviewCard:hover{transform:none!important;box-shadow:none!important;}
 tbody td{padding:10px 13px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;}
 td.pos{color:var(--green);font-weight:700;}
 td.neg{color:var(--red);font-weight:700;}
@@ -2613,7 +2613,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <div id="page-estadisticas" class="page">
 
     <!-- PERFIL DE MI MEJOR SETUP -->
-    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;border-left:3px solid var(--gold);">
+    <div id="perfilSetupCard" class="card" style="padding:1.2rem;margin-bottom:1.2rem;border-left:3px solid var(--gold);">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:.5rem;">
         <div class="section-label">🧬 Perfil de Mi Mejor Setup</div>
         <div style="display:flex;flex-direction:column;gap:4px;">
@@ -3251,7 +3251,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
 
     <!-- Entradas del diario -->
-    <div class="card" style="padding:1.2rem;">
+    <div id="diarioEntradasCard" class="card" style="padding:1.2rem;">
       <div class="section-label" style="margin-bottom:1rem;">📖 Entradas del Diario</div>
       <div id="diarioList"></div>
       <div id="diarioEmpty" class="empty" style="display:none"><div class="empty-icon">🧠</div>Sin entradas. Registrá tu estado al cargar un trade.</div>
@@ -3479,7 +3479,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <!-- HOY -->
     <div id="rutView-hoy">
-      <div class="card" style="padding:1.4rem;margin-bottom:1rem;">
+      <div id="rutinaHoyCard" class="card" style="padding:1.4rem;margin-bottom:1rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
           <div>
             <div class="section-label" id="rutFechaLabel">Rutina de hoy</div>
