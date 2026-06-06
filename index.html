@@ -3828,6 +3828,22 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 .meta-empty{text-align:center;padding:48px 20px;color:var(--sub);border:1px dashed var(--border2);border-radius:var(--r2);background:var(--glass);}
 .meta-empty-icon{font-size:42px;margin-bottom:12px;}
 .meta-range{width:100%;margin-top:6px;accent-color:var(--cyan);}
+
+/* ── CURSOR DORADO ───────────────────── */
+*{cursor:none!important;}
+#rdt-cursor{
+  position:fixed;top:0;left:0;
+  width:10px;height:10px;border-radius:50%;
+  background:var(--gold);
+  box-shadow:0 0 10px rgba(251,191,36,.7),0 0 22px rgba(251,191,36,.3);
+  pointer-events:none;z-index:999999;
+  transform:translate(-50%,-50%) scale(1);
+  transition:transform .12s ease,box-shadow .12s ease;
+  opacity:0;
+  will-change:left,top;
+}
+#rdt-cursor.is-hover{transform:translate(-50%,-50%) scale(1.8);box-shadow:0 0 16px rgba(251,191,36,.9),0 0 32px rgba(251,191,36,.45);}
+#rdt-cursor.is-click{transform:translate(-50%,-50%) scale(2.4);box-shadow:0 0 22px rgba(251,191,36,1),0 0 44px rgba(251,191,36,.55);}
 </style>
 
 <div id="page-metas" class="page">
@@ -13096,6 +13112,40 @@ function closeMobileSidebar(){
       orig(p);
     };
   }
+})();
+</script>
+<script id="rdt-cursor-script">
+(function(){
+  var cur = document.createElement('div');
+  cur.id = 'rdt-cursor';
+  document.body.appendChild(cur);
+
+  document.addEventListener('mousemove', function(e){
+    cur.style.left = e.clientX + 'px';
+    cur.style.top  = e.clientY + 'px';
+    cur.style.opacity = '1';
+  }, {passive:true});
+
+  document.addEventListener('mouseleave', function(){ cur.style.opacity = '0'; });
+
+  document.addEventListener('mouseover', function(e){
+    var t = e.target;
+    var isClick = t && (
+      t.tagName==='BUTTON' || t.tagName==='A' || t.tagName==='SELECT' ||
+      t.tagName==='LABEL'  ||
+      t.closest('button')  || t.closest('a') ||
+      getComputedStyle(t).cursor === 'pointer'
+    );
+    cur.classList.toggle('is-hover', !!isClick);
+  }, {passive:true});
+
+  document.addEventListener('mousedown', function(){
+    cur.classList.remove('is-hover');
+    cur.classList.add('is-click');
+  });
+  document.addEventListener('mouseup', function(){
+    cur.classList.remove('is-click');
+  });
 })();
 </script>
 </body>
