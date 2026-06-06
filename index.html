@@ -559,6 +559,8 @@ input:focus,select:focus,textarea:focus{
   background:rgba(10,22,60,.8);
 }
 input:hover,select:hover{border-color:var(--border2);}
+input[type="checkbox"]{width:auto!important;padding:0!important;background:none!important;border:none!important;backdrop-filter:none!important;transition:none!important;box-shadow:none!important;outline:none!important;}
+input[type="checkbox"]:focus,input[type="checkbox"]:hover{border:none!important;box-shadow:none!important;background:none!important;}
 select option{background:var(--bg3);}
 textarea{resize:vertical;min-height:64px;line-height:1.6;}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:1.3rem;padding-top:1.3rem;border-top:1px solid var(--border);}
