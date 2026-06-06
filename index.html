@@ -5121,25 +5121,26 @@ function toast(msg,type='ok'){const t=document.getElementById('toast');t.textCon
 
 function renderBiDirBars(containerId,labels,values){
   const el=document.getElementById(containerId);if(!el)return;
-  const max=Math.max(1,...values.map(Math.abs));
-  const ZONE=68;
+  const maxPos=Math.max(0,...values);
+  const maxNeg=Math.max(0,...values.map(v=>-v));
+  const hasPos=maxPos>0, hasNeg=maxNeg>0;
+  const TOTAL=130;
+  let posZone, negZone;
+  if(hasPos&&hasNeg){const t=maxPos+maxNeg;posZone=Math.max(30,Math.round(maxPos/t*TOTAL));negZone=TOTAL-posZone;}
+  else if(hasPos){posZone=TOTAL;negZone=0;}
+  else if(hasNeg){posZone=0;negZone=TOTAL;}
+  else{posZone=TOTAL;negZone=0;}
+
   el.innerHTML=`<div style="display:flex;gap:6px;padding:0 2px;">${labels.map((label,i)=>{
     const v=values[i];
-    const posH=v>0?Math.max(3,Math.round(v/max*ZONE)):0;
-    const negH=v<0?Math.max(3,Math.round(Math.abs(v)/max*ZONE)):0;
+    const posH=v>0&&hasPos?Math.max(4,Math.round(v/maxPos*posZone)):0;
+    const negH=v<0&&hasNeg?Math.max(4,Math.round(Math.abs(v)/maxNeg*negZone)):0;
     const c=v>0?'var(--green)':v<0?'var(--red)':'var(--dim)';
     const fmt=v===0?'$0':fmtUSD(v);
     return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;">
-      <div style="height:${ZONE}px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;width:100%;gap:0;">
-        ${v>0?`<div style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;color:${c};margin-bottom:3px;white-space:nowrap;">${fmt}</div>
-        <div style="width:68%;height:${posH}px;background:linear-gradient(to top,rgba(52,211,153,.95),rgba(52,211,153,.3));border-radius:3px 3px 0 0;"></div>`:''}
-      </div>
-      <div style="width:100%;height:1px;background:var(--border2);flex-shrink:0;"></div>
-      <div style="height:${ZONE}px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;width:100%;gap:0;">
-        ${v<0?`<div style="width:68%;height:${negH}px;background:linear-gradient(to bottom,rgba(248,113,113,.95),rgba(248,113,113,.3));border-radius:0 0 3px 3px;"></div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;color:${c};margin-top:3px;white-space:nowrap;">${fmt}</div>`:''}
-        ${v===0?`<div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--dim);margin-top:4px;">$0</div>`:''}
-      </div>
+      ${hasPos?`<div style="height:${posZone}px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;width:100%;">${v>0?`<div style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;color:${c};margin-bottom:3px;white-space:nowrap;">${fmt}</div><div style="width:68%;height:${posH}px;background:linear-gradient(to top,rgba(52,211,153,.95),rgba(52,211,153,.3));border-radius:3px 3px 0 0;"></div>`:v===0&&!hasNeg?`<div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--dim);margin-bottom:4px;">$0</div>`:''}</div>`:''}
+      ${hasPos&&hasNeg?`<div style="width:100%;height:1px;background:var(--border2);flex-shrink:0;"></div>`:''}
+      ${hasNeg?`<div style="height:${negZone}px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;width:100%;">${v<0?`<div style="width:68%;height:${negH}px;background:linear-gradient(to bottom,rgba(248,113,113,.95),rgba(248,113,113,.3));border-radius:0 0 3px 3px;"></div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;color:${c};margin-top:3px;white-space:nowrap;">${fmt}</div>`:''}</div>`:''}
       <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-top:5px;text-align:center;letter-spacing:.03em;">${label}</div>
     </div>`;
   }).join('')}</div>`;
