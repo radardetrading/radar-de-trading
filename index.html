@@ -476,7 +476,7 @@ tbody tr:hover{background:rgba(56,189,248,.04);}
 #page-historico .kpi-box{transition:none!important;}
 #page-historico .kpi-box:hover{transform:none!important;box-shadow:0 4px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)!important;}
 #histTradesCard,#diarioEntradasCard,#rutinaHoyCard,#perfilSetupCard,#repPreviewCard{transition:none!important;}
-#histTradesCard:hover,#diarioEntradasCard:hover,#rutinaHoyCard:hover,#perfilSetupCard:hover,#repPreviewCard:hover,#calCard:hover{transform:none!important;box-shadow:none!important;}
+#histTradesCard:hover,#diarioEntradasCard:hover,#rutinaHoyCard:hover,#perfilSetupCard:hover,#repPreviewCard:hover{transform:none!important;box-shadow:none!important;}
 tbody td{padding:10px 13px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;}
 td.pos{color:var(--green);font-weight:700;}
 td.neg{color:var(--red);font-weight:700;}
@@ -2514,7 +2514,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div id="dashPilaresList" style="display:flex;flex-direction:column;gap:7px;"></div>
       </div>
     </div>
-    <div class="card" id="calCard" style="padding:1.2rem;margin-bottom:1.5rem;">
+    <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
         <div class="section-label" id="calMonthLabel">Calendario</div>
         <div style="display:flex;gap:4px;">
@@ -12987,42 +12987,6 @@ document.addEventListener('visibilitychange', ()=>{
 setInterval(()=>{ if(dirty) save(); }, 30000);
 
 updateAutosave();
-</script>
-<script id="rdt-tilt">
-/* Tilt 3D suave en tarjetas. Usa delegación para cubrir tarjetas
-   renderizadas dinámicamente (KPIs, metas, cuentas, etc.). */
-(function(){
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-  var SEL = '.kpi-box,.card,.meta-card,.acc-card';
-  var MAX = 6.5; // grados de inclinación
-  function bind(el){
-    if(el._rdtTilt) return; el._rdtTilt = true;
-    var raf = null;
-    el.addEventListener('pointermove', function(ev){
-      if(reduce || ev.pointerType === 'touch') return;
-      if(raf) return;
-      raf = requestAnimationFrame(function(){
-        raf = null;
-        var r = el.getBoundingClientRect();
-        if(!r.width || !r.height) return;
-        var px = (ev.clientX - r.left) / r.width - .5;
-        var py = (ev.clientY - r.top) / r.height - .5;
-        el.style.transition = 'transform .08s ease-out, box-shadow .2s ease';
-        el.style.transform = 'perspective(950px) rotateX(' + (-py*MAX).toFixed(2) +
-          'deg) rotateY(' + (px*MAX).toFixed(2) + 'deg) translateY(-4px)';
-      });
-    });
-    el.addEventListener('pointerleave', function(){
-      el.style.transition = '';
-      el.style.transform = '';
-    });
-  }
-  document.addEventListener('pointerover', function(e){
-    if(!e.target || !e.target.closest) return;
-    var el = e.target.closest(SEL);
-    if(el) bind(el);
-  }, {passive:true});
-})();
 </script>
 <script>
 // Coverflow 3D landing
