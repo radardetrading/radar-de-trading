@@ -5654,9 +5654,35 @@ function renderJournal(){
   jPage.forEach((t,i)=>{
     const globalI = jStart + i;
     const acc=accObj(t.accountId);
+    const detailId='tv-detail-'+t.id;
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="muted">${f.length-globalI}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:10px;">${t.pair||'EUR/USD'}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${t.sl?.toFixed(5)||'—'}</td><td class="muted">${t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${t.close?.toFixed(5)||'—'}</td><td>${t.lots?.toFixed(2)||'—'}</td><td class="${t.pips>=0?'pos':'neg'}">${t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${((t.risk||0)*100).toFixed(2)}%</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
+    tr.style.cursor='pointer';
+    tr.title='Click para expandir gráfico';
+    tr.innerHTML=`<td class="muted">${f.length-globalI}${t.tv?`<div style="font-size:8px;color:var(--cyan);opacity:.7;line-height:1;margin-top:2px;" class="tv-chev-${t.id}">▾ tv</div>`:''}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:10px;">${t.pair||'EUR/USD'}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${t.sl?.toFixed(5)||'—'}</td><td class="muted">${t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${t.close?.toFixed(5)||'—'}</td><td>${t.lots?.toFixed(2)||'—'}</td><td class="${t.pips>=0?'pos':'neg'}">${t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${((t.risk||0)*100).toFixed(2)}%</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
+    tr.addEventListener('click',function(e){
+      if(e.target.tagName==='BUTTON'||e.target.tagName==='A') return;
+      const d=document.getElementById(detailId);
+      if(!d) return;
+      const open=d.style.display==='none';
+      d.style.display=open?'table-row':'none';
+      const chev=tr.querySelector('.tv-chev-'+t.id);
+      if(chev) chev.textContent=open?'▴ tv':'▾ tv';
+    });
     tbody.appendChild(tr);
+    const detailTr=document.createElement('tr');
+    detailTr.id=detailId;
+    detailTr.style.display='none';
+    const isSnapshot=t.tv&&/tradingview\.com\/x\//i.test(t.tv);
+    detailTr.innerHTML=t.tv
+      ?`<td colspan="23" style="padding:0;"><div style="padding:10px 16px 14px;background:rgba(56,189,248,.04);border-top:1px solid rgba(56,189,248,.14);border-bottom:1px solid rgba(56,189,248,.08);">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:${isSnapshot?'10px':'0'};">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.1em;color:var(--sub);text-transform:uppercase;">Gráfico TradingView</span>
+            <a href="${escHtml(t.tv)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:7px;background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.35);color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;text-decoration:none;" onmouseover="this.style.background='rgba(56,189,248,.26)'" onmouseout="this.style.background='rgba(56,189,248,.14)'">Abrir en TradingView ↗</a>
+          </div>
+          ${isSnapshot?`<div id="tv-img-${t.id}" style="border-radius:8px;overflow:hidden;border:1px solid rgba(56,189,248,.15);max-width:860px;"><img src="${escHtml(t.tv)}" alt="Chart" style="width:100%;display:block;max-height:480px;object-fit:contain;background:var(--bg2);" onerror="document.getElementById('tv-img-${t.id}').style.display='none'"></div>`:''}
+        </div></td>`
+      :`<td colspan="23" style="padding:0;"><div style="padding:7px 16px;background:rgba(255,255,255,.02);border-top:1px solid var(--border);"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);">Sin link de TradingView para este trade.</span></div></td>`;
+    tbody.appendChild(detailTr);
   });
   renderJournalPagination(f.length, jTotalPages);
   renderJZonaStats();
