@@ -6059,7 +6059,7 @@ function resetBtSave(){
     const parts = d.split('-');
     const mesAno = parts.length>=2 ? parseInt(parts[1])+String(parts[0]) : '';
     const dia = parts.length>=3 ? parseInt(parts[2]) : '';
-    return { id:Date.now()+Math.random(), date:d, mesAno, dia, par:'', session:t.session||'', zona:t.zona||'', type:t.type||'', result:t.result||getResult(t.pnl_direct||0), pctArr, pctGan, notas:t.notes||'' };
+    return { id:Date.now()+Math.random(), date:d, mesAno, dia, par:'', session:t.session||'', zona:t.zona||'', type:t.type||'', result:t.result||getResult(t.pnl_direct||0), pctArr, pctGan, conf:'', tv:t.tv||'', notes:t.notes||'' };
   });
   histTrades = histTrades.concat(converted);
   btTrades = btTrades.filter(t=>t.account!==btAccount);
