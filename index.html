@@ -3143,7 +3143,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Fecha</th><th>Día</th><th>Par</th><th>Sesión</th><th>Tipo</th><th>% Riesgo</th><th>% Ganado</th><th>R</th><th>Zona</th><th>Confirmación</th><th>TV</th><th>Notas</th></tr></thead>
+            <thead><tr><th>#</th><th>Fecha</th><th>Día</th><th>Par</th><th>Sesión</th><th>Tipo</th><th>% Riesgo</th><th>% Ganado</th><th>R</th><th>Zona</th><th>Confirmación</th><th>TV</th><th>Notas</th><th></th></tr></thead>
             <tbody id="histTableBody"></tbody>
           </table>
         </div>
@@ -4073,6 +4073,49 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     <div id="histImportResult"></div>
     <div class="form-actions">
       <button class="btn primary" onclick="closeModal('histImportModal')">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- HIST TRADE EDIT MODAL -->
+<div class="overlay" id="histEditModal">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" onclick="closeModal('histEditModal')">✕</button>
+    <div class="modal-title">✏️ Editar Trade Histórico</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Fecha</label><input type="date" id="he_date"></div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="he_type">
+          <option value="">— sin tipo —</option>
+          <option value="LONG">📈 LONG</option>
+          <option value="SHORT">📉 SHORT</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Par</label><input type="text" id="he_par" placeholder="Ej: XAUUSD"></div>
+      <div class="form-group">
+        <label>Sesión</label>
+        <select id="he_session">
+          <option value="London">🇬🇧 London</option>
+          <option value="New York">🗽 New York</option>
+          <option value="Asia">🌏 Asia</option>
+          <option value="Overlap">⚡ Overlap</option>
+        </select>
+      </div>
+      <div class="form-group"><label>% Arriesgado</label><input type="number" id="he_pctArr" step="0.01" min="0" placeholder="Ej: 1"></div>
+      <div class="form-group"><label>% Ganado / Perdido</label><input type="number" id="he_pctGan" step="0.01" placeholder="Ej: 2 o -1"></div>
+    </div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-top:.3rem;">
+      <div class="form-group"><label>Zona</label><input type="text" id="he_zona" placeholder="Ej: OB, FVG..."></div>
+      <div class="form-group"><label>Confirmación / Setup</label><input type="text" id="he_conf" placeholder="Ej: OB+FVG"></div>
+    </div>
+    <div class="form-grid" style="grid-template-columns:1fr;margin-top:.3rem;">
+      <div class="form-group"><label>Link TradingView</label><input type="url" id="he_tv" placeholder="https://www.tradingview.com/x/..."></div>
+      <div class="form-group"><label>Notas</label><textarea id="he_notes" style="height:60px;"></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('histEditModal')">Cancelar</button>
+      <button class="btn primary" onclick="saveHistTrade()">Guardar</button>
     </div>
   </div>
 </div>
@@ -11973,12 +12016,70 @@ function renderHistTable(){
         <td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.conf || '—'}</td>
         <td>${t.tv ? `<a class="tv-link" href="${t.tv}" target="_blank">↗</a>` : '—'}</td>
         <td class="muted" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;">${t.notes || '—'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn sm" onclick="openHistEditModal(${t.id})" style="padding:3px 8px;font-size:11px;" title="Editar">✏️</button>
+          <button class="btn sm danger" onclick="deleteHistTrade(${t.id})" style="padding:3px 8px;font-size:11px;margin-left:3px;" title="Eliminar">✕</button>
+        </td>
       </tr>
     `;
   }).join('');
 
   // Renderizar controles de paginación
   renderHistPagination(reversed.length, totalPages);
+}
+
+let editHistTradeId = null;
+
+function openHistEditModal(id){
+  const t = histTrades.find(x=>x.id===id);
+  if(!t) return;
+  editHistTradeId = id;
+  document.getElementById('he_date').value    = t.date||'';
+  document.getElementById('he_type').value    = t.type||'';
+  document.getElementById('he_par').value     = t.par||'';
+  document.getElementById('he_session').value = t.session||'London';
+  document.getElementById('he_pctArr').value  = t.pctArr!=null ? t.pctArr : '';
+  document.getElementById('he_pctGan').value  = t.pctGan!=null ? t.pctGan : '';
+  document.getElementById('he_zona').value    = t.zona||'';
+  document.getElementById('he_conf').value    = t.conf||'';
+  document.getElementById('he_tv').value      = t.tv||'';
+  document.getElementById('he_notes').value   = t.notes||'';
+  openModal('histEditModal');
+}
+
+function saveHistTrade(){
+  if(!editHistTradeId) return;
+  const idx = histTrades.findIndex(t=>t.id===editHistTradeId);
+  if(idx===-1) return;
+  const pctArr = parseFloat(document.getElementById('he_pctArr').value);
+  const pctGan = parseFloat(document.getElementById('he_pctGan').value);
+  if(isNaN(pctArr)||isNaN(pctGan)){toast('Completá % arriesgado y % ganado','err');return;}
+  const d = document.getElementById('he_date').value;
+  const parts = d.split('-');
+  const mesAno = parts.length>=2 ? parseInt(parts[1])+String(parts[0]) : '';
+  const dia    = parts.length>=3 ? parseInt(parts[2]) : '';
+  histTrades[idx] = {
+    ...histTrades[idx],
+    date:d, mesAno, dia,
+    type:document.getElementById('he_type').value,
+    par:document.getElementById('he_par').value.trim().toUpperCase(),
+    session:document.getElementById('he_session').value,
+    pctArr, pctGan,
+    zona:document.getElementById('he_zona').value.trim(),
+    conf:document.getElementById('he_conf').value.trim(),
+    tv:document.getElementById('he_tv').value.trim(),
+    notes:document.getElementById('he_notes').value.trim()
+  };
+  editHistTradeId = null;
+  markDirty();save();closeModal('histEditModal');renderHistorico();
+  toast('Trade actualizado','ok');
+}
+
+function deleteHistTrade(id){
+  if(!confirm('¿Eliminar este trade del histórico?')) return;
+  histTrades = histTrades.filter(t=>t.id!==id);
+  markDirty();save();renderHistorico();
+  toast('Trade eliminado','ok');
 }
 
 function renderHistPagination(totalRows, totalPages){
