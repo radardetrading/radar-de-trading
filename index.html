@@ -5179,8 +5179,7 @@ function nav(name, fromPopState=false){
 window.addEventListener('popstate', e=>{
   const page = e.state && e.state.page;
   if(!page || page==='_root'){
-    history.pushState({page:'dashboard'}, '', location.href);
-    nav('dashboard', true);
+    history.go(1);
     return;
   }
   if(pageTitles[page]) nav(page, true);
