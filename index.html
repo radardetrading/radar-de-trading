@@ -5102,7 +5102,8 @@ async function iniciarApp(){
   if(login) login.style.display = 'none';
   const lp = document.getElementById('landing');
   if(lp) lp.classList.add('hide');
-  history.replaceState({page:'dashboard'}, '', location.href);
+  history.replaceState({page:'_root'}, '', location.href);
+  history.pushState({page:'dashboard'}, '', location.href);
 }
 async function chequearSesion(){
   const { data: { session } } = await sb.auth.getSession();
@@ -5177,7 +5178,12 @@ function nav(name, fromPopState=false){
 
 window.addEventListener('popstate', e=>{
   const page = e.state && e.state.page;
-  if(page && pageTitles[page]) nav(page, true);
+  if(!page || page==='_root'){
+    history.pushState({page:'dashboard'}, '', location.href);
+    nav('dashboard', true);
+    return;
+  }
+  if(pageTitles[page]) nav(page, true);
 });
 
 function openMainCta(){const a=ctaActions[currentPage];if(a) new Function(a)();}
