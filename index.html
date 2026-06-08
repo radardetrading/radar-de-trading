@@ -5059,6 +5059,7 @@ async function iniciarApp(){
   if(login) login.style.display = 'none';
   const lp = document.getElementById('landing');
   if(lp) lp.classList.add('hide');
+  history.replaceState({page:'dashboard'}, '', location.href);
 }
 async function chequearSesion(){
   const { data: { session } } = await sb.auth.getSession();
@@ -5114,7 +5115,7 @@ const ctaLabels={dashboard:'+ Nuevo Trade',journal:'+ Nuevo Trade',estadisticas:
 const ctaActions={dashboard:'openTradeModal()',journal:'openTradeModal()',estadisticas:null,backtest:"openBtModal()",historico:null,pares:'openUsoModal()',calculadora:null,riesgo:null,semanal:null,reglas:'openReglaModal()',cuentas:'openAccModal()',pagos:'openPagoModal()',diario:null,rutina:null,reportes:null,metas:"openMetaModal('trading')"};
 let currentPage='dashboard';
 
-function nav(name){
+function nav(name, fromPopState=false){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
@@ -5128,7 +5129,13 @@ function nav(name){
   updateHeader();
   const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:renderPares,calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:renderReporte,reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas};
   if(renders[name]) renders[name]();
+  if(!fromPopState) history.pushState({page:name}, '', location.href);
 }
+
+window.addEventListener('popstate', e=>{
+  const page = e.state && e.state.page;
+  if(page && pageTitles[page]) nav(page, true);
+});
 
 function openMainCta(){const a=ctaActions[currentPage];if(a) new Function(a)();}
 
