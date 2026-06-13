@@ -1,0 +1,23 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    - cron: '0 12 */5 * *'  # cada 5 días al mediodía UTC
+  workflow_dispatch:         # también se puede disparar a mano desde GitHub
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: sb_publishable_xOA5GbuyB4sjLFQwdPfeyA_Pxs9WOyH" \
+            -H "Authorization: Bearer sb_publishable_xOA5GbuyB4sjLFQwdPfeyA_Pxs9WOyH" \
+            "https://mbcdwdpaxrcaplfnjsml.supabase.co/rest/v1/estado?select=data&limit=1")
+          echo "HTTP status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "Error: respuesta inesperada de Supabase"
+            exit 1
+          fi
+          echo "Ping exitoso — proyecto activo"
