@@ -3202,6 +3202,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           </div>
         </div>
         <div class="cal-grid" id="paresCal"></div>
+        <div id="paresCalDetail"></div>
       </div>
       <div class="card" style="padding:1.2rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
@@ -4841,7 +4842,7 @@ function savePilares(){
   localStorage.setItem('hq_pilares', JSON.stringify(pilares));
   save();
 }
-let editAccId=null, updAccId=null, editParId=null, semOff=0;
+let editAccId=null, updAccId=null, editParId=null, semOff=0, calSelDay=null;
 const SK={
   tr:'hq_trades_v1', bt:'hq_bt_v1', ac:'hq_accounts_v1',
   pg:'hq_pagos_v1', pr:'hq_pares_v1', ph:'hq_pareshist_v1', ev:'hq_events_v1',
@@ -7193,19 +7194,18 @@ function renderPares(){
   const wDates=Array.from({length:5},(_,i)=>{const d2=new Date(mon);d2.setDate(mon.getDate()+i);return d2.toISOString().split('T')[0];});
   const todayISO=today.toISOString().split('T')[0];
   const dLabels=['Lun','Mar','Mié','Jue','Vie'];
+  // default selection: today if in view, else Monday
+  if(!calSelDay||!wDates.includes(calSelDay)) calSelDay=wDates.includes(todayISO)?todayISO:wDates[0];
   document.getElementById('paresCal').innerHTML=wDates.map((ds,i)=>{
-    const isTod=ds===todayISO;const isPast=ds<todayISO;const wd=i+1;
+    const isTod=ds===todayISO;const wd=i+1;const isSel=ds===calSelDay;
     const parsDia=pares.filter(p=>p.tipo==='fijo'||(p.dias||[]).includes(wd));
     const histDia=paresHist.filter(h=>h.fecha===ds);
-    // collect unique accounts for this day
-    const accIdsDia=[...new Set(parsDia.flatMap(p=>[p.acc1,p.acc2]).filter(Boolean))];
-    const riskBlock=accIdsDia.length?`<div style="margin-top:7px;border-top:1px solid var(--border);padding-top:6px;display:flex;flex-direction:column;gap:5px;">${accIdsDia.map(aid=>{const a=accObj(aid);if(!a)return'';const pct=a.riskPct||1;const bal=getEffectiveBalance(a);const usd=bal*pct/100;return`<div style="font-size:9px;line-height:1.5;min-width:0;overflow:hidden;"><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(a.name)}">${escHtml(a.firm?a.firm+' · ':'')}${escHtml(a.name)}</div><div style="display:flex;justify-content:space-between;align-items:center;gap:3px;min-width:0;overflow:hidden;"><span style="color:var(--gold);font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0;">${pct}%</span><span style="color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:right;">${fmtUSD(usd)}</span><button onclick="openRiskEdit(${aid});event.stopPropagation();" style="background:none;border:1px solid var(--border);border-radius:3px;color:var(--sub);font-size:7px;padding:1px 3px;cursor:pointer;line-height:1;flex-shrink:0;" title="Editar riesgo">✎</button></div></div>`;}).join('')}</div>`:'';
-    return`<div class="cal-day ${isTod?'today':''}">
-      <div class="cal-day-label" style="color:${isTod?'var(--cyan)':'var(--sub)'};">${dLabels[i]}<br><span style="font-size:10px;">${ds.slice(8)}</span></div>
+    return`<div class="cal-day ${isTod?'today':''}" onclick="calSelDay='${ds}';renderCalDetail()" style="cursor:pointer;${isSel?'border-color:var(--gold)!important;background:rgba(251,191,36,.06);':''}">
+      <div class="cal-day-label" style="color:${isTod?'var(--cyan)':isSel?'var(--gold)':'var(--sub)'};">${dLabels[i]}<br><span style="font-size:10px;">${ds.slice(8)}</span></div>
       ${parsDia.map(p=>{const u=histDia.find(h=>h.parId===p.id);const ri=!u?'':u.res==='tp_ambas'?'✅':u.res==='sl_ambas'?'❌':u.res==='tp_una'?'⚡':'⬜';return`<div class="cal-pair-chip" style="background:${p.color}18;color:${p.color};"><span style="overflow:hidden;text-overflow:ellipsis;max-width:44px;white-space:nowrap;">${p.name}</span><span>${ri}</span></div>`;}).join('')}
-      ${riskBlock}
     </div>`;
   }).join('');
+  renderCalDetail();
 
   // pares list
   document.getElementById('paresList').innerHTML=pares.length?pares.map(p=>{
@@ -7229,6 +7229,44 @@ function renderPares(){
     tr.innerHTML=`<td class="muted">${h.fecha||'—'}</td><td style="color:${c};font-weight:700;">${h.parName||'—'}</td><td class="muted" style="font-size:10px;">${h.parId?[accObj(pares.find(p=>p.id===h.parId)?.acc1)?.name,accObj(pares.find(p=>p.id===h.parId)?.acc2)?.name].filter(Boolean).join(' · '):'—'}</td><td style="color:${rc[h.res]||'var(--sub)'};">${rl[h.res]||h.res}</td><td style="color:${h.siguenJuntas?'var(--green)':'var(--orange)'};">${h.siguenJuntas?'✓ Sí':'↻ No'}</td><td class="muted">${h.notes||'—'}</td><td><button class="btn sm danger" onclick="deleteUso(${h.id})">✕</button></td>`;
     tbody.appendChild(tr);
   });
+}
+
+function renderCalDetail(){
+  const el=document.getElementById('paresCalDetail');if(!el)return;
+  if(!calSelDay){el.innerHTML='';return;}
+  const today=new Date();const todayISO=today.toISOString().split('T')[0];
+  const ds=calSelDay;
+  const d=new Date(ds+'T12:00:00');
+  const dNames=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const mNames=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const label=`${dNames[d.getDay()]} ${d.getDate()} ${mNames[d.getMonth()]}`;
+  const wd=d.getDay()===0?7:d.getDay();
+  const parsDia=pares.filter(p=>p.tipo==='fijo'||(p.dias||[]).includes(wd));
+  const accIdsDia=[...new Set(parsDia.flatMap(p=>[p.acc1,p.acc2]).filter(Boolean))];
+  const isToday=ds===todayISO;
+  if(!accIdsDia.length){
+    el.innerHTML=`<div style="margin-top:10px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;gap:8px;"><span style="font-size:13px;color:var(--gold);font-weight:700;">${label}</span><span style="font-size:11px;color:var(--sub);">Sin cuentas configuradas para este día.</span></div>`;
+    return;
+  }
+  const rows=accIdsDia.map(aid=>{
+    const a=accObj(aid);if(!a)return'';
+    const pct=a.riskPct||1;
+    const bal=getEffectiveBalance(a);
+    const usd=bal*pct/100;
+    const firmLabel=a.firm?`<span style="font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;">${escHtml(a.firm)}</span>`:'';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">${firmLabel}<span style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(a.name)}</span></div>
+        <div style="font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;">Balance: ${fmtUSD(bal)}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:18px;font-weight:800;color:var(--gold);font-family:'JetBrains Mono',monospace;line-height:1;">${pct}%</div>
+        <div style="font-size:12px;font-weight:600;color:var(--cyan);font-family:'JetBrains Mono',monospace;margin-top:1px;">${fmtUSD(usd)}</div>
+      </div>
+      <button onclick="openRiskEdit(${aid});event.stopPropagation();" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--sub);font-size:11px;padding:5px 8px;cursor:pointer;flex-shrink:0;" title="Editar riesgo">✎</button>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div style="margin-top:10px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:13px;font-weight:700;color:${isToday?'var(--cyan)':'var(--gold)'};">${label}${isToday?' · Hoy':''}</span><span style="font-size:10px;color:var(--sub);">${accIdsDia.length} cuenta${accIdsDia.length!==1?'s':''}</span></div><div style="display:flex;flex-direction:column;gap:6px;">${rows}</div></div>`;
 }
 
 // ════════════════════════════════════════════════════════════
