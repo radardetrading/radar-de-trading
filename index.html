@@ -4280,6 +4280,13 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
       </div>
       <div class="form-group"><label>% Profit Split</label><input type="number" id="ac_split" value="80"></div>
 
+      <div class="form-sep-label">Gestión de Riesgo Personal</div><div class="form-sep"></div>
+
+      <div class="form-group full">
+        <label>% Riesgo por Trade (sobre balance actual)</label>
+        <input type="number" id="ac_riskPct" value="1" step="0.1" min="0.1" placeholder="Ej: 1">
+      </div>
+
       <div class="form-sep-label">Reglas de Riesgo de la Firma</div><div class="form-sep"></div>
 
       <div class="form-group">
@@ -4305,6 +4312,34 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     <div class="form-actions">
       <button class="btn" onclick="closeModal('accModal')">Cancelar</button>
       <button class="btn primary" onclick="saveAcc()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- RISK EDIT MODAL -->
+<div class="overlay" id="riskEditModal">
+  <div class="modal" style="max-width:340px;">
+    <button class="modal-close" onclick="closeModal('riskEditModal')">✕</button>
+    <div class="modal-title">⚡ Riesgo — <span id="riskEditAccName"></span></div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>% Riesgo por Trade</label>
+        <input type="number" id="re_pct" step="0.1" min="0.1" placeholder="Ej: 1" oninput="updateRiskPreview()">
+      </div>
+      <div class="form-group full">
+        <label>Balance actual</label>
+        <div id="re_balInfo" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--sub);padding:6px 0;"></div>
+      </div>
+      <div class="form-group full">
+        <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:.9rem 1rem;">
+          <div style="font-size:10px;color:var(--sub);margin-bottom:4px;">MONTO EN RIESGO</div>
+          <div id="re_usdPreview" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--gold);"></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('riskEditModal')">Cancelar</button>
+      <button class="btn primary" onclick="saveRiskEdit()">Guardar</button>
     </div>
   </div>
 </div>
@@ -7162,9 +7197,13 @@ function renderPares(){
     const isTod=ds===todayISO;const isPast=ds<todayISO;const wd=i+1;
     const parsDia=pares.filter(p=>p.tipo==='fijo'||(p.dias||[]).includes(wd));
     const histDia=paresHist.filter(h=>h.fecha===ds);
+    // collect unique accounts for this day
+    const accIdsDia=[...new Set(parsDia.flatMap(p=>[p.acc1,p.acc2]).filter(Boolean))];
+    const riskBlock=accIdsDia.length?`<div style="margin-top:7px;border-top:1px solid var(--border);padding-top:6px;display:flex;flex-direction:column;gap:5px;">${accIdsDia.map(aid=>{const a=accObj(aid);if(!a)return'';const pct=a.riskPct||1;const bal=getEffectiveBalance(a);const usd=bal*pct/100;return`<div style="font-size:9px;line-height:1.5;"><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(a.name)}">${escHtml(a.firm?a.firm+' · ':'')}${escHtml(a.name)}</div><div style="display:flex;justify-content:space-between;align-items:center;gap:3px;"><span style="color:var(--gold);font-weight:700;font-family:'JetBrains Mono',monospace;">${pct}%</span><span style="color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:8px;">${fmtUSD(usd)}</span><button onclick="openRiskEdit(${aid});event.stopPropagation();" style="background:none;border:1px solid var(--border);border-radius:3px;color:var(--sub);font-size:7px;padding:1px 3px;cursor:pointer;line-height:1;flex-shrink:0;" title="Editar riesgo">✎</button></div></div>`;}).join('')}</div>`:'';
     return`<div class="cal-day ${isTod?'today':''}">
       <div class="cal-day-label" style="color:${isTod?'var(--cyan)':'var(--sub)'};">${dLabels[i]}<br><span style="font-size:10px;">${ds.slice(8)}</span></div>
       ${parsDia.map(p=>{const u=histDia.find(h=>h.parId===p.id);const ri=!u?'':u.res==='tp_ambas'?'✅':u.res==='sl_ambas'?'❌':u.res==='tp_una'?'⚡':'⬜';return`<div class="cal-pair-chip" style="background:${p.color}18;color:${p.color};"><span style="overflow:hidden;text-overflow:ellipsis;max-width:44px;white-space:nowrap;">${p.name}</span><span>${ri}</span></div>`;}).join('')}
+      ${riskBlock}
     </div>`;
   }).join('');
 
@@ -7190,6 +7229,36 @@ function renderPares(){
     tr.innerHTML=`<td class="muted">${h.fecha||'—'}</td><td style="color:${c};font-weight:700;">${h.parName||'—'}</td><td class="muted" style="font-size:10px;">${h.parId?[accObj(pares.find(p=>p.id===h.parId)?.acc1)?.name,accObj(pares.find(p=>p.id===h.parId)?.acc2)?.name].filter(Boolean).join(' · '):'—'}</td><td style="color:${rc[h.res]||'var(--sub)'};">${rl[h.res]||h.res}</td><td style="color:${h.siguenJuntas?'var(--green)':'var(--orange)'};">${h.siguenJuntas?'✓ Sí':'↻ No'}</td><td class="muted">${h.notes||'—'}</td><td><button class="btn sm danger" onclick="deleteUso(${h.id})">✕</button></td>`;
     tbody.appendChild(tr);
   });
+}
+
+// ════════════════════════════════════════════════════════════
+// RISK EDIT
+// ════════════════════════════════════════════════════════════
+let riskEditAccId=null;
+function openRiskEdit(id){
+  const a=accounts.find(x=>x.id===id);if(!a)return;
+  riskEditAccId=id;
+  document.getElementById('riskEditAccName').textContent=a.name;
+  document.getElementById('re_pct').value=a.riskPct||1;
+  const bal=getEffectiveBalance(a);
+  document.getElementById('re_balInfo').textContent='Balance: '+fmtUSD(bal);
+  updateRiskPreview();
+  openModal('riskEditModal');
+}
+function updateRiskPreview(){
+  const a=accounts.find(x=>x.id===riskEditAccId);if(!a)return;
+  const pct=parseFloat(document.getElementById('re_pct').value)||0;
+  const bal=getEffectiveBalance(a);
+  document.getElementById('re_usdPreview').textContent=fmtUSD(bal*pct/100);
+}
+function saveRiskEdit(){
+  const pct=parseFloat(document.getElementById('re_pct').value);
+  if(!pct||pct<=0){toast('Ingresá un % válido','err');return;}
+  const idx=accounts.findIndex(x=>x.id===riskEditAccId);
+  if(idx<0)return;
+  accounts[idx].riskPct=pct;
+  markDirty();save();closeModal('riskEditModal');renderPares();
+  toast('Riesgo actualizado','ok');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -7228,6 +7297,7 @@ function openAccModal(id=null){
     document.getElementById('ac_balance').value=a.initialBalance!=null?a.initialBalance:(a.size||'');
     document.getElementById('ac_dayOpen').value=a.dayOpen||'';
     document.getElementById('ac_phase').value=a.phase||'challenge';document.getElementById('ac_split').value=a.split||80;
+    document.getElementById('ac_riskPct').value=a.riskPct||1;
     document.getElementById('ac_dailyDD').value=a.dailyDD||5;document.getElementById('ac_maxDD').value=a.maxDD||10;
     document.getElementById('ac_target').value=a.target||10;
     document.getElementById('ac_target2').value=a.target2||5;
@@ -7241,6 +7311,7 @@ function openAccModal(id=null){
   } else {
     ['ac_name','ac_firm','ac_notes','ac_size','ac_balance','ac_next','ac_start','ac_dayOpen'].forEach(k=>document.getElementById(k).value='');
     document.getElementById('ac_phase').value='challenge';document.getElementById('ac_split').value=80;
+    document.getElementById('ac_riskPct').value=1;
     document.getElementById('ac_dailyDD').value=5;document.getElementById('ac_maxDD').value=10;
     document.getElementById('ac_target').value=10;document.getElementById('ac_target2').value=5;
     document.getElementById('ac_start').value=todayStr();
@@ -7277,7 +7348,8 @@ function saveAcc(){
     numFases,
     startDate:document.getElementById('ac_start').value,
     nextTrade:document.getElementById('ac_next').value,
-    notes:document.getElementById('ac_notes').value
+    notes:document.getElementById('ac_notes').value,
+    riskPct:parseFloat(document.getElementById('ac_riskPct').value)||1
   };
   if(editAccId){const idx=accounts.findIndex(x=>x.id===editAccId);accounts[idx]=a;}
   else{
