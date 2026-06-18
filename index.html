@@ -1675,7 +1675,36 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 }
 
 /* ── Hero ────────────────────────────────────────────────── */
-.lp-hero { padding: 5.5rem 2.8rem 7rem; gap: 3rem; }
+.lp-hero { padding: 5.5rem 2.8rem 7rem; gap: 3rem; position: relative; overflow: hidden; }
+.lp-hero-left, .lp-hero-right { position: relative; z-index: 1; }
+
+/* ── Marca de agua ───────────────────────────────────────── */
+.lp-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lp-watermark img {
+  width: 121%;
+  max-width: 1173px;
+  min-width: 449px;
+  height: auto;
+  object-fit: contain;
+  opacity: .14;
+  filter: grayscale(100%) brightness(2.5);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+@media (max-width: 768px) {
+  .lp-watermark img { width: 155%; }
+}
+@media (max-width: 480px) {
+  .lp-watermark img { width: 173%; opacity: .10; }
+}
 .lp-badge {
   background: linear-gradient(135deg, rgba(245,166,35,.08), rgba(56,189,248,.04));
   border: 1px solid rgba(245,166,35,.32);
@@ -2032,6 +2061,9 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
   <!-- HERO -->
   <section class="lp-hero" id="lp-top">
+    <div class="lp-watermark" aria-hidden="true">
+      <img src="la que va.jpeg" alt="">
+    </div>
     <div class="lp-hero-left">
       <div class="lp-badge"><span class="lp-badge-dot"></span>Tu trading. Tu sistema. Tu evolución.</div>
       <h1 class="lp-title">
