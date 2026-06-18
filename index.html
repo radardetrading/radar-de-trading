@@ -7251,13 +7251,13 @@ function renderCalDetail(){
   const rows=accIdsDia.map(aid=>{
     const a=accObj(aid);if(!a)return'';
     const pct=a.riskPct||1;
-    const bal=getEffectiveBalance(a);
-    const usd=bal*pct/100;
+    const size=a.size||0;
+    const usd=size*pct/100;
     const firmLabel=a.firm?`<span style="font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;">${escHtml(a.firm)}</span>`:'';
     return`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">${firmLabel}<span style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(a.name)}</span></div>
-        <div style="font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;">Balance: ${fmtUSD(bal)}</div>
+        <div style="font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;">Cuenta: ${fmtUSD(size)}</div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div style="font-size:18px;font-weight:800;color:var(--gold);font-family:'JetBrains Mono',monospace;line-height:1;">${pct}%</div>
