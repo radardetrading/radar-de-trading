@@ -5029,11 +5029,11 @@ async function load(){
     // El local es MÁS NUEVO que la nube → hay cambios sin subir. Preguntar.
     const fechaLocal = localSavedAt ? new Date(localSavedAt).toLocaleString('es-AR') : 'desconocida';
     const usarLocal = confirm(
-      'Encontré cambios guardados en este dispositivo MÁS NUEVOS que los de la nube.\n\n' +
-      'Guardado local: ' + fechaLocal + '\n' +
-      'Esto puede pasar si la última vez se cortó la conexión.\n\n' +
-      'Aceptar = recuperar los cambios locales (y subirlos)\n' +
-      'Cancelar = usar lo que está en la nube'
+      '⚠️ RECUPERACIÓN DE DATOS\n\n' +
+      'Hay cambios guardados en este dispositivo que son MÁS NUEVOS que los de la nube.\n\n' +
+      'Guardado local: ' + fechaLocal + '\n\n' +
+      '✅ ACEPTAR = recuperar tus datos más recientes (RECOMENDADO)\n' +
+      '❌ Cancelar = descartar estos cambios y usar la nube (puede haber pérdida de datos)'
     );
     if(usarLocal){
       aplicarEstado(local);
@@ -6194,7 +6194,7 @@ function deleteBtTrade(id){btTrades=btTrades.filter(t=>t.id!==id);markDirty();sa
 
 function resetBt(){
   const cuenta = btTrades.filter(t=>t.account===btAccount);
-  if(!cuenta.length){ btTrades=[];markDirty();save();calcBacktest();toast('Simulación reiniciada','ok');return; }
+  if(!cuenta.length){ toast('No hay trades para reiniciar en esta cuenta','ok');return; }
   document.getElementById('btResetCount').textContent = cuenta.length + (cuenta.length===1?' trade':' trades');
   openModal('btResetModal');
 }
@@ -13398,6 +13398,16 @@ document.addEventListener('visibilitychange', ()=>{
 
 // 3) Autoguardado periódico: cada 30s, si hay cambios pendientes, guardar solo.
 setInterval(()=>{ if(dirty) save(); }, 30000);
+
+// 4) Guardar al cerrar/cambiar de pestaña para no perder datos sin subir.
+window.addEventListener('beforeunload', ()=>{
+  if(dirty){
+    try{ const e=armarEstado(); guardarSnapshotLocal(e); }catch(_){}
+  }
+});
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='hidden' && dirty) save();
+});
 
 updateAutosave();
 </script>
