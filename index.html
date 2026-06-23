@@ -2453,6 +2453,9 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <button class="btn sm" style="flex:1;justify-content:center;" onclick="document.getElementById('importFile').click()">↑ Import</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
+    <div style="margin-top:6px;">
+      <button class="btn sm" style="width:100%;justify-content:center;color:var(--orange);" onclick="abrirModalBackups()">🛟 Recuperar backup</button>
+    </div>
     <div id="undoImportInfo" style="display:none;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dim);line-height:1.4;">
       <div style="color:var(--sub);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:8.5px;">Última importación</div>
       <div id="undoImportFecha" style="color:var(--orange);margin-top:2px;">—</div>
@@ -4627,6 +4630,18 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
   </div>
 </div>
 
+<!-- BACKUPS MODAL -->
+<div class="overlay" id="backupsModal">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" onclick="closeModal('backupsModal')">✕</button>
+    <div class="modal-title">🛟 Recuperar backup local</div>
+    <p style="font-size:11px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
+      Estas copias se guardan automáticamente en este dispositivo cada vez que guardás. Son independientes de la nube.
+    </p>
+    <div id="backupsList"></div>
+  </div>
+</div>
+
 <!-- BT RESET MODAL -->
 <div class="overlay" id="btResetModal">
   <div class="modal" style="max-width:420px;">
@@ -4942,11 +4957,62 @@ function localSnapshotKey(){
   return CURRENT_USER ? (LOCAL_SNAPSHOT_BASE + '_' + CURRENT_USER.id) : LOCAL_SNAPSHOT_BASE;
 }
 
+function abrirModalBackups(){
+  const prefix = 'hq_roll_'+(CURRENT_USER?.id||'anon')+'_';
+  const keys = Object.keys(localStorage).filter(k=>k.startsWith(prefix)).sort().reverse();
+  const container = document.getElementById('backupsList');
+  if(!keys.length){
+    container.innerHTML = '<div style="color:var(--sub);font-size:12px;text-align:center;padding:20px;">No hay backups disponibles todavía.<br>Se crean automáticamente al guardar.</div>';
+  } else {
+    container.innerHTML = keys.map((k,i)=>{
+      try{
+        const d = JSON.parse(localStorage.getItem(k));
+        const ts = d.savedAt ? new Date(d.savedAt).toLocaleString('es-AR') : 'desconocida';
+        const bt = (d.btTrades||[]).length;
+        const tr = (d.trades||[]).length;
+        const hist = (d.histTrades||[]).length;
+        return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;">
+          <div style="min-width:0;">
+            <div style="font-size:11px;font-weight:600;color:var(--text);">${i===0?'<span style="color:var(--green);">● Más reciente</span> &nbsp;':''}<span style="color:var(--sub);">${ts}</span></div>
+            <div style="font-size:10px;color:var(--dim);margin-top:3px;">Journal: ${tr} · BT: ${bt} · Histórico: ${hist}</div>
+          </div>
+          <button class="btn sm primary" onclick="restaurarBackup('${k}')" style="white-space:nowrap;font-size:10px;flex-shrink:0;">Restaurar</button>
+        </div>`;
+      }catch(_){ return ''; }
+    }).join('');
+  }
+  openModal('backupsModal');
+}
+
+function restaurarBackup(key){
+  if(!confirm('¿Restaurar este backup?\n\nEl estado actual se guardará primero. Podés volver al estado anterior usando otro backup de la lista.')) return;
+  try{
+    const d = JSON.parse(localStorage.getItem(key));
+    if(!d){ toast('No se pudo leer el backup','err'); return; }
+    save();
+    aplicarEstado(d);
+    if(CURRENT_USER) save();
+    closeModal('backupsModal');
+    try{ renderDashboard(); }catch(_){}
+    try{ calcBacktest(); }catch(_){}
+    toast('Backup restaurado correctamente','ok');
+  }catch(e){
+    toast('No se pudo restaurar el backup','err');
+  }
+}
+
 // Guarda SIEMPRE una copia local del estado, con su savedAt real.
 // Esto pasa pase lo que pase con la nube o la sesión.
 function guardarSnapshotLocal(estado){
   try{ localStorage.setItem(localSnapshotKey(), JSON.stringify(estado)); }
   catch(e){ console.warn('No se pudo guardar snapshot local:', e); }
+  // Backups rodantes: guarda las últimas 5 versiones para recuperación manual.
+  try{
+    const prefix = 'hq_roll_'+(CURRENT_USER?.id||'anon')+'_';
+    localStorage.setItem(prefix+Date.now(), JSON.stringify(estado));
+    const keys = Object.keys(localStorage).filter(k=>k.startsWith(prefix)).sort();
+    if(keys.length>5) keys.slice(0,keys.length-5).forEach(k=>localStorage.removeItem(k));
+  }catch(_){}
 }
 
 // GUARDAR — primero local (a prueba de balas), después la nube
@@ -5230,6 +5296,7 @@ const ctaActions={dashboard:'openTradeModal()',journal:'openTradeModal()',estadi
 let currentPage='dashboard';
 
 function nav(name, fromPopState=false){
+  if(dirty) save();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
