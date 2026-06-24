@@ -6411,10 +6411,9 @@ function calcBacktest(){
     return{...t,pnl,equity,phase:prevPhase,phaseAfter:phase,rr};
   });
 
-  // Current Max DD = drawdown vs el balance inicial (size).
-  // Si equity > size la cuenta está en ganancia → Max DD = 0, la barra no se mueve.
-  // Solo sube si equity < size (la cuenta está en pérdida neta respecto al inicio).
-  const currentDD = Math.max(0, size - equity);
+  // Current DD = trailing drawdown desde el pico (lo mismo que usa el chequeo de blown).
+  // Si maxEq=equity (estamos en un nuevo high), DD=0. Si volvimos desde un high, DD>0.
+  const currentDD = Math.max(0, maxEq - equity);
   const currentDDpct = currentDD / size * 100;
 
   // Daily DD = sum of losses from trades dated today
@@ -8437,7 +8436,8 @@ function renderSemanal(){
   const totalPnl=weekTrades.reduce((s,t)=>s+(t.pnl||0),0);
   const totalPips=weekTrades.reduce((s,t)=>s+(t.pips||0),0);
   const wr=n?wins/n:0;
-  const avgRR=n?weekTrades.reduce((s,t)=>s+(t.rr||0),0)/n:0;
+  const rrTrades=weekTrades.filter(t=>t.rr);
+  const avgRR=rrTrades.length?rrTrades.reduce((s,t)=>s+t.rr,0)/rrTrades.length:0;
 
   // Operating days
   const opDays=[...new Set(weekTrades.map(t=>t.date))].length;
@@ -12823,14 +12823,14 @@ function repGroup(arr, key){
   arr.forEach(t=>{
     let k;
     if(key==='dow'){
-      const d = t.date ? new Date(t.date+'T00:00:00') : null;
+      const d = t.date ? new Date(t.date+'T12:00:00') : null;
       k = (d && !isNaN(d)) ? REP_DOW[d.getDay()] : '—';
     } else {
       k = (t[key] || '—').toString();
     }
     if(!map[k]) map[k] = {key:k, n:0, wins:0, totalR:0, totalUsd:0};
     map[k].n++;
-    if(t.r>0) map[k].wins++;
+    if((t.result||0) > 0.005) map[k].wins++;
     map[k].totalR += t.r;
     map[k].totalUsd += t.usd;
   });
