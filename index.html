@@ -6399,8 +6399,8 @@ function calcBacktest(){
           const next=phase==='fase1'?'fase2':'funded';
           phase=next;
           phaseChanges.push({idx:i,from:prevPhase,to:next});
-          // Cuenta nueva: reiniciar equity y drawdown al capital inicial.
-          equity=size; maxEq=size;
+          // Cuenta nueva: reiniciar equity, drawdown y maxDD al capital inicial.
+          equity=size; maxEq=size; maxDD=0;
           // Nuevo segmento para la fase siguiente, arrancando en `size`
           // en el mismo punto x para empalmar visualmente con el cambio.
           eqSegments.push({phase:next, points:[{x:xIdx, y:size}]});
@@ -6430,9 +6430,9 @@ function calcBacktest(){
   const finalPhase=phase;
   const n=btTrades.filter(t=>t.account===btAccount).length;
   const wr=n?wins/n:0;
-  const winTotal=enriched.filter(t=>t.pips>0).reduce((s,t)=>s+t.pnl,0);
-  const lossTotal=Math.abs(enriched.filter(t=>t.pips<0).reduce((s,t)=>s+t.pnl,0));
-  const pf=lossTotal>0?winTotal/lossTotal:0;
+  const winTotal=enriched.filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0);
+  const lossTotal=Math.abs(enriched.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
+  const pf=lossTotal>0?winTotal/lossTotal:winTotal>0?999:0;
   // Contadores TP / SL / BE
   const tpCount = enriched.filter(t=>t.pnl>0).length;
   const slCount = enriched.filter(t=>t.pnl<0).length;
@@ -8772,13 +8772,14 @@ function stGroupBy(arr, key){
              :key==='type'?(t.type||'—')
              :key==='result'?(t.result||'—')
              :'—';
-    if(!map[k]) map[k]={k,n:0,wins:0,losses:0,bes:0,pnl:0,pips:0,rr:0};
-    map[k].n++; map[k].pnl+=t.pnl||0; map[k].pips+=t.pips||0; map[k].rr+=t.rr||0;
+    if(!map[k]) map[k]={k,n:0,wins:0,losses:0,bes:0,pnl:0,pips:0,rr:0,nRR:0};
+    map[k].n++; map[k].pnl+=t.pnl||0; map[k].pips+=t.pips||0;
+    if(t.rr){map[k].rr+=t.rr;map[k].nRR++;}
     if(t.result==='WIN') map[k].wins++;
     else if(t.result==='LOSS') map[k].losses++;
     else map[k].bes++;
   });
-  return Object.values(map).map(r=>({...r,wr:r.n?r.wins/r.n*100:0,avgRR:r.n?r.rr/r.n:0}));
+  return Object.values(map).map(r=>({...r,wr:r.n?r.wins/r.n*100:0,avgRR:r.nRR?r.rr/r.nRR:0}));
 }
 
 function stBarTable(rows, metrica, sortBy){
