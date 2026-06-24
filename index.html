@@ -9313,7 +9313,7 @@ function renderCalendar(){
   // For 5-col (Mon-Fri) grid: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4
   // getDay(): 0=Sun,1=Mon,...,5=Fri,6=Sat
   // If month starts on weekend, offset to next Monday
-  const startOffset=firstDay===0?4:firstDay===6?4:firstDay-1;
+  const startOffset=(firstDay===0||firstDay===6)?0:firstDay-1;
   const daysInMonth=new Date(year,month+1,0).getDate();
   const grid=document.getElementById('calGrid');
   if(!grid) return;
@@ -9475,7 +9475,7 @@ function exportExcel(){
     +'Total Trades,'+nt+'\nWins,'+wns+'\nLosses,'+ls+'\nBreakeven,'+(nt-wns-ls)+'\n'
     +'Win Rate %,'+(wrt*100).toFixed(2)+'\n'
     +'PnL Total USD,'+trades.reduce((s,t)=>s+(t.pnl||0),0).toFixed(2)+'\n'
-    +'Profit Factor,'+(lpnl>0?wpnl/lpnl:0).toFixed(2)+'\n'
+    +'Profit Factor,'+(lpnl>0?wpnl/lpnl:wpnl>0?999:0).toFixed(2)+'\n'
     +'Avg WIN USD,'+(wns>0?wpnl/wns:0).toFixed(2)+'\n'
     +'Avg LOSS USD,'+(ls>0?-lpnl/ls:0).toFixed(2)+'\n'
     +'Total Pips,'+trades.reduce((s,t)=>s+(t.pips||0),0).toFixed(1)+'\n'
