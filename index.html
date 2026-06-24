@@ -5435,7 +5435,9 @@ function renderDashboard(){
   const lossPnls = trades.filter(t => (t.pnl||0) < 0).map(t => t.pnl);
   const avgW=winPnls.length?winPnls.reduce((a,b)=>a+b,0)/winPnls.length:0;
   const avgL=lossPnls.length?lossPnls.reduce((a,b)=>a+b,0)/lossPnls.length:0;
-  const pf=lossPnls.length&&Math.abs(lossPnls.reduce((a,b)=>a+b,0))>0?winPnls.reduce((a,b)=>a+b,0)/Math.abs(lossPnls.reduce((a,b)=>a+b,0)):0;
+  const grossWin=winPnls.reduce((a,b)=>a+b,0);
+  const grossLoss=Math.abs(lossPnls.reduce((a,b)=>a+b,0));
+  const pf=grossLoss>0?grossWin/grossLoss:grossWin>0?999:0;
   const totalCap=accounts.reduce((s,a)=>s+(a.size||0),0);
   const funded=accounts.filter(a=>a.phase==='funded').length;
 
@@ -6691,8 +6693,8 @@ function simulatePhases(tradesList, cfg){
     phasePnl += pnl;
     if(equity>maxEq) maxEq=equity;
 
-    // Drawdown medido dentro de la fase actual, vs el capital inicial de esa fase
-    const dd = Math.max(0, size - equity);
+    // Drawdown medido dentro de la fase actual, trailing desde el pico (igual que calcBacktest)
+    const dd = Math.max(0, maxEq - equity);
     const ddPct = dd/size*100;
     const rules = cfg[phase]||cfg.fase1;
 
@@ -11621,7 +11623,7 @@ function calcHistMetrics(enriched){
 
   const sumWinPct  = wins.reduce((s,t)=>s+t.pnl, 0);
   const sumLossPct = Math.abs(losses.reduce((s,t)=>s+t.pnl, 0));
-  const pf = sumLossPct > 0 ? sumWinPct / sumLossPct : 0;
+  const pf = sumLossPct > 0 ? sumWinPct / sumLossPct : sumWinPct > 0 ? 999 : 0;
 
   const avgWinR  = wins.length   ? wins.reduce((s,t)=>s+t.r,0)/wins.length     : 0;
   const avgLossR = losses.length ? Math.abs(losses.reduce((s,t)=>s+t.r,0)/losses.length) : 0;
@@ -13338,7 +13340,7 @@ function calcMetaProgreso(m){
     const ganTotal = tsFiltradas.reduce((s,t)=>s+(t.pnl||0), 0);
     const target = m.valor;
     if(m.tipo==='ganancia_mensual'){
-      const accSize = accounts[0]?.size||10000;
+      const accSize = accounts.reduce((s,a)=>s+(a.size||0),0)||10000;
       const pct = (ganTotal/accSize)*100;
       return Math.min(100, Math.max(0, Math.round((pct/target)*100)));
     } else {
