@@ -4888,7 +4888,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let CURRENT_USER = null;   // se setea al loguear
 const tabId = Math.random().toString(36).slice(2); // ID único de esta pestaña
-let lastSavedAt = null; // savedAt del último estado que guardamos nosotros (para ignorar nuestro propio evento de realtime)
+let lastSavedAt = null;      // savedAt del último estado que guardamos nosotros
+let lastAppliedSavedAt = null; // savedAt del estado actualmente en memoria (para rechazar estados más viejos)
 
 // Arma el blob de estado completo (misma forma que exportData)
 function armarEstado(){
@@ -4912,6 +4913,7 @@ function armarEstado(){
 // Reparte un blob a las variables globales
 function aplicarEstado(d){
   if(!d) return;
+  if(d.savedAt) lastAppliedSavedAt = d.savedAt;
   if(d.trades)     trades     = d.trades;
   if(d.btTrades)   btTrades   = d.btTrades;
   if(d.accounts)   accounts   = d.accounts;
@@ -5242,6 +5244,7 @@ function suscribirRealtime(){
       const incoming = payload.new?.data;
       if(!incoming) return;
       if(incoming.savedAt === lastSavedAt) return; // fue nuestro propio guardado, ignorar
+      if(lastAppliedSavedAt && incoming.savedAt <= lastAppliedSavedAt) return; // más viejo o igual que lo que ya tenemos
       if(dirty) return;                            // tenemos cambios sin guardar, no pisar
       aplicarEstado(incoming);
       lastSavedAt = incoming.savedAt;
