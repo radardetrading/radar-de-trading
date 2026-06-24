@@ -6760,16 +6760,16 @@ function renderSessionAnalysis(){
     const n = list.length;
 
     // Métricas básicas
-    let wins=0, losses=0, bes=0, pnlTotal=0, rSum=0, winSum=0, lossSum=0;
+    let wins=0, losses=0, bes=0, pnlTotal=0, rSum=0, rCount=0, winSum=0, lossSum=0;
     list.forEach(t=>{
       const pnl=(t.pnl_direct!==undefined)?t.pnl_direct:(t.pips||0);
       pnlTotal+=pnl;
       const rr=(t.rr!==undefined)?t.rr:(t.riskUSD?pnl/t.riskUSD:0);
-      rSum+=rr;
+      if(t.rr!==undefined||(t.riskUSD&&t.riskUSD>0)){rSum+=rr;rCount++;}
       if(pnl>0){wins++;winSum+=pnl;} else if(pnl<0){losses++;lossSum+=Math.abs(pnl);} else bes++;
     });
     const wr = n? wins/n*100 : 0;
-    const avgR = n? rSum/n : 0;
+    const avgR = rCount? rSum/rCount : 0;
     const pf = lossSum>0? winSum/lossSum : (winSum>0?Infinity:0);
 
     // Simulación de fases solo con esta sesión
@@ -8690,8 +8690,8 @@ function checkRegla(r, tradesToCheck){
       if(sinOperar) return {ok:true, na:true, msg:'Sin operar hoy'};
       const totalSize = accounts.reduce((s,a)=>s+(a.size||0),0) || 10000;
       const dayPnl=todayTrades.reduce((s,t)=>s+(t.pnl||0),0);
-      const pct=Math.abs(dayPnl)/totalSize*100;
-      return pct>r.valor?{ok:false,msg:`Pérdida diaria ${pct.toFixed(2)}% supera límite ${r.valor}%`}:{ok:true,msg:`Pérdida hoy: ${pct.toFixed(2)}%`};
+      const lossPct=dayPnl<0?Math.abs(dayPnl)/totalSize*100:0;
+      return lossPct>r.valor?{ok:false,msg:`Pérdida diaria ${lossPct.toFixed(2)}% supera límite ${r.valor}%`}:{ok:true,msg:`Pérdida hoy: ${lossPct.toFixed(2)}%`};
     }
     case 'no_operar_dia':{
       const todayDow=new Date().getDay()===0?7:new Date().getDay();
@@ -12110,15 +12110,15 @@ function renderHistSim(enriched){
     const n = list.length;
 
     // Métricas base de la sesión
-    let wins=0, losses=0, pnlTotal=0, rSum=0, winSum=0, lossSum=0;
+    let wins=0, losses=0, pnlTotal=0, rSum=0, rCount=0, winSum=0, lossSum=0;
     list.forEach(t=>{
       const pnl=t.pctGan||0;
       pnlTotal+=pnl;
-      rSum += (t.r!==undefined)?t.r:(t.pctArr>0?pnl/t.pctArr:0);
+      if(t.r!==undefined||(t.pctArr&&t.pctArr>0)){rSum+=(t.r!==undefined)?t.r:pnl/t.pctArr;rCount++;}
       if(pnl>0){wins++;winSum+=pnl;} else if(pnl<0){losses++;lossSum+=Math.abs(pnl);}
     });
     const wr = n? wins/n*100 : 0;
-    const avgR = n? rSum/n : 0;
+    const avgR = rCount? rSum/rCount : 0;
     const pf = lossSum>0? winSum/lossSum : (winSum>0?Infinity:0);
 
     const sim = simulateFundingCycles(list, cfg, WD);
