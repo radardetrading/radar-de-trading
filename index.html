@@ -11900,7 +11900,7 @@ function groupStats(enriched, keyFn){
     ...g,
     wr: g.n ? g.wins/g.n : 0,
     avgR: g.n ? g.totalR/g.n : 0,
-    expectancy: g.n ? (g.wins/g.n) * (g.wins>0 ? g.totalR/g.n : 0) : 0
+    expectancy: g.n ? g.totalR / g.n : 0
   })).sort((a,b)=> b.n - a.n);
 }
 
@@ -12500,7 +12500,7 @@ function repFromHist(t){
     zona: (t.zona || '').toString().trim() || '(sin zona)',
     r, usd,
     pct: t.pctGan,
-    result: t.pnl !== undefined ? t.pnl : t.pctGan
+    result: t.pctGan !== undefined ? t.pctGan : (t.pnl !== undefined ? t.pnl : 0)
   };
 }
 
@@ -12550,9 +12550,11 @@ function buildRepUniverse(){
 function repMetrics(arr){
   const n = arr.length;
   if(!n) return null;
-  const wins   = arr.filter(t=> t.r > 0);
-  const losses = arr.filter(t=> t.r < 0);
-  const bes    = arr.filter(t=> t.r === 0);
+  // Clasificar por resultado real (result = pctGan para histórico, usd para backtest)
+  // Esto evita que trades sin pctArr (r=0) sean contados como BE aunque hayan ganado/perdido
+  const wins   = arr.filter(t=> (t.result || 0) > 0.005);
+  const losses = arr.filter(t=> (t.result || 0) < -0.005);
+  const bes    = arr.filter(t=> Math.abs(t.result || 0) <= 0.005);
   const wr = wins.length / n;
   const totalR   = arr.reduce((s,t)=>s+t.r, 0);
   const totalUsd = arr.reduce((s,t)=>s+t.usd, 0);
@@ -12563,12 +12565,13 @@ function repMetrics(arr){
   const avgLossR = losses.length ? sumLossR / losses.length : 0;
   const avgR     = totalR / n;
   const avgUsd   = totalUsd / n;
-  const expectancy = (wr * avgWinR) - ((losses.length / n) * avgLossR);
-  // rachas
+  // Expectancy = promedio de R por trade (equivalente a WR*avgWinR - LR*avgLossR pero sin distorsión por clasificación)
+  const expectancy = avgR;
+  // rachas (también por resultado real)
   let mW=0,mL=0,cW=0,cL=0;
   arr.forEach(t=>{
-    if(t.r>0){cW++;cL=0;if(cW>mW)mW=cW;}
-    else if(t.r<0){cL++;cW=0;if(cL>mL)mL=cL;}
+    if((t.result||0)>0.005){cW++;cL=0;if(cW>mW)mW=cW;}
+    else if((t.result||0)<-0.005){cL++;cW=0;if(cL>mL)mL=cL;}
   });
   // max DD en R y USD (recalculado sobre el subconjunto)
   let cumR=0,cumU=0,pR=0,pU=0,ddR=0,ddU=0;
