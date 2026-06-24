@@ -10387,7 +10387,7 @@ function previewReport(){
       const btWr     = btMonth.length ? btWins.length/btMonth.length*100 : 0;
       const btWinSum = btWins.reduce((s,t)=>s+(t.pnl_direct!==undefined?t.pnl_direct:(t.pnl||0)),0);
       const btLossSum= Math.abs(btLosses.reduce((s,t)=>s+(t.pnl_direct!==undefined?t.pnl_direct:(t.pnl||0)),0));
-      const btPf     = btLossSum>0 ? (btWinSum/btLossSum).toFixed(2) : '—';
+      const btPf     = btLossSum>0 ? (btWinSum/btLossSum).toFixed(2) : btWinSum>0 ? '999' : '0';
 
       html += `<div style="background:${TC.glass};border:1px solid ${TC.border};border-radius:12px;padding:1.4rem;margin-bottom:1rem;">
         <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${TC.cyan};margin-bottom:1rem;">🔬 Backtest</div>
@@ -11040,7 +11040,7 @@ function exportExcelReport(){
     const wpnl = wins.reduce((s,t)=>s+(t.pnl||0),0);
     const lpnl = Math.abs(losses.reduce((s,t)=>s+(t.pnl||0),0));
     const wr = filtered.length ? wins.length/filtered.length*100 : 0;
-    const pf = lpnl>0 ? (wpnl/lpnl).toFixed(2) : '—';
+    const pf = lpnl>0 ? (wpnl/lpnl).toFixed(2) : wpnl>0 ? '999' : '0';
 
     rows.push(spacer(headers.length));
     rows.push(`<tr><td colspan="2" style="background:#1a3a5c;color:#fff;font-weight:bold;padding:6px 10px;border:none;">Resumen Estadístico</td><td colspan="${headers.length-2}" style="background:#1a3a5c;border:none;"></td></tr>`);
