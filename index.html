@@ -4887,6 +4887,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_xOA5GbuyB4sjLFQwdPfeyA_Pxs9WOyH';  // 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let CURRENT_USER = null;   // se setea al loguear
+const tabId = Math.random().toString(36).slice(2); // ID único de esta pestaña
+let lastSavedAt = null; // savedAt del último estado que guardamos nosotros (para ignorar nuestro propio evento de realtime)
 
 // Arma el blob de estado completo (misma forma que exportData)
 function armarEstado(){
@@ -5035,6 +5037,7 @@ async function save(){
       if(error){
         marcarSoloLocal('No se pudo subir a la nube — guardado local');
       } else {
+        lastSavedAt = estado.savedAt; // marcar como "este guardado fue nuestro"
         const ts = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
         markClean(ts);
       }
@@ -5225,6 +5228,32 @@ document.addEventListener('click', (e)=>{
 });
 
 
+// REALTIME — sincronización entre pestañas y dispositivos
+let realtimeChannel = null;
+function suscribirRealtime(){
+  if(realtimeChannel){ try{ sb.removeChannel(realtimeChannel); }catch(_){} }
+  realtimeChannel = sb.channel('estado-sync-' + CURRENT_USER.id)
+    .on('postgres_changes', {
+      event:  'UPDATE',
+      schema: 'public',
+      table:  'estado',
+      filter: 'user_id=eq.' + CURRENT_USER.id
+    }, (payload) => {
+      const incoming = payload.new?.data;
+      if(!incoming) return;
+      if(incoming.savedAt === lastSavedAt) return; // fue nuestro propio guardado, ignorar
+      if(dirty) return;                            // tenemos cambios sin guardar, no pisar
+      aplicarEstado(incoming);
+      lastSavedAt = incoming.savedAt;
+      guardarSnapshotLocal(incoming);
+      try{ renderDashboard(); }catch(_){}
+      try{ updateHeader(); }catch(_){}
+      try{ calcBacktest(); }catch(_){}
+      toast('🔄 Sincronizado desde otra sesión','ok');
+    })
+    .subscribe();
+}
+
 // ARRANQUE con sesión
 async function iniciarApp(){
   await load();
@@ -5234,6 +5263,7 @@ async function iniciarApp(){
   refreshUndoBtn();
   setInterval(tickCD,1000);
   initIdleWatcher();   // ← auto-logout por inactividad (15 min)
+  suscribirRealtime(); // ← sync en tiempo real entre pestañas y dispositivos
   const login = document.getElementById('loginOverlay');
   if(login) login.style.display = 'none';
   const lp = document.getElementById('landing');
