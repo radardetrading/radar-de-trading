@@ -2623,6 +2623,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <option value="XAUUSD">XAUUSD</option><option value="US30">US30</option><option value="NAS100">NAS100</option>
         </select>
         <select id="jAccount" onchange="journalPage=1;renderJournal()"><option value="">Todas las cuentas</option></select>
+        <select id="jTipoInstr" onchange="journalPage=1;renderJournal()"><option value="">Forex + Futuros</option><option value="forex">Solo Forex</option><option value="futuros">Solo Futuros</option></select>
         <select id="jZona" onchange="journalPage=1;renderJournal()"><option value="">Todas las zonas</option></select>
         <select id="jOrder" onchange="journalPage=1;renderJournal()">
           <option value="desc">Más nuevo primero</option>
@@ -2706,6 +2707,14 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             <option value="90d">Últimos 90 días</option>
           </select>
         </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label>Tipo de instrumento</label>
+          <select id="st_tipo_instr" onchange="renderEstadisticas()" style="font-size:11px;padding:5px 10px;height:30px;min-width:140px;">
+            <option value="">Forex + Futuros</option>
+            <option value="forex">Solo Forex</option>
+            <option value="futuros">Solo Futuros</option>
+          </select>
+        </div>
       </div>
       <div id="st_constructor_result" style="margin-top:1rem;"></div>
     </div>
@@ -2755,7 +2764,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <div id="page-backtest" class="page">
 
     <!-- SELECTOR + EDITOR DE CUENTAS -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:1.5rem;">
 
       <!-- CUENTA A -->
       <div id="bt_card_5k" onclick="selectBtAccount('5k')" style="cursor:pointer;border-radius:var(--r3);border:2px solid rgba(56,189,248,.5);background:linear-gradient(135deg,rgba(56,189,248,.1),rgba(56,189,248,.03));padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
@@ -2783,6 +2792,23 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
         <div style="font-size:26px;font-weight:900;letter-spacing:-.04em;color:var(--sub);" id="bt_title_50k">$50,000</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);margin-top:3px;" id="bt_sub_50k">Neomaa · 2 Fases · 8% / 5% target</div>
+      </div>
+
+      <!-- CUENTA C — FUTUROS -->
+      <div id="bt_card_fut" onclick="selectBtAccount('fut')" style="cursor:pointer;border-radius:var(--r3);border:2px solid var(--border);background:rgba(255,255,255,.02);padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
+        <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--orange);opacity:.04;border-radius:50%;filter:blur(20px);pointer-events:none;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);" id="bt_lbl_fut">Cuenta Disponible</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:8px;height:8px;background:var(--border2);border-radius:50%;" id="bt_dot_fut"></div>
+            <button class="btn sm" style="font-size:9px;z-index:2;" onclick="event.stopPropagation();openBtCfgModal('fut')">✎ Editar</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <div style="font-size:22px;font-weight:900;letter-spacing:-.04em;color:var(--sub);" id="bt_title_fut">$50,000</div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--orange);background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);padding:1px 6px;border-radius:4px;" id="bt_fut_instr_badge">ES</span>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);margin-top:3px;" id="bt_sub_fut">Futuros · 1 Fase · 8% target</div>
       </div>
     </div>
 
@@ -3223,6 +3249,22 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <table><thead><tr><th>Fecha</th><th>Par</th><th>Cuentas</th><th>Resultado</th><th>¿Siguen?</th><th>Notas</th><th></th></tr></thead><tbody id="paresHistBody"></tbody></table>
       <div id="paresHistEmpty" class="empty" style="display:none"><div class="empty-icon">⚡</div>Sin historial de pares.</div>
     </div>
+
+    <!-- CATÁLOGO DE INSTRUMENTOS DE FUTUROS -->
+    <div class="table-wrap" style="margin-top:1.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.9rem 1.1rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="section-label">📊 Instrumentos de Futuros</div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--orange);background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.2);padding:2px 8px;border-radius:20px;">FUTUROS</span>
+        </div>
+        <button class="btn sm primary" onclick="openFutInstrModal()">+ Nuevo</button>
+      </div>
+      <table>
+        <thead><tr><th>Símbolo</th><th>Nombre</th><th>Tick Size</th><th>Tick Value</th><th>Point Value</th><th></th></tr></thead>
+        <tbody id="futInstrBody"></tbody>
+      </table>
+      <div id="futInstrEmpty" class="empty" style="display:none"><div class="empty-icon">📊</div>Sin instrumentos. Agregá uno.</div>
+    </div>
   </div>
 
   <!-- CUENTAS -->
@@ -3613,6 +3655,14 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <!-- CALCULADORA DE LOTAJE -->
   <div id="page-calculadora" class="page">
     <div style="max-width:600px;margin:0 auto;">
+      <!-- Tab selector -->
+      <div style="display:flex;gap:8px;margin-bottom:1.2rem;">
+        <button id="calcTabForex" class="btn primary" onclick="switchCalcTab('forex')" style="flex:1;">Forex</button>
+        <button id="calcTabFut" class="btn" onclick="switchCalcTab('futuros')" style="flex:1;color:var(--orange);">📊 Futuros</button>
+      </div>
+
+      <!-- TAB FOREX -->
+      <div id="calcForexPanel">
       <div class="kpi-grid" id="calcResult" style="margin-bottom:1.5rem;"></div>
       <div class="card" style="padding:1.5rem;margin-bottom:1.2rem;">
         <div class="section-label" style="margin-bottom:1.2rem;">⚙ Parámetros de la Operación</div>
@@ -3677,6 +3727,46 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <button class="btn primary" style="width:100%;" onclick="sendCalcToJournal()">📋 Enviar al Journal →</button>
         </div>
       </div>
+      </div><!-- /calcForexPanel -->
+
+      <!-- TAB FUTUROS -->
+      <div id="calcFutPanel" style="display:none;">
+        <div class="kpi-grid" id="calcFutResult" style="margin-bottom:1.5rem;"></div>
+        <div class="card" style="padding:1.5rem;margin-bottom:1.2rem;">
+          <div class="section-label" style="margin-bottom:1.2rem;">⚙ Calculadora de Futuros</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Tamaño de Cuenta ($)</label>
+              <input type="number" id="cf_account" value="10000" oninput="calcFuturos()">
+            </div>
+            <div class="form-group">
+              <label>Riesgo por Trade (%)</label>
+              <input type="number" id="cf_risk" value="1" step="0.1" min="0.1" oninput="calcFuturos()">
+            </div>
+            <div class="form-group">
+              <label>Instrumento</label>
+              <select id="cf_instr" onchange="calcFuturos()"></select>
+            </div>
+            <div class="form-group">
+              <label>Stop Loss (puntos)</label>
+              <input type="number" id="cf_sl_pts" value="10" step="0.25" min="0.25" oninput="calcFuturos()">
+            </div>
+            <div class="form-group">
+              <label>R:R Objetivo</label>
+              <input type="number" id="cf_rr" value="2" step="0.1" min="0.1" oninput="calcFuturos()">
+            </div>
+            <div class="form-group">
+              <label>Precio de Entrada (opcional)</label>
+              <input type="number" id="cf_entry" step="0.01" placeholder="5200.00" oninput="calcFuturos()">
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:1.5rem;">
+          <div class="section-label" style="margin-bottom:1rem;">📊 Resultado</div>
+          <div id="calcFutLevels"></div>
+        </div>
+      </div><!-- /calcFutPanel -->
+
     </div>
   </div>
 
@@ -3925,61 +4015,111 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     <div class="modal-title">📋 <span>Registrar Trade</span></div>
     <div class="form-grid">
       <div class="form-group full"><label>Cuenta Prop Firm</label>
-        <select id="t_account"><option value="">— Sin asignar —</option></select>
+        <select id="t_account" onchange="onTradeAccountChange()"><option value="">— Sin asignar —</option></select>
+      </div>
+      <div class="form-group full">
+        <label>Tipo de Instrumento</label>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="t_tipo" id="t_tipo_forex" value="forex" style="width:auto;background:none;border:none;padding:0;" onchange="toggleTradeTipo()" checked>
+            <div style="text-align:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--cyan);">Forex</div></div>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="t_tipo" id="t_tipo_futuros" value="futuros" style="width:auto;background:none;border:none;padding:0;" onchange="toggleTradeTipo()">
+            <div style="text-align:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--orange);">Futuros</div></div>
+          </label>
+        </div>
       </div>
       <div class="form-sep"></div>
       <div class="form-group"><label>Fecha</label><input type="date" id="t_date"></div>
       <div class="form-group"><label>Tipo</label><select id="t_type"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select></div>
       <div class="form-group"><label>Hora Entrada</label><input type="time" id="t_hent"></div>
       <div class="form-group"><label>Hora Salida</label><input type="time" id="t_hsal"></div>
-      <div class="form-group"><label>Sesión</label><select id="t_session"><option value="Londres">Londres</option><option value="NY">NY</option><option value="Asia">Asia</option><option value="Frankfurt">Frankfurt</option></select></div>
-      <div class="form-group"><label>Par de Divisas</label>
-        <select id="t_pair">
-          <optgroup label="Majors">
-            <option value="EUR/USD">EUR/USD</option>
-            <option value="GBP/USD">GBP/USD</option>
-            <option value="USD/JPY">USD/JPY</option>
-            <option value="USD/CHF">USD/CHF</option>
-            <option value="AUD/USD">AUD/USD</option>
-            <option value="USD/CAD">USD/CAD</option>
-            <option value="NZD/USD">NZD/USD</option>
-          </optgroup>
-          <optgroup label="Crosses">
-            <option value="EUR/GBP">EUR/GBP</option>
-            <option value="EUR/JPY">EUR/JPY</option>
-            <option value="GBP/JPY">GBP/JPY</option>
-            <option value="EUR/AUD">EUR/AUD</option>
-            <option value="GBP/AUD">GBP/AUD</option>
-            <option value="AUD/JPY">AUD/JPY</option>
-            <option value="EUR/CAD">EUR/CAD</option>
-            <option value="GBP/CAD">GBP/CAD</option>
-            <option value="CAD/JPY">CAD/JPY</option>
-            <option value="EUR/NZD">EUR/NZD</option>
-            <option value="GBP/NZD">GBP/NZD</option>
-          </optgroup>
-          <optgroup label="Exóticos">
-            <option value="USD/MXN">USD/MXN</option>
-            <option value="USD/ZAR">USD/ZAR</option>
-            <option value="USD/SGD">USD/SGD</option>
-            <option value="USD/NOK">USD/NOK</option>
-            <option value="USD/SEK">USD/SEK</option>
-          </optgroup>
-          <optgroup label="Índices / Otros">
-            <option value="US30">US30 (Dow Jones)</option>
-            <option value="NAS100">NAS100 (Nasdaq)</option>
-            <option value="SPX500">SPX500 (S&P 500)</option>
-            <option value="GER40">GER40 (DAX)</option>
-            <option value="XAUUSD">XAUUSD (Oro)</option>
-            <option value="XAGUSD">XAGUSD (Plata)</option>
-          </optgroup>
-        </select>
+      <div class="form-group full"><label>Sesión</label><select id="t_session"><option value="Londres">Londres</option><option value="NY">NY</option><option value="Asia">Asia</option><option value="Frankfurt">Frankfurt</option></select></div>
+
+      <!-- ── CAMPOS FOREX ─────────────────────────────────────── -->
+      <div id="t_forex_wrap" style="display:contents;">
+        <div class="form-group"><label>Par de Divisas</label>
+          <select id="t_pair">
+            <optgroup label="Majors">
+              <option value="EUR/USD">EUR/USD</option>
+              <option value="GBP/USD">GBP/USD</option>
+              <option value="USD/JPY">USD/JPY</option>
+              <option value="USD/CHF">USD/CHF</option>
+              <option value="AUD/USD">AUD/USD</option>
+              <option value="USD/CAD">USD/CAD</option>
+              <option value="NZD/USD">NZD/USD</option>
+            </optgroup>
+            <optgroup label="Crosses">
+              <option value="EUR/GBP">EUR/GBP</option>
+              <option value="EUR/JPY">EUR/JPY</option>
+              <option value="GBP/JPY">GBP/JPY</option>
+              <option value="EUR/AUD">EUR/AUD</option>
+              <option value="GBP/AUD">GBP/AUD</option>
+              <option value="AUD/JPY">AUD/JPY</option>
+              <option value="EUR/CAD">EUR/CAD</option>
+              <option value="GBP/CAD">GBP/CAD</option>
+              <option value="CAD/JPY">CAD/JPY</option>
+              <option value="EUR/NZD">EUR/NZD</option>
+              <option value="GBP/NZD">GBP/NZD</option>
+            </optgroup>
+            <optgroup label="Exóticos">
+              <option value="USD/MXN">USD/MXN</option>
+              <option value="USD/ZAR">USD/ZAR</option>
+              <option value="USD/SGD">USD/SGD</option>
+              <option value="USD/NOK">USD/NOK</option>
+              <option value="USD/SEK">USD/SEK</option>
+            </optgroup>
+            <optgroup label="Índices / Otros">
+              <option value="US30">US30 (Dow Jones)</option>
+              <option value="NAS100">NAS100 (Nasdaq)</option>
+              <option value="SPX500">SPX500 (S&P 500)</option>
+              <option value="GER40">GER40 (DAX)</option>
+              <option value="XAUUSD">XAUUSD (Oro)</option>
+              <option value="XAGUSD">XAGUSD (Plata)</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group"><label>Lotes</label><input type="number" id="t_lots" step="0.01" value="0.10"></div>
+        <div class="form-group"><label>Entrada</label><input type="number" id="t_entry" step="0.00001"></div>
+        <div class="form-group"><label>Stop Loss</label><input type="number" id="t_sl" step="0.00001"></div>
+        <div class="form-group"><label>Take Profit</label><input type="number" id="t_tp" step="0.00001"></div>
+        <div class="form-group"><label>Cierre</label><input type="number" id="t_close" step="0.00001"></div>
+        <div class="form-group"><label>Comisión / Tarifa ($)</label><input type="number" id="t_commission" step="0.01" min="0" placeholder="Ej: 3.50" value="0"></div>
       </div>
-      <div class="form-group"><label>Lotes</label><input type="number" id="t_lots" step="0.01" value="0.10"></div>
-      <div class="form-group"><label>Entrada</label><input type="number" id="t_entry" step="0.00001"></div>
-      <div class="form-group"><label>Stop Loss</label><input type="number" id="t_sl" step="0.00001"></div>
-      <div class="form-group"><label>Take Profit</label><input type="number" id="t_tp" step="0.00001"></div>
-      <div class="form-group"><label>Cierre</label><input type="number" id="t_close" step="0.00001"></div>
-      <div class="form-group"><label>Comisión / Tarifa ($)</label><input type="number" id="t_commission" step="0.01" min="0" placeholder="Ej: 3.50" value="0"></div>
+
+      <!-- ── CAMPOS FUTUROS ───────────────────────────────────── -->
+      <div id="t_fut_wrap" style="display:none;">
+        <div class="form-group full">
+          <label>Modo de ingreso</label>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+              <input type="radio" name="t_fut_mode" id="t_fut_mode_precios" value="precios" style="width:auto;background:none;border:none;padding:0;" onchange="toggleFutMode()" checked>
+              <div style="text-align:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--cyan);">Precios</div><div style="font-size:9px;color:var(--sub);">calcula P&L solo</div></div>
+            </label>
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+              <input type="radio" name="t_fut_mode" id="t_fut_mode_directo" value="directo" style="width:auto;background:none;border:none;padding:0;" onchange="toggleFutMode()">
+              <div style="text-align:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--orange);">P&L Directo</div><div style="font-size:9px;color:var(--sub);">ingresás el resultado</div></div>
+            </label>
+          </div>
+        </div>
+        <div class="form-group"><label>Instrumento</label><select id="t_fut_instr" onchange="calcFutPnlModal()"></select></div>
+        <div class="form-group"><label>Contratos</label><input type="number" id="t_fut_contratos" step="1" min="1" value="1" oninput="calcFutPnlModal();calcFutRiskModal()"></div>
+        <div class="form-group" id="t_fut_entry_grp"><label>Precio Entrada</label><input type="number" id="t_fut_entry" step="0.01" oninput="calcFutPnlModal();calcFutRiskModal()"></div>
+        <div class="form-group" id="t_fut_exit_grp"><label>Precio Salida</label><input type="number" id="t_fut_exit" step="0.01" oninput="calcFutPnlModal()"></div>
+        <div class="form-group" id="t_fut_sl_grp"><label>Stop Loss (precio)</label><input type="number" id="t_fut_sl_price" step="0.01" oninput="calcFutRiskModal()"></div>
+        <div class="form-group full" id="t_fut_pnl_calc_grp">
+          <label>P&L calculado</label>
+          <div id="t_fut_pnl_display" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;padding:8px 0;color:var(--sub);">—</div>
+        </div>
+        <div class="form-group full" id="t_fut_pnl_direct_grp" style="display:none;">
+          <label>P&L ($) — positivo = ganancia, negativo = pérdida</label>
+          <input type="number" id="t_fut_pnl_direct" step="0.01">
+        </div>
+        <div class="form-group"><label>Riesgo ($) — para calcular R</label><input type="number" id="t_fut_risk" step="0.01" placeholder="Ej: 100"></div>
+        <div class="form-group"><label>Comisión ($)</label><input type="number" id="t_fut_commission" step="0.01" min="0" value="0"></div>
+      </div>
+
       <div class="form-sep"></div>
       <div class="form-group full"><label>Link TradingView</label><input type="url" id="t_tv" placeholder="https://www.tradingview.com/x/..."></div>
       <div class="form-group full"><label>Setup / Estrategia</label><input type="text" id="t_setup" placeholder="FVG + BOS M15, Pullback EMA..."></div>
@@ -4182,6 +4322,10 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
           <option value="Overlap">⚡ Overlap</option>
         </select>
       </div>
+      <div class="form-group" id="b_instr_grp" style="display:none;">
+        <label style="color:var(--orange);">Instrumento</label>
+        <select id="b_instrumento"></select>
+      </div>
       <div class="form-group">
         <label>$ Arriesgado</label>
         <input type="number" id="b_risk_usd" step="0.01" min="0" placeholder="Ej: 150" oninput="btCalcResult()">
@@ -4235,6 +4379,25 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     <button class="modal-close" onclick="closeModal('accModal')">✕</button>
     <div class="modal-title">🏦 <span id="accModalTitle">Nueva Cuenta</span></div>
     <div class="form-grid">
+      <div class="form-group full">
+        <label>Tipo de Cuenta</label>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="ac_tipo" id="ac_tipo_forex" value="forex" style="width:auto;background:none;border:none;padding:0;" onchange="toggleAccTipo()" checked>
+            <div style="text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:var(--cyan);">Forex</div>
+              <div style="font-size:10px;color:var(--sub);margin-top:2px;">Pares de divisas</div>
+            </div>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="ac_tipo" id="ac_tipo_futuros" value="futuros" style="width:auto;background:none;border:none;padding:0;" onchange="toggleAccTipo()">
+            <div style="text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:var(--orange);">Futuros</div>
+              <div style="font-size:10px;color:var(--sub);margin-top:2px;">ES, NQ, CL...</div>
+            </div>
+          </label>
+        </div>
+      </div>
       <div class="form-group full"><label>Nombre</label><input type="text" id="ac_name" placeholder="FTMO #1 — 100K Principal"></div>
       <div class="form-group"><label>Firma / Broker</label><input type="text" id="ac_firm" placeholder="Neomaa, FTMO..."></div>
       <div class="form-group"><label>Tamaño ($)</label><input type="number" id="ac_size"></div>
@@ -4425,6 +4588,40 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     <div class="form-actions">
       <button class="btn" onclick="closeModal('parModal')">Cancelar</button>
       <button class="btn primary" onclick="savePar()">Guardar Par</button>
+    </div>
+  </div>
+</div>
+
+<!-- FUTUROS — INSTRUMENTO MODAL -->
+<div class="overlay" id="futInstrModal">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" onclick="closeModal('futInstrModal')">✕</button>
+    <div class="modal-title">📊 <span id="futInstrModalTitle">Nuevo Instrumento</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Símbolo</label>
+        <input type="text" id="fi_symbol" placeholder="ES, NQ, CL..." style="text-transform:uppercase;">
+      </div>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="fi_nombre" placeholder="E-mini S&P 500">
+      </div>
+      <div class="form-group">
+        <label>Tick Size</label>
+        <input type="number" id="fi_tickSize" step="0.01" placeholder="0.25" oninput="calcFiPointValue()">
+      </div>
+      <div class="form-group">
+        <label>Tick Value ($)</label>
+        <input type="number" id="fi_tickValue" step="0.01" placeholder="12.50" oninput="calcFiPointValue()">
+      </div>
+      <div class="form-group full">
+        <label>Point Value ($/punto) — se calcula solo</label>
+        <input type="number" id="fi_pointValue" step="0.01" placeholder="50" readonly style="opacity:.6;cursor:not-allowed;">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('futInstrModal')">Cancelar</button>
+      <button class="btn primary" onclick="saveFutInstr()">Guardar</button>
     </div>
   </div>
 </div>
@@ -4685,6 +4882,10 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
         <label>Tamaño de Cuenta ($)</label>
         <input type="number" id="cfg_size" placeholder="5000">
       </div>
+      <div id="cfg_fut_wrap" style="display:none;" class="form-group full">
+        <label>Instrumento de Futuros</label>
+        <select id="cfg_fut_instr"></select>
+      </div>
       <div class="form-sep-label">Estructura del Challenge</div><div class="form-sep"></div>
       <div class="form-group full">
         <label>Cantidad de Fases</label>
@@ -4847,6 +5048,16 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
 // DATA
 // ════════════════════════════════════════════════════════════
 let trades=[], btTrades=[], accounts=[], pagos=[], pares=[], paresHist=[], events=[], histTrades=[];
+
+const FUT_INSTR_DEFAULT = [
+  { id:'ES',  nombre:'E-mini S&P 500',    tickSize:0.25, tickValue:12.50, pointValue:50    },
+  { id:'MES', nombre:'Micro E-mini S&P',  tickSize:0.25, tickValue:1.25,  pointValue:5     },
+  { id:'NQ',  nombre:'E-mini Nasdaq',     tickSize:0.25, tickValue:5.00,  pointValue:20    },
+  { id:'MNQ', nombre:'Micro Nasdaq',      tickSize:0.25, tickValue:0.50,  pointValue:2     },
+  { id:'CL',  nombre:'Crude Oil',         tickSize:0.01, tickValue:10.00, pointValue:1000  },
+  { id:'GC',  nombre:'Gold',              tickSize:0.10, tickValue:10.00, pointValue:100   },
+];
+let futInstruments = JSON.parse(JSON.stringify(FUT_INSTR_DEFAULT));
 let metas = JSON.parse(localStorage.getItem('rdm_metas')||'[]');
 let histView='R'; // R | USD | PCT
 let histSimAccount='5k'; // cuenta para el simulador de fondeo por sesión del histórico
@@ -4920,6 +5131,7 @@ function armarEstado(){
     reglas, reglasLog, pilares,
     histTrades,
     metas,
+    futInstruments,
     btCfg: NEOMAA,
     btRules: btQuickRules,
     btZonas,
@@ -4946,9 +5158,10 @@ function aplicarEstado(d){
   if(d.reglas)     reglas     = d.reglas;
   if(d.reglasLog)  reglasLog  = d.reglasLog;
   if(d.pilares)    pilares    = d.pilares;
-  if(d.histTrades) histTrades = d.histTrades;
-  if(d.metas)      metas      = d.metas;
-  if(d.btCfg)      NEOMAA     = d.btCfg;
+  if(d.histTrades)      histTrades      = d.histTrades;
+  if(d.metas)           metas           = d.metas;
+  if(d.futInstruments)  futInstruments  = d.futInstruments;
+  if(d.btCfg)           NEOMAA          = d.btCfg;
   if(d.btRules)    btQuickRules = d.btRules;
   if(d.btZonas)    btZonas    = d.btZonas;
   if(d.fondCfg){ try{ localStorage.setItem('hq_fond_v1', JSON.stringify(d.fondCfg)); }catch(_){} }
@@ -5363,7 +5576,7 @@ function nav(name, fromPopState=false){
   else cta.style.display='none';
   currentPage=name;
   updateHeader();
-  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:renderPares,calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:renderReporte,reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas};
+  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:renderReporte,reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas};
   if(renders[name]) renders[name]();
   if(!fromPopState) history.pushState({page:name}, '', location.href);
 }
@@ -5680,6 +5893,78 @@ function chartOpts(){
 }
 
 // ════════════════════════════════════════════════════════════
+// JOURNAL — helpers futuros
+// ════════════════════════════════════════════════════════════
+function populateFutInstrSelect(){
+  const sel = document.getElementById('t_fut_instr');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = futInstruments.map(f=>`<option value="${f.id}">${f.id} — ${f.nombre} ($${f.pointValue}/pto)</option>`).join('');
+  if(cur && futInstruments.find(f=>f.id===cur)) sel.value=cur;
+}
+
+function toggleTradeTipo(){
+  const isFut = document.getElementById('t_tipo_futuros')?.checked;
+  const fw = document.getElementById('t_forex_wrap');
+  const futw = document.getElementById('t_fut_wrap');
+  if(fw)  fw.style.display  = isFut ? 'none' : 'contents';
+  if(futw) futw.style.display = isFut ? 'contents' : 'none';
+  if(isFut) populateFutInstrSelect();
+}
+
+function toggleFutMode(){
+  const isDirecto = document.getElementById('t_fut_mode_directo')?.checked;
+  const preciosIds = ['t_fut_entry_grp','t_fut_exit_grp','t_fut_sl_grp','t_fut_pnl_calc_grp'];
+  preciosIds.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=isDirecto?'none':'block'; });
+  const dg = document.getElementById('t_fut_pnl_direct_grp');
+  if(dg) dg.style.display = isDirecto ? 'block' : 'none';
+}
+
+function calcFutPnlModal(){
+  const instr = futInstruments.find(f=>f.id===document.getElementById('t_fut_instr')?.value);
+  if(!instr) return;
+  const entry = parseFloat(document.getElementById('t_fut_entry').value);
+  const exit  = parseFloat(document.getElementById('t_fut_exit').value);
+  const cont  = parseFloat(document.getElementById('t_fut_contratos').value)||1;
+  const disp  = document.getElementById('t_fut_pnl_display');
+  if(!disp) return;
+  if(!isNaN(entry) && !isNaN(exit)){
+    const pnl = (exit - entry) * instr.pointValue * cont;
+    disp.textContent = (pnl>=0?'+':'') + fmtUSD(pnl);
+    disp.style.color = pnl>=0?'var(--green)':'var(--red)';
+  } else {
+    disp.textContent='—'; disp.style.color='var(--sub)';
+  }
+}
+
+function calcFutRiskModal(){
+  const instr = futInstruments.find(f=>f.id===document.getElementById('t_fut_instr')?.value);
+  if(!instr) return;
+  const entry = parseFloat(document.getElementById('t_fut_entry').value);
+  const sl    = parseFloat(document.getElementById('t_fut_sl_price').value);
+  const cont  = parseFloat(document.getElementById('t_fut_contratos').value)||1;
+  const riskEl= document.getElementById('t_fut_risk');
+  if(!riskEl) return;
+  if(!isNaN(entry) && !isNaN(sl) && sl!==entry){
+    const risk = Math.abs(entry - sl) * instr.pointValue * cont;
+    riskEl.value = risk.toFixed(2);
+  }
+}
+
+function onTradeAccountChange(){
+  const accId = parseInt(document.getElementById('t_account').value)||null;
+  if(!accId) return;
+  const acc = accounts.find(a=>a.id===accId);
+  if(!acc) return;
+  if(acc.tipo==='futuros'){
+    document.getElementById('t_tipo_futuros').checked=true;
+  } else {
+    document.getElementById('t_tipo_forex').checked=true;
+  }
+  toggleTradeTipo();
+}
+
+// ════════════════════════════════════════════════════════════
 // JOURNAL
 // ════════════════════════════════════════════════════════════
 function openTradeModal(){
@@ -5694,6 +5979,17 @@ function openTradeModal(){
   jSel.innerHTML='<option value="">Todas las cuentas</option>'+accounts.map(a=>`<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
   ['t_entry','t_sl','t_tp','t_close','t_tv','t_setup','t_notes'].forEach(x=>document.getElementById(x).value='');
   document.getElementById('t_commission').value='0';
+  // reset tipo a forex
+  document.getElementById('t_tipo_forex').checked=true;
+  toggleTradeTipo();
+  // reset campos futuros
+  document.getElementById('t_fut_mode_precios').checked=true;
+  toggleFutMode();
+  ['t_fut_entry','t_fut_exit','t_fut_sl_price','t_fut_risk','t_fut_pnl_direct'].forEach(x=>{ const el=document.getElementById(x); if(el) el.value=''; });
+  document.getElementById('t_fut_contratos').value='1';
+  document.getElementById('t_fut_commission').value='0';
+  document.getElementById('t_fut_pnl_display').textContent='—';
+  document.getElementById('t_fut_pnl_display').style.color='var(--sub)';
   window._jZonaSelected = '';
   renderJournalZonaChips();
   document.getElementById('t_zona_selected').textContent='';
@@ -5718,13 +6014,33 @@ function editTrade(id){
   document.getElementById('t_hent').value=t.hEnt||'';
   document.getElementById('t_hsal').value=t.hSal||'';
   document.getElementById('t_session').value=t.session||'Londres';
-  document.getElementById('t_pair').value=t.pair||'EUR/USD';
-  document.getElementById('t_lots').value=t.lots||0.1;
-  document.getElementById('t_commission').value=t.commission||0;
-  document.getElementById('t_entry').value=t.entry||'';
-  document.getElementById('t_sl').value=t.sl||'';
-  document.getElementById('t_tp').value=t.tp||'';
-  document.getElementById('t_close').value=t.close||'';
+  // tipo de instrumento
+  const isFut = t.tipo==='futuros';
+  document.getElementById(isFut?'t_tipo_futuros':'t_tipo_forex').checked=true;
+  toggleTradeTipo();
+  if(isFut){
+    populateFutInstrSelect();
+    document.getElementById('t_fut_instr').value=t.instrumento||'';
+    document.getElementById('t_fut_contratos').value=t.contratos||1;
+    const usedPrecios = t.entryPrice!=null && t.exitPrice!=null;
+    document.getElementById(usedPrecios?'t_fut_mode_precios':'t_fut_mode_directo').checked=true;
+    toggleFutMode();
+    document.getElementById('t_fut_entry').value=t.entryPrice||'';
+    document.getElementById('t_fut_exit').value=t.exitPrice||'';
+    document.getElementById('t_fut_sl_price').value=t.slPrice||'';
+    document.getElementById('t_fut_pnl_direct').value=t.pnl_direct||'';
+    document.getElementById('t_fut_risk').value=t.riskUSD||'';
+    document.getElementById('t_fut_commission').value=t.commission||0;
+    calcFutPnlModal();
+  } else {
+    document.getElementById('t_pair').value=t.pair||'EUR/USD';
+    document.getElementById('t_lots').value=t.lots||0.1;
+    document.getElementById('t_commission').value=t.commission||0;
+    document.getElementById('t_entry').value=t.entry||'';
+    document.getElementById('t_sl').value=t.sl||'';
+    document.getElementById('t_tp').value=t.tp||'';
+    document.getElementById('t_close').value=t.close||'';
+  }
   document.getElementById('t_tv').value=t.tv||'';
   document.getElementById('t_setup').value=t.setup||'';
   document.getElementById('t_notes').value=t.notes||'';
@@ -5749,50 +6065,99 @@ function editTrade(id){
 function deleteTrade(id){trades=trades.filter(t=>t.id!==id);markDirty();save();renderJournal();renderDashboard();renderCuentas();updateHeader();}
 
 function saveTrade(){
-  const entry=parseFloat(document.getElementById('t_entry').value);
-  const sl=parseFloat(document.getElementById('t_sl').value);
-  const close=parseFloat(document.getElementById('t_close').value);
-  const lots=parseFloat(document.getElementById('t_lots').value);
-  const type=document.getElementById('t_type').value;
-  const accId=parseInt(document.getElementById('t_account').value)||null;
-  if(!entry||!sl||!close||!lots){toast('Completá los precios','err');return;}
-  const pips=calcPips(type,entry,close);
-  const pnlGross=calcPnl(pips,lots);
-  const commission=parseFloat(document.getElementById('t_commission').value)||0;
-  const pnl=+(pnlGross - commission).toFixed(2);
-  const acc=accObj(accId);
-  const rr=calcRR(type,entry,sl,close);
-  const risk=calcRisk(type,entry,sl,lots,acc?.size||10000);
-  const tradeData={
-    id:editTradeId||Date.now(),
-    accountId:accId,
-    date:document.getElementById('t_date').value,
-    hEnt:document.getElementById('t_hent').value,
-    hSal:document.getElementById('t_hsal').value,
-    type,pair:document.getElementById('t_pair').value||'EUR/USD',
-    session:document.getElementById('t_session').value,
-    lots,entry,sl,
-    tp:parseFloat(document.getElementById('t_tp').value)||0,
-    close,pips,pnlGross:+pnlGross.toFixed(2),commission,pnl,rr,risk,
-    result:getResult(pnl),
-    tv:document.getElementById('t_tv').value,
-    setup:document.getElementById('t_setup').value,
-    notes:document.getElementById('t_notes').value,
-    zona: window._jZonaSelected || '',
-    moodBefore: _moodAnswers['q_before_estado'] || window._moodBefore || '',
-    moodNoteB: '',
-    moodAfter: _moodAnswers['q_after_estado'] || window._moodAfter || '',
-    moodNoteA: '',
+  const isFut = document.getElementById('t_tipo_futuros')?.checked;
+  const type  = document.getElementById('t_type').value;
+  const accId = parseInt(document.getElementById('t_account').value)||null;
+  const acc   = accObj(accId);
+  const commonFields = {
+    id: editTradeId||Date.now(),
+    accountId: accId,
+    date: document.getElementById('t_date').value,
+    hEnt: document.getElementById('t_hent').value,
+    hSal: document.getElementById('t_hsal').value,
+    type,
+    session: document.getElementById('t_session').value,
+    tv: document.getElementById('t_tv').value,
+    setup: document.getElementById('t_setup').value,
+    notes: document.getElementById('t_notes').value,
+    zona: window._jZonaSelected||'',
+    moodBefore: _moodAnswers['q_before_estado']||window._moodBefore||'',
+    moodNoteB:'',
+    moodAfter: _moodAnswers['q_after_estado']||window._moodAfter||'',
+    moodNoteA:'',
     moodAnswers: {..._moodAnswers}
   };
-  if(editTradeId){
-    const idx=trades.findIndex(t=>t.id===editTradeId);
-    trades[idx]=tradeData;
-    toast('Trade actualizado','ok');
+
+  let tradeData;
+  if(isFut){
+    const instrId  = document.getElementById('t_fut_instr').value;
+    const instr    = futInstruments.find(f=>f.id===instrId);
+    if(!instr){ toast('Seleccioná un instrumento','err'); return; }
+    const contratos= parseFloat(document.getElementById('t_fut_contratos').value)||1;
+    const commission= parseFloat(document.getElementById('t_fut_commission').value)||0;
+    const riskUSD  = parseFloat(document.getElementById('t_fut_risk').value)||0;
+    const isDirecto= document.getElementById('t_fut_mode_directo')?.checked;
+    let pnl_direct, entryPrice, exitPrice, slPrice;
+    if(isDirecto){
+      pnl_direct = parseFloat(document.getElementById('t_fut_pnl_direct').value);
+      if(isNaN(pnl_direct)){ toast('Ingresá el P&L','err'); return; }
+    } else {
+      entryPrice = parseFloat(document.getElementById('t_fut_entry').value);
+      exitPrice  = parseFloat(document.getElementById('t_fut_exit').value);
+      slPrice    = parseFloat(document.getElementById('t_fut_sl_price').value)||null;
+      if(isNaN(entryPrice)||isNaN(exitPrice)){ toast('Ingresá precio de entrada y salida','err'); return; }
+      pnl_direct = +((exitPrice - entryPrice) * instr.pointValue * contratos).toFixed(2);
+    }
+    const pnl = +(pnl_direct - commission).toFixed(2);
+    const rr  = riskUSD>0 ? +(pnl_direct/riskUSD).toFixed(2) : 0;
+    tradeData = {
+      ...commonFields,
+      tipo:'futuros', instrumento:instrId,
+      par: instrId,  // para compatibilidad con estadísticas y filtros
+      contratos, entryPrice, exitPrice, slPrice,
+      pnl_direct, commission, pnl, rr, riskUSD,
+      result: getResult(pnl),
+      // campos forex en 0 para no romper cálculos legacy
+      lots:0, entry:entryPrice||0, sl:slPrice||0, tp:0, close:exitPrice||0, pips:0, pnlGross:pnl_direct, risk:riskUSD
+    };
+    if(editTradeId){
+      const idx=trades.findIndex(t=>t.id===editTradeId); trades[idx]=tradeData;
+      toast('Trade actualizado','ok');
+    } else {
+      trades.push(tradeData);
+      addEvent(pnl>=0?'win':'loss',`Futuros ${type} ${instrId} x${contratos}: ${fmtUSD(pnl)}`);
+      toast('Trade guardado','ok');
+    }
   } else {
-    trades.push(tradeData);
-    addEvent(pnl>=0?'win':'loss',`Trade ${type} ${acc?acc.name:''}: ${fmtUSD(pnl)} (${pips.toFixed(1)} pips)`);
-    toast('Trade guardado','ok');
+    const entry=parseFloat(document.getElementById('t_entry').value);
+    const sl=parseFloat(document.getElementById('t_sl').value);
+    const close=parseFloat(document.getElementById('t_close').value);
+    const lots=parseFloat(document.getElementById('t_lots').value);
+    if(!entry||!sl||!close||!lots){toast('Completá los precios','err');return;}
+    const pips=calcPips(type,entry,close);
+    const pnlGross=calcPnl(pips,lots);
+    const commission=parseFloat(document.getElementById('t_commission').value)||0;
+    const pnl=+(pnlGross - commission).toFixed(2);
+    const rr=calcRR(type,entry,sl,close);
+    const risk=calcRisk(type,entry,sl,lots,acc?.size||10000);
+    tradeData={
+      ...commonFields,
+      tipo:'forex',
+      pair:document.getElementById('t_pair').value||'EUR/USD',
+      par: document.getElementById('t_pair').value||'EUR/USD',
+      lots,entry,sl,
+      tp:parseFloat(document.getElementById('t_tp').value)||0,
+      close,pips,pnlGross:+pnlGross.toFixed(2),commission,pnl,rr,risk,
+      result:getResult(pnl)
+    };
+    if(editTradeId){
+      const idx=trades.findIndex(t=>t.id===editTradeId); trades[idx]=tradeData;
+      toast('Trade actualizado','ok');
+    } else {
+      trades.push(tradeData);
+      addEvent(pnl>=0?'win':'loss',`Trade ${type} ${acc?acc.name:''}: ${fmtUSD(pnl)} (${pips.toFixed(1)} pips)`);
+      toast('Trade guardado','ok');
+    }
   }
   editTradeId=null;
   // Si la cuenta afectada tiene un manualBalance viejo, lo limpiamos
@@ -5816,6 +6181,7 @@ function renderJournal(){
   const sess=document.getElementById('jSession').value;
   const pairF=document.getElementById('jPair').value;
   const accF=document.getElementById('jAccount').value;
+  const tipoF=document.getElementById('jTipoInstr')?.value||'';
   const zonaF=document.getElementById('jZona')?.value||'';
   // refresh account filter
   const jSel=document.getElementById('jAccount');const prev=jSel.value;
@@ -5830,6 +6196,7 @@ function renderJournal(){
     if(sess&&t.session!==sess) return false;
     if(pairF&&t.pair!==pairF) return false;
     if(accF&&String(t.accountId)!==accF) return false;
+    if(tipoF&&(t.tipo||'forex')!==tipoF) return false;
     if(zonaF&&(t.zona||'')!==zonaF) return false;
     if(txt&&!((t.date||'')+t.setup+t.notes+t.tv+(accName(t.accountId)||'')+(t.pair||'')).toLowerCase().includes(txt)) return false;
     return true;
@@ -5852,7 +6219,8 @@ function renderJournal(){
     const tr=document.createElement('tr');
     tr.style.cursor='pointer';
     tr.title='Click para expandir gráfico';
-    tr.innerHTML=`<td class="muted">${f.length-globalI}${t.tv?`<div style="font-size:8px;color:var(--cyan);opacity:.7;line-height:1;margin-top:2px;" class="tv-chev-${t.id}">▾ tv</div>`:''}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:10px;">${t.pair||'EUR/USD'}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${t.sl?.toFixed(5)||'—'}</td><td class="muted">${t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${t.close?.toFixed(5)||'—'}</td><td>${t.lots?.toFixed(2)||'—'}</td><td class="${t.pips>=0?'pos':'neg'}">${t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${((t.risk||0)*100).toFixed(2)}%</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
+    const isFutT = t.tipo==='futuros';
+    tr.innerHTML=`<td class="muted">${f.length-globalI}${t.tv?`<div style="font-size:8px;color:var(--cyan);opacity:.7;line-height:1;margin-top:2px;" class="tv-chev-${t.id}">▾ tv</div>`:''}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;color:${isFutT?'var(--orange)':'var(--gold)'};">${isFutT?`${t.instrumento||'—'} <span style="font-size:8px;opacity:.7;">×${t.contratos||1}</span>`:(t.pair||'EUR/USD')}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${isFutT?(t.entryPrice??t.entry)?.toFixed(2)||'—':t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${isFutT?(t.slPrice??t.sl)?.toFixed(2)||'—':t.sl?.toFixed(5)||'—'}</td><td class="muted">${isFutT?'—':t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${isFutT?(t.exitPrice??t.close)?.toFixed(2)||'—':t.close?.toFixed(5)||'—'}</td><td>${isFutT?`<span style="color:var(--orange);">${t.contratos||1} cto${(t.contratos||1)!==1?'s':''}</span>`:t.lots?.toFixed(2)||'—'}</td><td class="${isFutT?'muted':(t.pips>=0?'pos':'neg')}">${isFutT?'—':t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${isFutT?(t.riskUSD>0?fmtUSD(t.riskUSD):'—'):((t.risk||0)*100).toFixed(2)+'%'}</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
     tr.addEventListener('click',function(e){
       if(e.target.tagName==='BUTTON'||e.target.tagName==='A') return;
       const d=document.getElementById(detailId);
@@ -5916,7 +6284,8 @@ function goJournalPage(p){
 // Configuración por defecto (editable por el usuario)
 const NEOMAA_DEFAULT = {
   '5k':  { nombre:'Neomaa', size:5000,  numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} },
-  '50k': { nombre:'Neomaa', size:50000, numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} }
+  '50k': { nombre:'Neomaa', size:50000, numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} },
+  'fut': { nombre:'Futuros', size:50000, numFases:1, instrumento:'ES', fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} }
 };
 // Cargamos config guardada o usamos defaults
 let NEOMAA = JSON.parse(localStorage.getItem('hq_bt_cfg')||'null') || JSON.parse(JSON.stringify(NEOMAA_DEFAULT));
@@ -5948,16 +6317,27 @@ function openBtCfgModal(key){
   document.getElementById('cfg_split').value    = cfg.funded.split||80;
   document.getElementById('cfg_funded_daily').value = cfg.funded.dailyDD||4;
   document.getElementById('cfg_funded_max').value   = cfg.funded.maxDD||8;
+  const futWrap = document.getElementById('cfg_fut_wrap');
+  if(futWrap){
+    futWrap.style.display = key==='fut' ? '' : 'none';
+    if(key==='fut'){
+      const sel = document.getElementById('cfg_fut_instr');
+      sel.innerHTML = futInstruments.map(f=>`<option value="${f.id}">${f.id} — ${f.nombre}</option>`).join('');
+      sel.value = cfg.instrumento||'ES';
+    }
+  }
   openModal('btCfgModal');
 }
 
 function saveBtCfg(){
   const key = editingBtCfg;
   const numFases = document.getElementById('cfg_fases1').checked ? 1 : 2;
+  const instrumento = key==='fut' ? (document.getElementById('cfg_fut_instr')?.value||'ES') : undefined;
   NEOMAA[key] = {
     nombre: document.getElementById('cfg_nombre').value||'Neomaa',
     size:   parseFloat(document.getElementById('cfg_size').value)||5000,
     numFases,
+    ...(instrumento !== undefined && { instrumento }),
     fase1:  { target: parseFloat(document.getElementById('cfg_f1_target').value)||8,  dailyDD: parseFloat(document.getElementById('cfg_f1_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_f1_max').value)||8  },
     fase2:  { target: parseFloat(document.getElementById('cfg_f2_target').value)||5,  dailyDD: parseFloat(document.getElementById('cfg_f2_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_f2_max').value)||8  },
     funded: { split:  parseFloat(document.getElementById('cfg_split').value)||80,     dailyDD: parseFloat(document.getElementById('cfg_funded_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_funded_max').value)||8 }
@@ -5979,27 +6359,43 @@ function updateBtCards(){
     const nf=cfg.numFases||2;
     if(sub) sub.textContent=`${cfg.nombre} · ${nf} Fase${nf>1?'s':''} · ${cfg.fase1.target}%${nf>1?' / '+cfg.fase2.target+'%':''} target`;
   });
+  const cfgFut=NEOMAA['fut'];
+  const elFutT=document.getElementById('bt_title_fut');
+  const elFutS=document.getElementById('bt_sub_fut');
+  const elFutB=document.getElementById('bt_fut_instr_badge');
+  if(elFutT) elFutT.textContent=fmtUSD(cfgFut.size);
+  if(elFutB) elFutB.textContent=cfgFut.instrumento||'ES';
+  if(elFutS){ const nf=cfgFut.numFases||1; elFutS.textContent=`${cfgFut.nombre} · ${nf} Fase${nf>1?'s':''} · ${cfgFut.fase1.target}% target`; }
   const rsz=document.getElementById('bt_rules_size');
   if(rsz) rsz.textContent=fmtUSD(NEOMAA[btAccount].size);
 }
 
 function selectBtAccount(key){
   btAccount = key;
-  const other = key==='5k'?'50k':'5k';
-  document.getElementById(`bt_card_${key}`).style.border='2px solid rgba(56,189,248,.5)';
-  document.getElementById(`bt_card_${key}`).style.background='linear-gradient(135deg,rgba(56,189,248,.1),rgba(56,189,248,.03))';
-  document.getElementById(`bt_dot_${key}`).style.background='var(--cyan)';
-  document.getElementById(`bt_dot_${key}`).style.boxShadow='0 0 8px var(--cyan)';
-  document.getElementById(`bt_lbl_${key}`).style.color='var(--cyan)';
-  document.getElementById(`bt_lbl_${key}`).textContent='Cuenta Seleccionada';
-  document.getElementById(`bt_title_${key}`).style.color='var(--text)';
-  document.getElementById(`bt_card_${other}`).style.border='2px solid var(--border)';
-  document.getElementById(`bt_card_${other}`).style.background='rgba(255,255,255,.02)';
-  document.getElementById(`bt_dot_${other}`).style.background='var(--border2)';
-  document.getElementById(`bt_dot_${other}`).style.boxShadow='none';
-  document.getElementById(`bt_lbl_${other}`).style.color='var(--sub)';
-  document.getElementById(`bt_lbl_${other}`).textContent='Cuenta Disponible';
-  document.getElementById(`bt_title_${other}`).style.color='var(--sub)';
+  const allKeys=['5k','50k','fut'];
+  allKeys.forEach(k=>{
+    const isActive = k===key;
+    const card=document.getElementById(`bt_card_${k}`);
+    const dot=document.getElementById(`bt_dot_${k}`);
+    const lbl=document.getElementById(`bt_lbl_${k}`);
+    const ttl=document.getElementById(`bt_title_${k}`);
+    if(!card) return;
+    const accent = k==='fut'?'var(--orange)':'rgba(56,189,248,1)';
+    const accentAlpha = k==='fut'?'rgba(251,146,60,':'rgba(56,189,248,';
+    if(isActive){
+      card.style.border=`2px solid ${accent}`;
+      card.style.background=`linear-gradient(135deg,${accentAlpha}.1),${accentAlpha}.03))`;
+      dot.style.background=accent; dot.style.boxShadow=`0 0 8px ${accent}`;
+      if(lbl){ lbl.style.color=accent; lbl.textContent='Cuenta Seleccionada'; }
+      if(ttl) ttl.style.color='var(--text)';
+    } else {
+      card.style.border='2px solid var(--border)';
+      card.style.background='rgba(255,255,255,.02)';
+      dot.style.background='var(--border2)'; dot.style.boxShadow='none';
+      if(lbl){ lbl.style.color='var(--sub)'; lbl.textContent='Cuenta Disponible'; }
+      if(ttl) ttl.style.color='var(--sub)';
+    }
+  });
   document.getElementById('bt_rules_size').textContent=fmtUSD(NEOMAA[key].size);
   renderBtRules();
   calcBacktest();
@@ -6226,6 +6622,19 @@ function openBtModal(){
   document.getElementById('btModalPreview').style.display='none';
   document.getElementById('b_pnl_usd').value='';
 
+  // Instrumento: visible solo para cuenta fut
+  const isFutBt = btAccount==='fut';
+  const instrGrp = document.getElementById('b_instr_grp');
+  if(instrGrp){
+    instrGrp.style.display = isFutBt ? '' : 'none';
+    if(isFutBt){
+      const sel = document.getElementById('b_instrumento');
+      sel.innerHTML = futInstruments.map(f=>`<option value="${f.id}">${f.id} — ${f.nombre}</option>`).join('');
+      const cfgInstr = NEOMAA['fut'].instrumento||'ES';
+      sel.value = cfgInstr;
+    }
+  }
+
   // Pre-rellenar riesgo en $ desde el último trade o desde la cuenta activa
   const cfg = NEOMAA[btAccount];
   const lastTrade = [...btTrades].filter(t=>t.account===btAccount).sort((a,b)=>b.id-a.id)[0];
@@ -6259,6 +6668,17 @@ function editBtTrade(id){
   document.getElementById('b_pnl_usd').value=t.pnl_direct||'';
   document.getElementById('b_tv').value=t.tv||'';
   document.getElementById('b_notes').value=t.notes||'';
+  // Instrumento para cuenta fut
+  const instrGrpE = document.getElementById('b_instr_grp');
+  if(instrGrpE){
+    const isFutBtE = t.account==='fut';
+    instrGrpE.style.display = isFutBtE ? '' : 'none';
+    if(isFutBtE){
+      const selE = document.getElementById('b_instrumento');
+      selE.innerHTML = futInstruments.map(f=>`<option value="${f.id}">${f.id} — ${f.nombre}</option>`).join('');
+      selE.value = t.instrumento||'ES';
+    }
+  }
   renderBtRulesCheck();
   // Restore checked rules
   if(t.rules) t.rules.forEach((v,i)=>{
@@ -6307,14 +6727,14 @@ function saveBtTrade(){
     session:document.getElementById('b_session').value,
     riskUSD,
     pnl_direct:pnlDirect,
-    pips: pnlDirect,      // used as proxy; calcBacktest will use pnl_direct directly
+    pips: pnlDirect,
     rr,
     tv:document.getElementById('b_tv').value,
     notes:document.getElementById('b_notes').value,
     rules,
     zona,
     account:btAccount,
-    // legacy fields set to 0 so old calcBacktest math doesn't crash
+    ...(btAccount==='fut' && { instrumento: document.getElementById('b_instrumento')?.value||'ES', tipo:'futuros' }),
     entry:0, sl:0, tp:0, close:0
   };
   if(editBtTradeId){
@@ -7297,6 +7717,71 @@ function checkDiasSeguidos(){
   return alerts;
 }
 
+// ── Catálogo de Instrumentos de Futuros ──────────────────────
+let editingFutInstr = null;
+
+function renderFutInstr(){
+  const body = document.getElementById('futInstrBody');
+  const empty = document.getElementById('futInstrEmpty');
+  if(!body) return;
+  if(!futInstruments.length){ body.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  body.innerHTML = futInstruments.map(f=>`
+    <tr>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--orange);">${f.id}</span></td>
+      <td>${f.nombre}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">${f.tickSize}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">$${f.tickValue}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">$${f.pointValue}/punto</td>
+      <td style="text-align:right;white-space:nowrap;">
+        <button class="btn sm ghost" onclick="openFutInstrModal('${f.id}')">✎</button>
+        <button class="btn sm danger" onclick="deleteFutInstr('${f.id}')">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openFutInstrModal(id=null){
+  editingFutInstr = id;
+  document.getElementById('futInstrModalTitle').textContent = id ? 'Editar Instrumento' : 'Nuevo Instrumento';
+  const f = id ? futInstruments.find(x=>x.id===id) : null;
+  document.getElementById('fi_symbol').value    = f ? f.id        : '';
+  document.getElementById('fi_nombre').value    = f ? f.nombre    : '';
+  document.getElementById('fi_tickSize').value  = f ? f.tickSize  : '';
+  document.getElementById('fi_tickValue').value = f ? f.tickValue : '';
+  document.getElementById('fi_pointValue').value= f ? f.pointValue: '';
+  document.getElementById('fi_symbol').readOnly = !!id;
+  openModal('futInstrModal');
+}
+
+function calcFiPointValue(){
+  const ts = parseFloat(document.getElementById('fi_tickSize').value);
+  const tv = parseFloat(document.getElementById('fi_tickValue').value);
+  if(ts>0 && tv>0) document.getElementById('fi_pointValue').value = +(tv/ts).toFixed(4);
+}
+
+function saveFutInstr(){
+  const sym  = document.getElementById('fi_symbol').value.trim().toUpperCase();
+  const nombre= document.getElementById('fi_nombre').value.trim();
+  const ts   = parseFloat(document.getElementById('fi_tickSize').value);
+  const tv   = parseFloat(document.getElementById('fi_tickValue').value);
+  if(!sym || !nombre || !ts || !tv){ toast('Completá todos los campos','err'); return; }
+  const pv = +(tv/ts).toFixed(4);
+  if(editingFutInstr){
+    const idx = futInstruments.findIndex(x=>x.id===editingFutInstr);
+    if(idx>-1) futInstruments[idx] = { id:sym, nombre, tickSize:ts, tickValue:tv, pointValue:pv };
+  } else {
+    if(futInstruments.find(x=>x.id===sym)){ toast('Ya existe un instrumento con ese símbolo','err'); return; }
+    futInstruments.push({ id:sym, nombre, tickSize:ts, tickValue:tv, pointValue:pv });
+  }
+  markDirty(); save(); closeModal('futInstrModal'); renderFutInstr();
+  toast('Instrumento guardado','ok');
+}
+
+function deleteFutInstr(id){
+  futInstruments = futInstruments.filter(x=>x.id!==id);
+  markDirty(); save(); renderFutInstr();
+}
+
 function renderPares(){
   // hoy
   const parsHoy=getParHoy();
@@ -7440,6 +7925,10 @@ function saveRiskEdit(){
 // ════════════════════════════════════════════════════════════
 // CUENTAS
 // ════════════════════════════════════════════════════════════
+function toggleAccTipo(){
+  // reservado para lógica futura (ej: campos específicos de futuros en cuenta)
+}
+
 function toggleFase2(){
   const fases = document.querySelector('input[name="ac_fases"]:checked')?.value||'1';
   const is2 = fases==='2';
@@ -7479,6 +7968,8 @@ function openAccModal(id=null){
     document.getElementById('ac_target2').value=a.target2||5;
     document.getElementById('ac_start').value=a.startDate||'';
     document.getElementById('ac_next').value=a.nextTrade||'';
+    // set tipo radio
+    document.getElementById(a.tipo==='futuros'?'ac_tipo_futuros':'ac_tipo_forex').checked=true;
     // set fases radio
     const numFases = a.numFases||1;
     document.getElementById(numFases===2?'ac_fases2':'ac_fases1').checked=true;
@@ -7492,6 +7983,7 @@ function openAccModal(id=null){
     document.getElementById('ac_target').value=10;document.getElementById('ac_target2').value=5;
     document.getElementById('ac_start').value=todayStr();
     document.getElementById('ac_fases1').checked=true;
+    document.getElementById('ac_tipo_forex').checked=true;
     toggleFase2();
   }
   openModal('accModal');
@@ -7522,6 +8014,7 @@ function saveAcc(){
     target:parseFloat(document.getElementById('ac_target').value)||10,
     target2:parseFloat(document.getElementById('ac_target2').value)||5,
     numFases,
+    tipo: document.getElementById('ac_tipo_futuros').checked ? 'futuros' : 'forex',
     startDate:document.getElementById('ac_start').value,
     nextTrade:document.getElementById('ac_next').value,
     notes:document.getElementById('ac_notes').value,
@@ -7726,7 +8219,7 @@ function renderCuentas(){
     const ddColor=pct=>pct>=80?'pf-red':pct>=50?'pf-gold':'pf-green';
     const card=document.createElement('div');
     card.className=cardClass;
-    card.innerHTML=`<div class="acc-card-top"><div style="flex:1;min-width:0;"><div class="acc-firm">${escHtml(a.firm||'Sin firma')}</div><div class="acc-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(a.name)}</div><div style="margin-top:6px;display:flex;align-items:center;gap:5px;">
+    card.innerHTML=`<div class="acc-card-top"><div style="flex:1;min-width:0;"><div class="acc-firm" style="display:flex;align-items:center;gap:5px;">${escHtml(a.firm||'Sin firma')}${a.tipo==='futuros'?'<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--orange);background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);padding:1px 5px;border-radius:4px;letter-spacing:.05em;">FUTUROS</span>':''}</div><div class="acc-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(a.name)}</div><div style="margin-top:6px;display:flex;align-items:center;gap:5px;">
       ${a.numFases===2
         ? `<span class="badge b-challenge" style="font-size:8px;">C1</span>
            <span style="color:var(--dim);font-size:10px;">→</span>
@@ -8111,6 +8604,90 @@ chequearSesion();   // decide: mostrar login o entrar con sesión activa
 // ════════════════════════════════════════════════════════════
 // CALCULADORA DE LOTAJE
 // ════════════════════════════════════════════════════════════
+function switchCalcTab(tab){
+  const isFut = tab==='futuros';
+  document.getElementById('calcForexPanel').style.display = isFut?'none':'';
+  document.getElementById('calcFutPanel').style.display   = isFut?'':'none';
+  document.getElementById('calcTabForex').className = isFut?'btn':'btn primary';
+  document.getElementById('calcTabFut').className   = isFut?'btn primary':'btn';
+  if(isFut){ populateCfInstrSelect(); calcFuturos(); } else { calcLotaje(); }
+}
+
+function populateCfInstrSelect(){
+  const sel = document.getElementById('cf_instr');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = futInstruments.map(f=>`<option value="${f.id}">${f.id} — ${f.nombre} ($${f.pointValue}/pto)</option>`).join('');
+  if(cur && futInstruments.find(f=>f.id===cur)) sel.value=cur;
+}
+
+function calcFuturos(){
+  const account = parseFloat(document.getElementById('cf_account')?.value)||10000;
+  const riskPct = (parseFloat(document.getElementById('cf_risk')?.value)||1)/100;
+  const instrId = document.getElementById('cf_instr')?.value;
+  const instr   = futInstruments.find(f=>f.id===instrId);
+  const slPts   = parseFloat(document.getElementById('cf_sl_pts')?.value)||10;
+  const rr      = parseFloat(document.getElementById('cf_rr')?.value)||2;
+  const entry   = parseFloat(document.getElementById('cf_entry')?.value)||null;
+
+  const resEl  = document.getElementById('calcFutResult');
+  const levEl  = document.getElementById('calcFutLevels');
+  if(!instr||!resEl||!levEl) return;
+
+  const riskUSD   = account * riskPct;
+  const riskPerCto= slPts * instr.pointValue;
+  const contratos = Math.floor(riskUSD / riskPerCto);
+  const contratosMax = Math.max(contratos,0);
+  const riskReal  = contratosMax * riskPerCto;
+  const targetPts = slPts * rr;
+  const targetUSD = contratosMax * targetPts * instr.pointValue;
+
+  resEl.innerHTML = `
+    <div class="kpi-box" style="--accent:var(--orange)"><div class="kpi-label">Contratos</div><div class="kpi-value" style="color:var(--orange)">${contratosMax}</div><div class="kpi-sub">${instr.id}</div></div>
+    <div class="kpi-box" style="--accent:var(--red)"><div class="kpi-label">Riesgo Real</div><div class="kpi-value" style="color:var(--red)">${fmtUSD(riskReal)}</div><div class="kpi-sub">${(riskReal/account*100).toFixed(2)}% de la cuenta</div></div>
+    <div class="kpi-box" style="--accent:var(--green)"><div class="kpi-label">Target (${rr}R)</div><div class="kpi-value" style="color:var(--green)">${fmtUSD(targetUSD)}</div><div class="kpi-sub">${targetPts} puntos</div></div>
+    <div class="kpi-box" style="--accent:var(--cyan)"><div class="kpi-label">Point Value</div><div class="kpi-value" style="color:var(--cyan)">$${instr.pointValue}</div><div class="kpi-sub">por contrato</div></div>
+  `;
+  let levHtml = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;">
+      <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.8rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">SL</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);">${slPts} pts</div>
+        <div style="font-size:10px;color:var(--sub);margin-top:2px;">= ${fmtUSD(slPts*instr.pointValue)}/cto</div>
+      </div>
+      <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.8rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">Target</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--green);">${targetPts} pts</div>
+        <div style="font-size:10px;color:var(--sub);margin-top:2px;">= ${fmtUSD(targetPts*instr.pointValue)}/cto</div>
+      </div>
+      <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.8rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">Tick Size</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--cyan);">${instr.tickSize}</div>
+        <div style="font-size:10px;color:var(--sub);margin-top:2px;">= ${fmtUSD(instr.tickValue)}/tick</div>
+      </div>
+    </div>`;
+  if(entry){
+    const slPrice     = entry - slPts;
+    const targetPrice = entry + targetPts;
+    levHtml += `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:.5rem;">
+      <div style="background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:var(--r);padding:.7rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:4px;">SL PRECIO</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--red);">${slPrice.toFixed(2)}</div>
+      </div>
+      <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:var(--r);padding:.7rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:4px;">ENTRADA</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--gold);">${entry.toFixed(2)}</div>
+      </div>
+      <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:var(--r);padding:.7rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:4px;">TARGET</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--green);">${targetPrice.toFixed(2)}</div>
+      </div>
+    </div>`;
+  }
+  levEl.innerHTML = levHtml;
+}
+
 function calcLotaje(){
   const account = parseFloat(document.getElementById('calc_account')?.value)||10000;
   const riskPct = (parseFloat(document.getElementById('calc_risk')?.value)||1)/100;
@@ -8780,11 +9357,13 @@ function checkReglasWeek(weekTrades, start, end){
 // ════════════════════════════════════════════════════════════
 
 function stFilterTrades(){
-  const periodo = document.getElementById('st_periodo')?.value || 'all';
+  const periodo   = document.getElementById('st_periodo')?.value   || 'all';
+  const tipoInstr = document.getElementById('st_tipo_instr')?.value || '';
   const now = new Date();
   const today = todayStr();
   return trades.filter(t=>{
     if(!t.date) return false;
+    if(tipoInstr && (t.tipo||'forex')!==tipoInstr) return false;
     if(periodo==='month') return t.date.startsWith(today.slice(0,7));
     if(periodo==='week'){
       const d=new Date(t.date), start=new Date(now);
