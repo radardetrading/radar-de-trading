@@ -2634,7 +2634,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>#</th><th>Fecha</th><th>Cuenta</th><th>Par</th><th>H.Ent</th><th>H.Sal</th><th>Tipo</th><th>Sesión</th><th>Zona</th><th>Entrada</th><th>SL</th><th>TP</th><th>Cierre</th><th>Lotes</th><th>Pips</th><th>P&L</th><th>R:R</th><th>Riesgo%</th><th>Resultado</th><th>TradingView</th><th>Setup</th><th>Notas</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>Fecha</th><th>Cuenta</th><th>Par</th><th>H.Ent</th><th>H.Sal</th><th>Tipo</th><th>Sesión</th><th>Zona</th><th>Entrada</th><th>SL</th><th>TP</th><th>Cierre</th><th>Lotes</th><th>Pips</th><th>P&L</th><th>R:R</th><th>Riesgo%</th><th>Resultado</th><th>Rutina</th><th>TradingView</th><th>Setup</th><th>Notas</th><th></th></tr></thead>
         <tbody id="journalBody"></tbody>
       </table>
       <div id="journalEmpty" class="empty" style="display:none"><div class="empty-icon">📋</div>Sin trades registrados.</div>
@@ -2756,6 +2756,11 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div class="section-label" style="margin-bottom:.8rem;">🏆 Rachas</div>
         <div id="st_rachas"></div>
       </div>
+    </div>
+
+    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+      <div class="section-label" style="margin-bottom:.8rem;">⚡ Rutina × Performance</div>
+      <div id="st_rutina_perf"></div>
     </div>
 
   </div>
@@ -4138,6 +4143,19 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
       <div class="form-sep"></div>
       <div class="form-group full" id="moodDynamicSection">
         <!-- Preguntas dinámicas de estado mental — renderMoodModal() -->
+      </div>
+
+      <!-- RUTINA DEL DÍA -->
+      <div class="form-sep"></div>
+      <div id="tradeRutinaStrip" style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.8rem 1rem;margin-top:4px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.08em;text-transform:uppercase;">⚡ Rutina del día</span>
+          <span id="tRutPct" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;">—</span>
+        </div>
+        <div style="height:5px;border-radius:3px;background:var(--border);overflow:hidden;margin-bottom:.6rem;">
+          <div id="tRutBar" style="height:100%;width:0%;border-radius:3px;background:var(--cyan);transition:width .3s;"></div>
+        </div>
+        <div id="tRutHabitos" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
       </div>
     </div>
     <div class="form-actions">
@@ -5773,10 +5791,15 @@ function renderDashHoy(){
     return;
   }
 
+  const rutHoy = dayPct(rutDays[today]||{});
+  const rutColor = rutHoy===0?'var(--dim)':rutHoy===100?'var(--green)':rutHoy>=50?'var(--cyan)':'var(--orange)';
+  const rutSub   = rutHoy===0 ? 'Sin registrar' : (rutHoy===100 ? '¡Día perfecto!' : `${rutHabitos.filter(h=>h.type==='check'?!!(rutDays[today]||{})[h.id]:(parseInt((rutDays[today]||{})[h.id+'_min'])||0)>0).length}/${rutHabitos.length} hábitos`);
+
   el.innerHTML =
     kpi('Trades', hoy.length, 'var(--text)', `${wins}W · ${losses}L · ${bes}BE`) +
     kpi('P&L Hoy', (pnl>=0?'+':'')+fmtUSD(pnl), pnl>=0?'var(--green)':'var(--red)') +
     kpi('Pips', (pips>=0?'+':'')+pips.toFixed(1), pips>=0?'var(--green)':'var(--red)') +
+    kpi('Rutina', rutHoy===0?'—':rutHoy+'%', rutColor, rutSub) +
     (activeReglas.length ? kpi('Reglas', brokenToday===0?'✓ OK':`⚠ ${brokenToday} rota${brokenToday>1?'s':''}`, brokenToday===0?'var(--green)':'var(--red)', `${reglasOk}/${activeReglas.length} cumplidas`) : '');
 }
 
@@ -5986,6 +6009,28 @@ function onTradeAccountChange(){
 // ════════════════════════════════════════════════════════════
 // JOURNAL
 // ════════════════════════════════════════════════════════════
+
+function renderTradeRutinaStrip(dateStr){
+  const key = dateStr || todayKey();
+  const day  = rutDays[key] || {};
+  const pct  = dayPct(day);
+  const color = pct===0 ? 'var(--dim)' : pct===100 ? 'var(--green)' : pct>=50 ? 'var(--cyan)' : 'var(--orange)';
+  const barColor = pct===100 ? 'var(--green)' : pct>=50 ? 'var(--cyan)' : 'var(--orange)';
+  const pctEl = document.getElementById('tRutPct');
+  const barEl = document.getElementById('tRutBar');
+  const habEl = document.getElementById('tRutHabitos');
+  if(!pctEl) return;
+  pctEl.textContent = pct===0 ? 'Sin registrar' : pct.toFixed(0)+'%';
+  pctEl.style.color = color;
+  barEl.style.width  = pct+'%';
+  barEl.style.background = barColor;
+  if(!rutHabitos.length){ habEl.innerHTML='<span style="font-size:10px;color:var(--dim);">Sin hábitos configurados</span>'; return; }
+  habEl.innerHTML = rutHabitos.map(h=>{
+    const done = h.type==='check' ? !!day[h.id] : (parseInt(day[h.id+'_min'])||0)>0;
+    return `<span title="${escHtml(h.name)}" style="font-size:13px;opacity:${done?1:.25};cursor:default;">${h.icon||'⭐'}</span>`;
+  }).join('');
+}
+
 function openTradeModal(){
   editTradeId=null;
   const today=new Date().toISOString().split('T')[0];
@@ -6014,6 +6059,7 @@ function openTradeModal(){
   document.getElementById('t_zona_selected').textContent='';
   document.getElementById('t_zona_custom').value='';
   renderMoodModal(null);
+  renderTradeRutinaStrip();
   openModal('tradeModal');
 }
 
@@ -6078,6 +6124,7 @@ function editTrade(id){
     legacyAnswers['q_after_estado'] = legMap[t.moodAfter] || t.moodAfter;
   }
   renderMoodModal({...legacyAnswers, ...(t.moodAnswers||{})});
+  renderTradeRutinaStrip(t.date);
   openModal('tradeModal');
 }
 
@@ -6104,7 +6151,8 @@ function saveTrade(){
     moodNoteB:'',
     moodAfter: _moodAnswers['q_after_estado']||window._moodAfter||'',
     moodNoteA:'',
-    moodAnswers: {..._moodAnswers}
+    moodAnswers: {..._moodAnswers},
+    rutinaDelDia: Math.round(dayPct(rutDays[document.getElementById('t_date').value||todayKey()]||{}))
   };
 
   let tradeData;
@@ -6239,7 +6287,7 @@ function renderJournal(){
     tr.style.cursor='pointer';
     tr.title='Click para expandir gráfico';
     const isFutT = t.tipo==='futuros';
-    tr.innerHTML=`<td class="muted">${f.length-globalI}${t.tv?`<div style="font-size:8px;color:var(--cyan);opacity:.7;line-height:1;margin-top:2px;" class="tv-chev-${t.id}">▾ tv</div>`:''}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;color:${isFutT?'var(--orange)':'var(--gold)'};">${isFutT?`${t.instrumento||'—'} <span style="font-size:8px;opacity:.7;">×${t.contratos||1}</span>`:(t.pair||'EUR/USD')}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${isFutT?(t.entryPrice??t.entry)?.toFixed(2)||'—':t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${isFutT?(t.slPrice??t.sl)?.toFixed(2)||'—':t.sl?.toFixed(5)||'—'}</td><td class="muted">${isFutT?'—':t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${isFutT?(t.exitPrice??t.close)?.toFixed(2)||'—':t.close?.toFixed(5)||'—'}</td><td>${isFutT?`<span style="color:var(--orange);">${t.contratos||1} cto${(t.contratos||1)!==1?'s':''}</span>`:t.lots?.toFixed(2)||'—'}</td><td class="${isFutT?'muted':(t.pips>=0?'pos':'neg')}">${isFutT?'—':t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${isFutT?(t.riskUSD>0?fmtUSD(t.riskUSD):'—'):((t.risk||0)*100).toFixed(2)+'%'}</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
+    tr.innerHTML=`<td class="muted">${f.length-globalI}${t.tv?`<div style="font-size:8px;color:var(--cyan);opacity:.7;line-height:1;margin-top:2px;" class="tv-chev-${t.id}">▾ tv</div>`:''}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;color:${isFutT?'var(--orange)':'var(--gold)'};">${isFutT?`${t.instrumento||'—'} <span style="font-size:8px;opacity:.7;">×${t.contratos||1}</span>`:(t.pair||'EUR/USD')}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${isFutT?(t.entryPrice??t.entry)?.toFixed(2)||'—':t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${isFutT?(t.slPrice??t.sl)?.toFixed(2)||'—':t.sl?.toFixed(5)||'—'}</td><td class="muted">${isFutT?'—':t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${isFutT?(t.exitPrice??t.close)?.toFixed(2)||'—':t.close?.toFixed(5)||'—'}</td><td>${isFutT?`<span style="color:var(--orange);">${t.contratos||1} cto${(t.contratos||1)!==1?'s':''}</span>`:t.lots?.toFixed(2)||'—'}</td><td class="${isFutT?'muted':(t.pips>=0?'pos':'neg')}">${isFutT?'—':t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${isFutT?(t.riskUSD>0?fmtUSD(t.riskUSD):'—'):((t.risk||0)*100).toFixed(2)+'%'}</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${(()=>{const rp=t.rutinaDelDia;if(rp==null||rp===undefined)return '<span style="color:var(--dim);font-size:10px;">—</span>';const rc=rp===100?'var(--green)':rp>=50?'var(--cyan)':rp>0?'var(--orange)':'var(--dim)';return `<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:${rc};background:${rc}18;border:1px solid ${rc}40;padding:1px 6px;border-radius:10px;">${rp}%</span>`;})()}</td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
     tr.addEventListener('click',function(e){
       if(e.target.tagName==='BUTTON'||e.target.tagName==='A') return;
       const d=document.getElementById(detailId);
@@ -9606,6 +9654,42 @@ function renderEstadisticas(){
         </div>
       </div>
     </div>`;
+
+  // ── Rutina × Performance ───────────────────────────────────
+  const rutEl = document.getElementById('st_rutina_perf');
+  if(rutEl){
+    const conRut = t.filter(x=>x.rutinaDelDia!=null);
+    if(conRut.length < 3){
+      rutEl.innerHTML='<div style="color:var(--dim);font-size:12px;">Necesitás al menos 3 trades con rutina registrada.</div>';
+    } else {
+      const buckets = [
+        { label:'Sin rutina', color:'var(--dim)',    filter: x => (x.rutinaDelDia||0) === 0 },
+        { label:'1–50%',      color:'var(--orange)', filter: x => (x.rutinaDelDia||0) >  0 && (x.rutinaDelDia||0) <= 50 },
+        { label:'51–99%',     color:'var(--cyan)',   filter: x => (x.rutinaDelDia||0) >  50 && (x.rutinaDelDia||0) < 100 },
+        { label:'100% ⭐',    color:'var(--green)',  filter: x => (x.rutinaDelDia||0) === 100 },
+      ].map(b => {
+        const g = conRut.filter(b.filter);
+        const wins = g.filter(x=>x.result==='WIN').length;
+        const pnl  = g.reduce((s,x)=>s+(x.pnl||0),0);
+        const avgRR= g.length ? g.reduce((s,x)=>s+(x.rr||0),0)/g.length : 0;
+        return { ...b, n:g.length, wr: g.length ? wins/g.length*100 : 0, pnl, avgRR };
+      }).filter(b=>b.n>0);
+      if(!buckets.length){ rutEl.innerHTML='<div style="color:var(--dim);font-size:12px;">Sin datos.</div>'; }
+      else {
+        const maxPnl = Math.max(...buckets.map(b=>Math.abs(b.pnl)),1);
+        rutEl.innerHTML = buckets.map(b=>`
+          <div style="display:grid;grid-template-columns:80px 1fr 60px 55px 45px;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:${b.color};">${b.label}</div>
+            <div style="height:6px;background:var(--glass2);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${(Math.abs(b.pnl)/maxPnl*100).toFixed(1)}%;background:${b.color};border-radius:3px;"></div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:${b.pnl>=0?'var(--green)':'var(--red)'};text-align:right;">${fmtUSD(b.pnl)}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${b.wr>=50?'var(--green)':'var(--red)'};text-align:right;">${b.wr.toFixed(0)}%WR</div>
+            <div style="font-size:9px;color:var(--dim);text-align:right;">${b.n}t</div>
+          </div>`).join('');
+      }
+    }
+  }
 
   renderPerfilSetup();
 }
