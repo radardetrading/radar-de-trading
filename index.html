@@ -4348,6 +4348,7 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
         <select id="he_session">
           <option value="London">🇬🇧 London</option>
           <option value="New York">🗽 New York</option>
+          <option value="Pre-NY">🌅 Pre-NY</option>
           <option value="Asia">🌏 Asia</option>
           <option value="Overlap">⚡ Overlap</option>
         </select>
@@ -4390,6 +4391,7 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
         <select id="b_session">
           <option value="London">🇬🇧 London</option>
           <option value="New York">🗽 New York</option>
+          <option value="Pre-NY">🌅 Pre-NY</option>
           <option value="Asia">🌏 Asia</option>
           <option value="Overlap">⚡ Overlap</option>
         </select>
@@ -5205,6 +5207,19 @@ function markClean(ts){
 
 // ═══════════════════════════════════════════════════════════════
 // SUPABASE — config, auth, save/load en la nube (Enfoque A)
+// ── SESSION NORMALIZER ────────────────────────────────────────────────────
+function normalizeSession(s){
+  if(!s) return s;
+  const v = s.toString().trim().toLowerCase().replace(/[\.\-_\s]+/g,'');
+  if(['lon','london','londres','gb','gblondon','gblondres'].includes(v)) return 'London';
+  if(['ny','newyork','nuevayork'].includes(v)) return 'New York';
+  if(['pny','preny','prenewyork'].includes(v)) return 'Pre-NY';
+  if(['overlap','ov'].includes(v)) return 'Overlap';
+  if(['asia','as'].includes(v)) return 'Asia';
+  if(['frankfurt','ffm','frank'].includes(v)) return 'Frankfurt';
+  return s.trim();
+}
+
 // ═══════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://mbcdwdpaxrcaplfnjsml.supabase.co';  // ✅ URL ya cargada
 const SUPABASE_ANON_KEY = 'sb_publishable_xOA5GbuyB4sjLFQwdPfeyA_Pxs9WOyH';  // ✅ clave ya cargada
@@ -5249,7 +5264,7 @@ function aplicarEstado(d){
   if(d.reglas)     reglas     = d.reglas;
   if(d.reglasLog)  reglasLog  = d.reglasLog;
   if(d.pilares)    pilares    = d.pilares;
-  if(d.histTrades)      histTrades      = d.histTrades;
+  if(d.histTrades)      histTrades      = d.histTrades.map(t=>({...t, session: normalizeSession(t.session)}));
   if(d.metas)           metas           = d.metas;
   if(d.futInstruments)  futInstruments  = d.futInstruments;
   if(d.btCfg)           NEOMAA          = d.btCfg;
@@ -7355,8 +7370,8 @@ function renderSessionAnalysis(){
   if(acctLabel) acctLabel.textContent = fmtUSD(cfg.size).replace('.00','');
 
   // Sesiones presentes en los datos (orden fijo + cualquier extra)
-  const ORDER = ['Asia','London','New York','Overlap'];
-  const ICON  = {'Asia':'🌏','London':'🇬🇧','New York':'🗽','Overlap':'⚡'};
+  const ORDER = ['Asia','London','Pre-NY','New York','Overlap'];
+  const ICON  = {'Asia':'🌏','London':'🇬🇧','Pre-NY':'🌅','New York':'🗽','Overlap':'⚡'};
   const present = [...new Set(all.map(t=>t.session).filter(Boolean))];
   const sessions = [
     ...ORDER.filter(s=>present.includes(s)),
@@ -8636,7 +8651,7 @@ function importData(e){
       if(d.reglas){ reglas=d.reglas; saveReglas(); }
       if(d.reglasLog){ reglasLog=d.reglasLog; saveReglasLog(); }
       if(d.pilares){ pilares=d.pilares; savePilares(); }
-      if(d.histTrades) histTrades=d.histTrades;       // Backtest Histórico
+      if(d.histTrades) histTrades=d.histTrades.map(t=>({...t, session: normalizeSession(t.session)}));       // Backtest Histórico
       if(d.btCfg){ NEOMAA=d.btCfg; saveBtCfgToStorage(); }
       if(d.btRules){ btQuickRules=d.btRules; saveBtRules(); }
       if(d.btZonas){ btZonas=d.btZonas; saveBtZonas(); }
@@ -8747,7 +8762,7 @@ function undoImportConfirmar(){
     if(prev.reglas){ reglas=prev.reglas; saveReglas(); }
     if(prev.reglasLog){ reglasLog=prev.reglasLog; saveReglasLog(); }
     if(prev.pilares){ pilares=prev.pilares; savePilares(); }
-    if(prev.histTrades) histTrades=prev.histTrades;
+    if(prev.histTrades) histTrades=prev.histTrades.map(t=>({...t, session: normalizeSession(t.session)}));
     if(prev.btCfg){ NEOMAA=prev.btCfg; saveBtCfgToStorage(); }
     if(prev.btRules){ btQuickRules=prev.btRules; saveBtRules(); }
     if(prev.btZonas){ btZonas=prev.btZonas; saveBtZonas(); }
@@ -12630,7 +12645,7 @@ async function importHistorico(event){
       if(isNaN(pctGan)){ errors.push(`Fila ${i+1}: PctGanado inválido`); continue; }
 
       const par = String(r[idx.par]||'').trim();
-      const session = String(r[idx.session]||'').trim();
+      const session = normalizeSession(String(r[idx.session]||'').trim());
       if(!par || !session){ errors.push(`Fila ${i+1}: par o sesión vacíos`); continue; }
 
       // ── Lógica de Resultado: si está, MANDA; si no, deduce por signo ──
@@ -13303,8 +13318,8 @@ function renderHistSim(enriched){
     return;
   }
 
-  const ORDER = ['Asia','London','New York','Overlap'];
-  const ICON  = {'Asia':'🌏','London':'🇬🇧','New York':'🗽','Overlap':'⚡'};
+  const ORDER = ['Asia','London','Pre-NY','New York','Overlap'];
+  const ICON  = {'Asia':'🌏','London':'🇬🇧','Pre-NY':'🌅','New York':'🗽','Overlap':'⚡'};
   const present = [...new Set(all.map(t=>t.session).filter(Boolean))];
   const sessions = [
     ...ORDER.filter(s=>present.includes(s)),
