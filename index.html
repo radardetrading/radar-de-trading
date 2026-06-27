@@ -14410,9 +14410,13 @@ function exportFullExcel(){
 
   // CUENTAS
   addSheet('Cuentas', [
-    ['Cuenta','Fase','Tamaño','Balance','Estado'],
-    ...d.AC.map(a=>[a.name||'', a.phase||a.fase||'', _num(a.size),
-      _num(a.manualBalance!=null?a.manualBalance:(a.balance!=null?a.balance:a.size)), a.status||a.estado||''])
+    ['Cuenta','Fase','Tamaño','Saldo Actual','P&L Journal','Estado'],
+    ...d.AC.map(a=>[
+      a.name||'', a.phase||a.fase||'', _num(a.size),
+      +getEffectiveBalance(a).toFixed(2),
+      +getJournalPnl(a).toFixed(2),
+      a.status||a.estado||''
+    ])
   ], '34D399');
 
   // PAGOS
@@ -14423,8 +14427,23 @@ function exportFullExcel(){
 
   // PARES
   addSheet('Pares', [
-    ['Par','Notas'],
-    ...d.PR.map(p=>[p.name||p.par||'', p.notes||p.desc||''])
+    ['Par','Cuenta A','Cuenta B','Tipo','Días','Notas'],
+    ...d.PR.map(p=>{
+      const a1=accObj(p.acc1), a2=accObj(p.acc2);
+      const dias=(p.dias||[]).map(d=>['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ');
+      return [p.name||'', a1?a1.name:'—', a2?a2.name:'—', p.tipo||'', dias, p.notes||''];
+    })
+  ], 'FB923C');
+
+  // HISTORIAL PARES
+  addSheet('Historial Pares', [
+    ['Fecha','Par','Cuenta A','Cuenta B','Resultado','¿Siguen?','Notas'],
+    ...d.PH.map(h=>{
+      const par=d.PR.find(p=>p.id===h.parId);
+      const a1=par?accObj(par.acc1):null, a2=par?accObj(par.acc2):null;
+      return [h.fecha||'', h.parName||'', a1?a1.name:'—', a2?a2.name:'—',
+        h.res||'', h.siguenJuntas==='si'?'Sí':'No', h.notes||''];
+    })
   ], 'FB923C');
 
   // REGLAS
