@@ -11603,34 +11603,49 @@ function renderRutHoy(){
   const streakEl=document.getElementById('rutStreak');
   if(streakEl) streakEl.textContent = streak>0 ? '🔥 '+streak+' días seguidos' : '';
 
-  // Group habits by timing
-  const renderHabitoCard = h => {
-    if(h.type==='minutes'){
-      const val = parseInt(day[h.id+'_min'])||0;
-      const done = val > 0;
-      const pct = h.meta > 0 ? Math.min(100, val/h.meta*100) : (done?100:0);
-      return `<div style="background:${done?'rgba(52,211,153,.06)':'var(--glass)'};border:1px solid ${done?'rgba(52,211,153,.25)':'var(--border)'};border-radius:10px;padding:.8rem 1rem;transition:all .2s;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-          <span style="font-size:13px;">${escHtml(h.icon)}</span>
-          <span style="font-size:11px;font-weight:600;color:${done?'var(--green)':'var(--text)'};">${escHtml(h.name)}</span>
-          ${done?'<span style="font-size:14px;">✅</span>':'<span style="font-size:14px;opacity:.3;">⭕</span>'}
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <input type="number" min="0" max="999" value="${val||''}" placeholder="${h.meta||0}"
-            oninput="setRutMin('${h.id}',this.value)"
-            style="width:70px;font-size:13px;padding:4px 8px;text-align:center;font-family:'JetBrains Mono',monospace;">
-          <span style="font-size:10px;color:var(--sub);">min ${h.meta?'/ '+h.meta+'min meta':''}</span>
-        </div>
-        ${h.meta>0?`<div style="height:4px;border-radius:2px;background:var(--glass2);margin-top:6px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${pct>=100?'var(--green)':'var(--cyan)'};border-radius:2px;transition:width .3s;"></div></div>`:''}
-      </div>`;
-    } else {
-      const done = !!day[h.id];
-      return `<div onclick="toggleRutCheck('${h.id}')" style="display:flex;align-items:center;gap:10px;padding:.7rem 1rem;background:${done?'rgba(52,211,153,.06)':'var(--glass)'};border:1px solid ${done?'rgba(52,211,153,.25)':'var(--border)'};border-radius:10px;cursor:pointer;transition:all .2s;user-select:none;">
-        <span style="font-size:18px;">${done?'✅':'⭕'}</span>
-        <span style="font-size:13px;">${escHtml(h.icon)}</span>
-        <span style="font-size:12px;font-weight:${done?'700':'400'};color:${done?'var(--green)':'var(--text)'};">${escHtml(h.name)}</span>
-      </div>`;
-    }
+  // Chips para hábitos de check
+  const renderCheckChips = (habits) => {
+    if(!habits.length) return '';
+    return `<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:.6rem;">
+      ${habits.map(h=>{
+        const done = !!day[h.id];
+        return `<button onclick="toggleRutCheck('${h.id}')" style="
+          display:inline-flex;align-items:center;gap:6px;
+          padding:7px 14px;border-radius:20px;cursor:pointer;
+          border:1.5px solid ${done?'rgba(52,211,153,.5)':'var(--border2)'};
+          background:${done?'rgba(52,211,153,.1)':'var(--glass)'};
+          color:${done?'var(--green)':'var(--sub)'};
+          font-size:12px;font-weight:${done?700:400};
+          transition:all .18s;user-select:none;
+          box-shadow:${done?'0 0 10px rgba(52,211,153,.15)':'none'};
+        ">
+          <span style="font-size:13px;line-height:1;">${done?'✓':escHtml(h.icon)}</span>
+          <span>${escHtml(h.name)}</span>
+        </button>`;
+      }).join('')}
+    </div>`;
+  };
+
+  // Cards para hábitos de minutos (barra de progreso)
+  const renderMinCard = h => {
+    const val = parseInt(day[h.id+'_min'])||0;
+    const done = val > 0;
+    const pct = h.meta > 0 ? Math.min(100, val/h.meta*100) : (done?100:0);
+    return `<div style="background:${done?'rgba(52,211,153,.06)':'var(--glass)'};border:1px solid ${done?'rgba(52,211,153,.25)':'var(--border)'};border-radius:10px;padding:.8rem 1rem;transition:all .2s;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem;">
+        <span style="font-size:15px;">${escHtml(h.icon)}</span>
+        <span style="font-size:12px;font-weight:600;color:${done?'var(--green)':'var(--text)'};">${escHtml(h.name)}</span>
+        <span style="margin-left:auto;font-size:13px;opacity:${done?1:.25};">${done?'✅':'⭕'}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="number" min="0" max="999" value="${val||''}" placeholder="${h.meta||0}"
+          oninput="setRutMin('${h.id}',this.value)"
+          style="width:70px;font-size:13px;padding:4px 8px;text-align:center;font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:10px;color:var(--sub);">min${h.meta?' / '+h.meta+' meta':''}</span>
+        ${h.meta>0?`<span style="margin-left:auto;font-size:10px;font-family:'JetBrains Mono',monospace;color:${pct>=100?'var(--green)':'var(--sub)'};">${pct.toFixed(0)}%</span>`:''}
+      </div>
+      ${h.meta>0?`<div style="height:3px;border-radius:2px;background:var(--glass2);margin-top:8px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${pct>=100?'var(--green)':'var(--cyan)'};border-radius:2px;transition:width .3s;"></div></div>`:''}
+    </div>`;
   };
 
   const sections = [
@@ -11643,11 +11658,12 @@ function renderRutHoy(){
   sections.forEach(sec=>{
     const group = rutHabitos.filter(h=>(h.timing||'anytime')===sec.timing);
     if(!group.length) return;
-    html += `<div style="margin-bottom:1.2rem;">
+    const checks = group.filter(h=>h.type==='check');
+    const mins   = group.filter(h=>h.type==='minutes');
+    html += `<div style="margin-bottom:1.4rem;">
       <div style="font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem;color:${sec.color};">${sec.label}</div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        ${group.map(renderHabitoCard).join('')}
-      </div>
+      ${renderCheckChips(checks)}
+      ${mins.length?`<div style="display:flex;flex-direction:column;gap:6px;">${mins.map(renderMinCard).join('')}</div>`:''}
     </div>`;
   });
 
