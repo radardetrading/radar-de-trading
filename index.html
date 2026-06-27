@@ -6008,20 +6008,24 @@ function selectBtAccount(key){
 function renderBtRules(){
   const cfg = NEOMAA[btAccount];
   const size = cfg.size;
+  const nf = cfg.numFases||2;
   document.getElementById('bt_rules_size').textContent = fmtUSD(size);
-  document.getElementById('bt_rules_grid').innerHTML = `
+  const grid = document.getElementById('bt_rules_grid');
+  grid.style.gridTemplateColumns = `repeat(${nf>1?4:3},1fr)`;
+  grid.innerHTML = `
     <div style="background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:var(--r);padding:.8rem 1rem;">
       <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--purple);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">Fase 1 — Challenge</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);">Target: ${cfg.fase1.target}%</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sub);margin-top:3px;">= ${fmtUSD(size*cfg.fase1.target/100)}</div>
       <div style="font-size:11px;color:var(--sub);margin-top:6px;">Daily DD: ${cfg.fase1.dailyDD}% (${fmtUSD(size*cfg.fase1.dailyDD/100)})<br>Max DD: ${cfg.fase1.maxDD}% (${fmtUSD(size*cfg.fase1.maxDD/100)})</div>
     </div>
+    ${nf>1?`
     <div style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);border-radius:var(--r);padding:.8rem 1rem;">
       <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">Fase 2 — Verificación</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);">Target: ${cfg.fase2.target}%</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sub);margin-top:3px;">= ${fmtUSD(size*cfg.fase2.target/100)}</div>
       <div style="font-size:11px;color:var(--sub);margin-top:6px;">Daily DD: ${cfg.fase2.dailyDD}% (${fmtUSD(size*cfg.fase2.dailyDD/100)})<br>Max DD: ${cfg.fase2.maxDD}% (${fmtUSD(size*cfg.fase2.maxDD/100)})</div>
-    </div>
+    </div>`:''}
     <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.15);border-radius:var(--r);padding:.8rem 1rem;">
       <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">Funded</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);">${cfg.funded.split}% Split</div>
@@ -6030,7 +6034,7 @@ function renderBtRules(){
     <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:var(--r);padding:.8rem 1rem;">
       <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">Capital Simulado</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;color:var(--gold);">${fmtUSD(size)}</div>
-      <div style="font-size:11px;color:var(--sub);margin-top:6px;">${cfg.nombre} · ${cfg.fase1.target}% / ${cfg.fase2.target}% target</div>
+      <div style="font-size:11px;color:var(--sub);margin-top:6px;">${cfg.nombre} · ${cfg.fase1.target}%${nf>1?' / '+cfg.fase2.target+'%':''} target</div>
     </div>
   `;
 }
