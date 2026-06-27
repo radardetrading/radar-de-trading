@@ -2519,16 +2519,6 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
   <!-- DASHBOARD -->
   <div id="page-dashboard" class="page active">
-    <div id="rutinaBanner" style="display:none;margin-bottom:1rem;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.3);border-radius:var(--r2);padding:.7rem 1rem;align-items:center;justify-content:space-between;gap:12px;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:18px;">⚡</span>
-        <div>
-          <div style="font-size:12px;font-weight:600;color:var(--orange);">Todavía no registraste tu rutina de hoy</div>
-          <div style="font-size:10px;color:var(--sub);margin-top:1px;">Completar la rutina antes de operar mejora tu consistencia.</div>
-        </div>
-      </div>
-      <button class="btn sm" style="color:var(--orange);border-color:rgba(251,146,60,.4);white-space:nowrap;" onclick="nav('rutina')">Ir a Rutina →</button>
-    </div>
     <div class="kpi-grid" id="dashKpis"></div>
 
     <!-- RESUMEN DEL DÍA -->
@@ -2551,6 +2541,18 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
         <div id="dashReglasList" style="display:flex;flex-direction:column;gap:5px;"></div>
       </div>
+    </div>
+
+    <!-- BANNER RUTINA -->
+    <div id="rutinaBanner" style="display:none;margin-bottom:.8rem;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.3);border-radius:var(--r2);padding:.7rem 1rem;align-items:center;justify-content:space-between;gap:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;">⚡</span>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--orange);">Todavía no registraste tu rutina de hoy</div>
+          <div style="font-size:10px;color:var(--sub);margin-top:1px;">Completar la rutina antes de operar mejora tu consistencia.</div>
+        </div>
+      </div>
+      <button class="btn sm" style="color:var(--orange);border-color:rgba(251,146,60,.4);white-space:nowrap;" onclick="nav('rutina')">Ir a Rutina →</button>
     </div>
 
     <!-- MIS REGLAS DE TRADING (PILARES) -->
