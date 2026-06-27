@@ -4673,7 +4673,7 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
 
 <!-- BT CONFIG MODAL -->
 <div class="overlay" id="btCfgModal">
-
+  <div class="modal">
     <button class="modal-close" onclick="closeModal('btCfgModal')">✕</button>
     <div class="modal-title">✎ <span id="btCfgTitle">Editar Cuenta A</span></div>
     <div class="form-grid">
@@ -4684,6 +4684,26 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
       <div class="form-group full">
         <label>Tamaño de Cuenta ($)</label>
         <input type="number" id="cfg_size" placeholder="5000">
+      </div>
+      <div class="form-sep-label">Estructura del Challenge</div><div class="form-sep"></div>
+      <div class="form-group full">
+        <label>Cantidad de Fases</label>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="cfg_fases" id="cfg_fases1" value="1" style="width:auto;background:none;border:none;padding:0;" onchange="toggleCfgFase2()">
+            <div style="text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--cyan);">1 Fase</div>
+              <div style="font-size:10px;color:var(--sub);margin-top:2px;">Challenge → Funded</div>
+            </div>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="cfg_fases" id="cfg_fases2" value="2" style="width:auto;background:none;border:none;padding:0;" onchange="toggleCfgFase2()">
+            <div style="text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--purple);">2 Fases</div>
+              <div style="font-size:10px;color:var(--sub);margin-top:2px;">Challenge → Verificación → Funded</div>
+            </div>
+          </label>
+        </div>
       </div>
       <div class="form-sep-label">Fase 1 — Challenge</div><div class="form-sep"></div>
       <div class="form-group">
@@ -4698,18 +4718,20 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
         <label>Max DD total F1 (%)</label>
         <input type="number" id="cfg_f1_max" step="0.1" placeholder="8">
       </div>
-      <div class="form-sep-label">Fase 2 — Verificación</div><div class="form-sep"></div>
-      <div class="form-group">
-        <label>Profit Target F2 (%)</label>
-        <input type="number" id="cfg_f2_target" step="0.1" placeholder="5">
-      </div>
-      <div class="form-group">
-        <label>Daily DD máx F2 (%)</label>
-        <input type="number" id="cfg_f2_daily" step="0.1" placeholder="4">
-      </div>
-      <div class="form-group full">
-        <label>Max DD total F2 (%)</label>
-        <input type="number" id="cfg_f2_max" step="0.1" placeholder="8">
+      <div id="cfg_f2_wrap" style="display:contents;">
+        <div class="form-sep-label">Fase 2 — Verificación</div><div class="form-sep"></div>
+        <div class="form-group">
+          <label>Profit Target F2 (%)</label>
+          <input type="number" id="cfg_f2_target" step="0.1" placeholder="5">
+        </div>
+        <div class="form-group">
+          <label>Daily DD máx F2 (%)</label>
+          <input type="number" id="cfg_f2_daily" step="0.1" placeholder="4">
+        </div>
+        <div class="form-group full">
+          <label>Max DD total F2 (%)</label>
+          <input type="number" id="cfg_f2_max" step="0.1" placeholder="8">
+        </div>
       </div>
       <div class="form-sep-label">Funded</div><div class="form-sep"></div>
       <div class="form-group">
@@ -5893,8 +5915,8 @@ function goJournalPage(p){
 
 // Configuración por defecto (editable por el usuario)
 const NEOMAA_DEFAULT = {
-  '5k':  { nombre:'Neomaa', size:5000,  fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} },
-  '50k': { nombre:'Neomaa', size:50000, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} }
+  '5k':  { nombre:'Neomaa', size:5000,  numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} },
+  '50k': { nombre:'Neomaa', size:50000, numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} }
 };
 // Cargamos config guardada o usamos defaults
 let NEOMAA = JSON.parse(localStorage.getItem('hq_bt_cfg')||'null') || JSON.parse(JSON.stringify(NEOMAA_DEFAULT));
@@ -5903,12 +5925,20 @@ function saveBtCfgToStorage(){ localStorage.setItem('hq_bt_cfg', JSON.stringify(
 let btAccount = '5k';
 let editingBtCfg = null;
 
+function toggleCfgFase2(){
+  const is2 = document.getElementById('cfg_fases2').checked;
+  document.getElementById('cfg_f2_wrap').style.display = is2 ? 'contents' : 'none';
+}
+
 function openBtCfgModal(key){
   editingBtCfg = key;
   const cfg = NEOMAA[key];
   document.getElementById('btCfgTitle').textContent = `Editar Cuenta — ${cfg.nombre} ${fmtUSD(cfg.size)}`;
   document.getElementById('cfg_nombre').value   = cfg.nombre||'Neomaa';
   document.getElementById('cfg_size').value     = cfg.size||5000;
+  const numFases = cfg.numFases||2;
+  document.getElementById(numFases===1 ? 'cfg_fases1' : 'cfg_fases2').checked = true;
+  toggleCfgFase2();
   document.getElementById('cfg_f1_target').value= cfg.fase1.target||8;
   document.getElementById('cfg_f1_daily').value = cfg.fase1.dailyDD||4;
   document.getElementById('cfg_f1_max').value   = cfg.fase1.maxDD||8;
@@ -5923,9 +5953,11 @@ function openBtCfgModal(key){
 
 function saveBtCfg(){
   const key = editingBtCfg;
+  const numFases = document.getElementById('cfg_fases1').checked ? 1 : 2;
   NEOMAA[key] = {
     nombre: document.getElementById('cfg_nombre').value||'Neomaa',
     size:   parseFloat(document.getElementById('cfg_size').value)||5000,
+    numFases,
     fase1:  { target: parseFloat(document.getElementById('cfg_f1_target').value)||8,  dailyDD: parseFloat(document.getElementById('cfg_f1_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_f1_max').value)||8  },
     fase2:  { target: parseFloat(document.getElementById('cfg_f2_target').value)||5,  dailyDD: parseFloat(document.getElementById('cfg_f2_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_f2_max').value)||8  },
     funded: { split:  parseFloat(document.getElementById('cfg_split').value)||80,     dailyDD: parseFloat(document.getElementById('cfg_funded_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_funded_max').value)||8 }
@@ -5944,7 +5976,8 @@ function updateBtCards(){
     const el=document.getElementById(`bt_title_${k}`);
     const sub=document.getElementById(`bt_sub_${k}`);
     if(el) el.textContent=fmtUSD(cfg.size);
-    if(sub) sub.textContent=`${cfg.nombre} · 2 Fases · ${cfg.fase1.target}% / ${cfg.fase2.target}% target`;
+    const nf=cfg.numFases||2;
+    if(sub) sub.textContent=`${cfg.nombre} · ${nf} Fase${nf>1?'s':''} · ${cfg.fase1.target}%${nf>1?' / '+cfg.fase2.target+'%':''} target`;
   });
   const rsz=document.getElementById('bt_rules_size');
   if(rsz) rsz.textContent=fmtUSD(NEOMAA[btAccount].size);
@@ -6396,7 +6429,7 @@ function calcBacktest(){
         const phasePnl=phase==='fase1'?fase1Pnl:phase==='fase2'?fase2Pnl:fundedPnl;
         const phaseTarget=phase==='fase1'?cfg.fase1.target:phase==='fase2'?cfg.fase2.target:null;
         if(phaseTarget && phasePnl/size*100 >= phaseTarget){
-          const next=phase==='fase1'?'fase2':'funded';
+          const next=(phase==='fase1' && (cfg.numFases||2)>1)?'fase2':'funded';
           phase=next;
           phaseChanges.push({idx:i,from:prevPhase,to:next});
           // Cuenta nueva: reiniciar equity, drawdown y maxDD al capital inicial.
@@ -6460,11 +6493,11 @@ function calcBacktest(){
       <div style="background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.25);border-radius:var(--r3);padding:1.2rem 1.5rem;display:flex;align-items:center;gap:16px;">
         <div style="font-size:36px;">🏆</div>
         <div style="flex:1;">
-          <div style="font-size:18px;font-weight:800;color:var(--green);margin-bottom:4px;">¡FONDEADO! Pasaste ambas fases</div>
+          <div style="font-size:18px;font-weight:800;color:var(--green);margin-bottom:4px;">¡FONDEADO! Pasaste ${(cfg.numFases||2)>1?'ambas fases':'el challenge'}</div>
           <div style="font-size:13px;color:var(--sub);margin-bottom:10px;">Ganancia en funded: ${fmtUSD(fundedPnl)} · Split del ${cfg.funded.split}% = <span style="color:var(--green);font-weight:700;">${fmtUSD(fundedPnl*cfg.funded.split/100)}</span></div>
           <div style="display:flex;gap:8px;">
             ${progressPill('Fase 1','100%',f1Target,true)}
-            ${progressPill('Fase 2','100%',f2Target,true)}
+            ${(cfg.numFases||2)>1?progressPill('Fase 2','100%',f2Target,true):''}
             ${progressPill('Funded',null,null,true,'funded')}
           </div>
           <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:6px;">
@@ -6537,7 +6570,7 @@ function calcBacktest(){
         </div>
         <div style="display:flex;gap:8px;margin-bottom:.8rem;">
           ${progressPill('Fase 1',fase1Pct.toFixed(2)+'%',f1Target,false)}
-          ${progressPill('Fase 2',null,f2Target,false)}
+          ${(cfg.numFases||2)>1?progressPill('Fase 2',null,f2Target,false):''}
           ${progressPill('Funded',null,null,false,'funded')}
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
@@ -6705,7 +6738,7 @@ function simulatePhases(tradesList, cfg){
     // ¿Alcanzó el target de la fase?
     const target = phase==='fase1'?cfg.fase1.target : phase==='fase2'?cfg.fase2.target : null;
     if(target && (phasePnl/size*100) >= target){
-      const next = phase==='fase1'?'fase2':'funded';
+      const next = (phase==='fase1' && (cfg.numFases||2)>1)?'fase2':'funded';
       milestones.push({idx:i, from:phase, to:next});
       phase=next;
       // Cuenta nueva: reinicia equity/pico/PnL de la nueva fase
@@ -6780,7 +6813,7 @@ function renderSessionAnalysis(){
     let badge, badgeColor, badgeBg, detail;
     if(sim.finalPhase==='funded'){
       badge='🏆 FONDEADO'; badgeColor='var(--green)'; badgeBg='rgba(52,211,153,.12)';
-      detail='Pasó Fase 1 y Fase 2';
+      detail=(cfg.numFases||2)>1?'Pasó Fase 1 y Fase 2':'Pasó el Challenge';
     } else if(sim.finalPhase==='blown'){
       badge='💥 BLOWN'; badgeColor='var(--red)'; badgeBg='rgba(248,113,113,.12)';
       const fLabel = sim.blownFrom==='fase2'?'Fase 2':'Fase 1';
@@ -6814,7 +6847,7 @@ function renderSessionAnalysis(){
         </div>
         <div style="display:flex;gap:6px;margin-bottom:.9rem;">
           ${pill('Fase 1',f1done,f1active)}
-          ${pill('Fase 2',f2done,f2active)}
+          ${(cfg.numFases||2)>1?pill('Fase 2',f2done,f2active):''}
         </div>
         <div style="font-size:10px;color:var(--sub);margin-bottom:.9rem;font-family:'JetBrains Mono',monospace;">${detail}</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
