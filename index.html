@@ -3581,6 +3581,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <button class="btn" id="rutTab-hoy" onclick="rutTab('hoy')" style="font-size:11px;">📅 Hoy</button>
       <button class="btn ghost" id="rutTab-historial" onclick="rutTab('historial')" style="font-size:11px;">📊 Historial</button>
       <button class="btn ghost" id="rutTab-habitos" onclick="rutTab('habitos')" style="font-size:11px;">⚙ Mis Hábitos</button>
+      <button class="btn ghost" id="rutTab-correlacion" onclick="rutTab('correlacion')" style="font-size:11px;">🔗 Correlación</button>
     </div>
 
     <!-- HOY -->
@@ -3690,6 +3691,11 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <button class="btn primary" onclick="addHabito()" style="height:38px;">+ Agregar</button>
         </div>
       </div>
+    </div>
+
+    <!-- CORRELACIÓN -->
+    <div id="rutView-correlacion" style="display:none;">
+      <div id="rutCorrContent"></div>
     </div>
 
   </div>
@@ -11344,7 +11350,7 @@ function todayKey(){
 
 function rutTab(tab){
   rutCurTab = tab;
-  ['hoy','historial','habitos'].forEach(t=>{
+  ['hoy','historial','habitos','correlacion'].forEach(t=>{
     const v=document.getElementById('rutView-'+t);
     const b=document.getElementById('rutTab-'+t);
     if(v) v.style.display = t===tab ? '' : 'none';
@@ -11353,6 +11359,7 @@ function rutTab(tab){
   if(tab==='hoy') renderRutHoy();
   if(tab==='historial') renderRutHistorial();
   if(tab==='habitos') renderRutHabitos();
+  if(tab==='correlacion') renderRutCorrelacion();
 }
 
 function renderRutina(){
@@ -11538,6 +11545,157 @@ function saveRutDay(){
 }
 
 let rutCalOffset = 0;
+function renderRutCorrelacion(){
+  const el = document.getElementById('rutCorrContent');
+  if(!el) return;
+
+  if(!rutHabitos.length){
+    el.innerHTML='<div class="card" style="padding:2rem;text-align:center;color:var(--sub);">Configurá tus hábitos primero en ⚙ Mis Hábitos.</div>';
+    return;
+  }
+  if(!trades.length){
+    el.innerHTML='<div class="card" style="padding:2rem;text-align:center;color:var(--sub);">Todavía no hay trades cargados en el journal.</div>';
+    return;
+  }
+
+  // Helper: saber si un hábito estaba hecho en un día dado
+  const habDone = (h, dayData) => {
+    if(!dayData) return false;
+    return h.type==='check' ? !!dayData[h.id] : (parseInt(dayData[h.id+'_min'])||0) > 0;
+  };
+
+  // Métricas de un grupo de trades
+  const metrics = arr => {
+    if(!arr.length) return null;
+    const wins   = arr.filter(t=>t.result==='WIN').length;
+    const losses = arr.filter(t=>t.result==='LOSS').length;
+    const pnl    = arr.reduce((s,t)=>s+(t.pnl||0), 0);
+    const avgPnl = pnl / arr.length;
+    const wr     = wins / arr.length;
+    return { n: arr.length, wins, losses, wr, pnl, avgPnl };
+  };
+
+  // Agrupar trades por si el hábito estaba hecho o no ese día
+  const corrData = rutHabitos.map(h => {
+    const done=[], notDone=[];
+    trades.forEach(t => {
+      if(!t.date) return;
+      const dayData = rutDays[t.date];
+      // Si no hay registro de rutina ese día → "no hecho"
+      if(habDone(h, dayData)) done.push(t);
+      else notDone.push(t);
+    });
+    return { h, done: metrics(done), notDone: metrics(notDone), doneCount: done.length, notDoneCount: notDone.length };
+  });
+
+  // Sección global: rutina % buckets
+  const buckets = [
+    { label:'Sin rutina', range:[0,0],   color:'var(--dim)',    bg:'rgba(100,116,139,.08)',  border:'rgba(100,116,139,.2)' },
+    { label:'1 – 49%',   range:[1,49],   color:'var(--orange)', bg:'rgba(251,146,60,.08)',   border:'rgba(251,146,60,.25)' },
+    { label:'50 – 99%',  range:[50,99],  color:'var(--cyan)',   bg:'rgba(56,189,248,.08)',   border:'rgba(56,189,248,.25)' },
+    { label:'100%',      range:[100,100],color:'var(--green)',  bg:'rgba(52,211,153,.08)',   border:'rgba(52,211,153,.25)' },
+  ];
+  const bucketTrades = buckets.map(b => {
+    const arr = trades.filter(t => {
+      const pct = t.rutinaDelDia != null ? t.rutinaDelDia : -1;
+      if(b.range[0]===0 && b.range[1]===0) return pct<=0;
+      return pct >= b.range[0] && pct <= b.range[1];
+    });
+    return { ...b, m: metrics(arr) };
+  });
+  const maxWR = Math.max(...bucketTrades.filter(b=>b.m).map(b=>b.m.wr), 0.001);
+
+  let html = '';
+
+  // Card global
+  html += `<div class="card" style="padding:1.4rem;margin-bottom:1.2rem;">
+    <div class="section-label" style="margin-bottom:1rem;">📊 Rutina del día vs rendimiento</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+    ${bucketTrades.map(b=>{
+      if(!b.m) return `<div style="border:1px solid ${b.border};border-radius:10px;padding:1rem;background:${b.bg};opacity:.4;text-align:center;">
+        <div style="font-size:11px;font-weight:700;color:${b.color};margin-bottom:.3rem;">${b.label}</div>
+        <div style="font-size:10px;color:var(--dim);">Sin datos</div>
+      </div>`;
+      const barW = (b.m.wr / maxWR * 100).toFixed(0);
+      return `<div style="border:1px solid ${b.border};border-radius:10px;padding:1rem;background:${b.bg};">
+        <div style="font-size:11px;font-weight:700;color:${b.color};margin-bottom:.5rem;">${b.label}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:${b.color};">${(b.m.wr*100).toFixed(0)}%</div>
+        <div style="font-size:9px;color:var(--sub);margin-bottom:.5rem;">Win Rate · ${b.m.n} trade${b.m.n!==1?'s':''}</div>
+        <div style="height:4px;border-radius:2px;background:var(--glass2);overflow:hidden;margin-bottom:.4rem;">
+          <div style="height:100%;width:${barW}%;background:${b.color};border-radius:2px;"></div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${b.m.avgPnl>=0?'var(--green)':'var(--red)'};">${b.m.avgPnl>=0?'+':''}${fmtUSD(b.m.avgPnl)} avg</div>
+      </div>`;
+    }).join('')}
+    </div>
+  </div>`;
+
+  // Cards por hábito
+  html += `<div class="section-label" style="margin-bottom:.8rem;">🔗 Impacto por hábito</div>`;
+
+  corrData.forEach(({h, done, notDone}) => {
+    const hasDone    = done    && done.n    > 0;
+    const hasNotDone = notDone && notDone.n > 0;
+    if(!hasDone && !hasNotDone) return;
+
+    const deltaWR  = hasDone && hasNotDone ? ((done.wr - notDone.wr) * 100) : null;
+    const deltaAvg = hasDone && hasNotDone ? (done.avgPnl - notDone.avgPnl) : null;
+    const maxWr2   = Math.max(hasDone?done.wr:0, hasNotDone?notDone.wr:0, 0.001);
+
+    const renderSide = (m, label, labelColor, barColor) => {
+      if(!m || m.n===0) return `<div style="flex:1;padding:.8rem 1rem;border-radius:8px;background:var(--glass);border:1px solid var(--border);opacity:.35;text-align:center;">
+        <div style="font-size:9px;color:var(--sub);margin-bottom:.3rem;">${label}</div>
+        <div style="font-size:10px;color:var(--dim);">Sin trades</div>
+      </div>`;
+      const barW = (m.wr / maxWr2 * 100).toFixed(0);
+      return `<div style="flex:1;padding:.8rem 1rem;border-radius:8px;background:var(--glass);border:1px solid var(--border);">
+        <div style="font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;color:${labelColor};margin-bottom:.4rem;">${label}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;color:${m.wr>=0.5?'var(--green)':'var(--red)'};">${(m.wr*100).toFixed(0)}%</div>
+        <div style="font-size:9px;color:var(--sub);margin-bottom:.5rem;">${m.wins}W · ${m.losses}L · ${m.n} trades</div>
+        <div style="height:4px;border-radius:2px;background:var(--glass2);overflow:hidden;margin-bottom:.4rem;">
+          <div style="height:100%;width:${barW}%;background:${barColor};border-radius:2px;transition:width .3s;"></div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${m.avgPnl>=0?'var(--green)':'var(--red)'};">${m.avgPnl>=0?'+':''}${fmtUSD(m.avgPnl)} avg</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);">${m.pnl>=0?'+':''}${fmtUSD(m.pnl)} total</div>
+      </div>`;
+    };
+
+    const deltaColor = deltaWR===null?'var(--dim)':deltaWR>0?'var(--green)':deltaWR<0?'var(--red)':'var(--sub)';
+    const deltaIcon  = deltaWR===null?'—':deltaWR>0?'▲':'▼';
+
+    html += `<div class="card" style="padding:1.2rem;margin-bottom:.8rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:20px;">${h.icon||'⭐'}</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;">${escHtml(h.name)}</div>
+            <div style="font-size:9px;color:var(--sub);">${h.timing==='before'?'Antes del trade':h.timing==='after'?'Después del trade':'Cualquier momento'}</div>
+          </div>
+        </div>
+        ${deltaWR!==null ? `<div style="text-align:right;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:${deltaColor};">${deltaIcon} ${Math.abs(deltaWR).toFixed(1)}% WR</div>
+          <div style="font-size:9px;color:var(--sub);">${deltaAvg>=0?'+':''}${fmtUSD(deltaAvg)} avg P&L</div>
+          <div style="font-size:9px;color:${deltaColor};">${deltaWR>1?'Impacto positivo claro':deltaWR>0?'Leve mejora':deltaWR<-1?'Impacto negativo':'Sin diferencia clara'}</div>
+        </div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;">
+        ${renderSide(done,    '✅ Con hábito',    'var(--green)', 'var(--green)')}
+        ${renderSide(notDone, '⭕ Sin hábito',   'var(--red)',   'var(--red)'  )}
+      </div>
+    </div>`;
+  });
+
+  // Aviso si hay pocos datos
+  const minTrades = corrData.reduce((m,d)=>Math.min(m, (d.done?.n||0)+(d.notDone?.n||0)), Infinity);
+  if(minTrades < 10){
+    html = `<div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:var(--r2);padding:.7rem 1rem;margin-bottom:1rem;font-size:11px;color:var(--gold);">
+      ⚠ Pocos datos por ahora — los porcentajes van a ser más representativos a medida que cargues más trades con la rutina activa.
+    </div>` + html;
+  }
+
+  el.innerHTML = html;
+}
+
 function renderRutCalendar(){
   const el = document.getElementById('rutCalendar');
   if(!el) return;
