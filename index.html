@@ -3490,11 +3490,18 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
       <!-- Origen de datos / cobertura -->
       <div class="card" style="padding:.9rem 1.2rem;margin-bottom:1rem;">
-        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-size:11px;">
-          <div style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--purple);display:inline-block;"></span><span style="color:var(--sub);">Histórico:</span> <b id="repCountHist" style="font-family:'JetBrains Mono',monospace;">0</b></div>
-          <div style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--cyan);display:inline-block;"></span><span style="color:var(--sub);">Backtest:</span> <b id="repCountBt" style="font-family:'JetBrains Mono',monospace;">0</b></div>
-          <div style="display:flex;align-items:center;gap:7px;"><span style="color:var(--sub);">Total:</span> <b id="repCountTotal" style="font-family:'JetBrains Mono',monospace;color:var(--gold);">0</b></div>
-          <div style="margin-left:auto;color:var(--dim);" id="repDateRange"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-size:11px;">
+            <div style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--purple);display:inline-block;"></span><span style="color:var(--sub);">Histórico:</span> <b id="repCountHist" style="font-family:'JetBrains Mono',monospace;">0</b></div>
+            <div style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--cyan);display:inline-block;"></span><span style="color:var(--sub);">Backtest:</span> <b id="repCountBt" style="font-family:'JetBrains Mono',monospace;">0</b></div>
+            <div style="display:flex;align-items:center;gap:7px;"><span style="color:var(--sub);">Total:</span> <b id="repCountTotal" style="font-family:'JetBrains Mono',monospace;color:var(--gold);">0</b></div>
+            <div style="color:var(--dim);" id="repDateRange"></div>
+          </div>
+          <div style="display:flex;gap:0;background:var(--glass2);border-radius:8px;padding:3px;">
+            <button id="repFiltAll" onclick="setRepFilt('all')" style="background:var(--cyan);color:#fff;border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">Todos</button>
+            <button id="repFiltFx"  onclick="setRepFilt('forex')" style="background:transparent;color:var(--sub);border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">Forex</button>
+            <button id="repFiltFut" onclick="setRepFilt('futuros')" style="background:transparent;color:var(--sub);border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">Futuros</button>
+          </div>
         </div>
       </div>
 
@@ -13382,6 +13389,19 @@ function updateAutosave(){
 // Métricas en paralelo: R y USD. Curva unificada + comparativa lado a lado.
 // ════════════════════════════════════════════════════════════════════════
 let repView = 'R';            // 'R' | 'USD'
+let repFilt = 'all';          // 'all' | 'forex' | 'futuros'
+
+function setRepFilt(f){
+  repFilt = f;
+  ['all','forex','futuros'].forEach(k=>{
+    const b = document.getElementById('repFilt'+{all:'All',forex:'Fx',futuros:'Fut'}[k]);
+    if(!b) return;
+    const active = k === f;
+    b.style.background = active ? 'var(--cyan)' : 'transparent';
+    b.style.color = active ? '#fff' : 'var(--sub)';
+  });
+  renderReporte();
+}
 let repEqChart = null;
 
 const REP_DOW = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -13395,34 +13415,35 @@ function getRepRiskPct(){
 function repFromHist(t){
   const r = (t.pctArr && t.pctArr > 0) ? (t.pctGan / t.pctArr) : 0;
   const bal = (typeof getHistBalance === 'function') ? getHistBalance() : 5000;
-  const usd = (t.pctGan / 100) * bal;        // estima USD con balance de referencia
+  const usd = (t.pctGan / 100) * bal;
+  const par = (t.par || '').toString().trim() || '—';
+  const futIds = (typeof futInstruments !== 'undefined' ? futInstruments : []).map(f=>f.id.toUpperCase());
+  const isFut = futIds.includes(par.toUpperCase()) || (t.tipo === 'futuros');
   return {
     date: t.date || '',
     source: 'hist',
-    par: (t.par || '').toString().trim() || '—',
+    par,
     session: (t.session || '').toString().trim() || '—',
     zona: (t.zona || '').toString().trim() || '(sin zona)',
-    r, usd,
+    r, usd, isFut,
     pct: t.pctGan,
     result: t.pctGan !== undefined ? t.pctGan : (t.pnl !== undefined ? t.pnl : 0)
   };
 }
 
-// Normaliza un trade del BACKTEST nuevo a la forma común
 function repFromBt(t){
   const usd = (typeof t.pnl_direct === 'number') ? t.pnl_direct
             : (t.pnl_direct ? parseFloat(t.pnl_direct) : 0);
   const riskUSD = (typeof t.riskUSD === 'number') ? t.riskUSD : parseFloat(t.riskUSD) || 0;
-  // R real del backtest: pnl / riesgo. Si falta riesgo, cae al rr guardado.
   let r = riskUSD > 0 ? usd / riskUSD : (typeof t.rr === 'number' ? t.rr : parseFloat(t.rr) || 0);
+  const isFut = t.tipo === 'futuros';
   return {
     date: t.date || '',
     source: 'bt',
-    par: 'EUR/USD',                            // backtest del challenge: par fijo del setup
+    par: isFut ? (t.instrumento || 'FUT') : 'EUR/USD',
     session: (t.session || '').toString().trim() || '—',
     zona: (t.zona || '').toString().trim() || '(sin zona)',
-    r,
-    usd,
+    r, usd, isFut,
     pct: null,
     result: usd
   };
@@ -13430,8 +13451,10 @@ function repFromBt(t){
 
 // Construye el universo combinado, ordenado por fecha y enriquecido (cumR, cumUsd, dd)
 function buildRepUniverse(){
-  const hist = (typeof histTrades !== 'undefined' ? histTrades : []).map(repFromHist);
-  const bt   = (typeof btTrades  !== 'undefined' ? btTrades  : []).map(repFromBt);
+  let hist = (typeof histTrades !== 'undefined' ? histTrades : []).map(repFromHist);
+  let bt   = (typeof btTrades  !== 'undefined' ? btTrades  : []).map(repFromBt);
+  if(repFilt === 'forex')   { hist = hist.filter(t=>!t.isFut); bt = bt.filter(t=>!t.isFut); }
+  if(repFilt === 'futuros') { hist = hist.filter(t=> t.isFut); bt = bt.filter(t=> t.isFut); }
   const all  = [...hist, ...bt].sort((a,b)=>{
     const c = (a.date||'').localeCompare(b.date||'');
     if(c !== 0) return c;
