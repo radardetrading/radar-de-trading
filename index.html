@@ -4379,8 +4379,38 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     <button class="modal-close" onclick="closeModal('accModal')">✕</button>
     <div class="modal-title">🏦 <span id="accModalTitle">Nueva Cuenta</span></div>
     <div class="form-grid">
+
+      <!-- CATEGORÍA -->
       <div class="form-group full">
-        <label>Tipo de Cuenta</label>
+        <label>Categoría</label>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="ac_cat" id="ac_cat_challenge" value="challenge" style="width:auto;background:none;border:none;padding:0;" onchange="toggleAccCategoria()" checked>
+            <div style="text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--purple);">Challenge</div>
+              <div style="font-size:9px;color:var(--sub);margin-top:2px;">Prop firm activo</div>
+            </div>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="ac_cat" id="ac_cat_funded" value="funded" style="width:auto;background:none;border:none;padding:0;" onchange="toggleAccCategoria()">
+            <div style="text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--green);">Fondeada</div>
+              <div style="font-size:9px;color:var(--sub);margin-top:2px;">Ya pasé el challenge</div>
+            </div>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="ac_cat" id="ac_cat_propia" value="propia" style="width:auto;background:none;border:none;padding:0;" onchange="toggleAccCategoria()">
+            <div style="text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--gold);">Propia</div>
+              <div style="font-size:9px;color:var(--sub);margin-top:2px;">Broker personal</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- INSTRUMENTO (Forex / Futuros) -->
+      <div class="form-group full">
+        <label>Instrumento</label>
         <div style="display:flex;gap:8px;margin-top:4px;">
           <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;">
             <input type="radio" name="ac_tipo" id="ac_tipo_forex" value="forex" style="width:auto;background:none;border:none;padding:0;" onchange="toggleAccTipo()" checked>
@@ -4398,80 +4428,69 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
           </label>
         </div>
       </div>
+
       <div class="form-group full"><label>Nombre</label><input type="text" id="ac_name" placeholder="FTMO #1 — 100K Principal"></div>
       <div class="form-group"><label>Firma / Broker</label><input type="text" id="ac_firm" placeholder="Neomaa, FTMO..."></div>
-      <div class="form-group"><label>Tamaño ($)</label><input type="number" id="ac_size"></div>
+      <div class="form-group"><label>Tamaño / Capital ($)</label><input type="number" id="ac_size"></div>
       <div class="form-group"><label>Balance Actual ($)</label><input type="number" id="ac_balance"></div>
-
-      <div class="form-sep-label">Estructura del Challenge</div><div class="form-sep"></div>
-
-      <div class="form-group full">
-        <label>Cantidad de Fases antes de Funded</label>
-        <div style="display:flex;gap:8px;margin-top:4px;">
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;" id="fase1_lbl">
-            <input type="radio" name="ac_fases" id="ac_fases1" value="1" style="width:auto;background:none;border:none;padding:0;" onchange="toggleFase2()">
-            <div style="text-align:center;">
-              <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--cyan);">1 Fase</div>
-              <div style="font-size:10px;color:var(--sub);margin-top:2px;">Challenge → Funded</div>
-            </div>
-          </label>
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;" id="fase2_lbl">
-            <input type="radio" name="ac_fases" id="ac_fases2" value="2" style="width:auto;background:none;border:none;padding:0;" onchange="toggleFase2()">
-            <div style="text-align:center;">
-              <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--purple);">2 Fases</div>
-              <div style="font-size:10px;color:var(--sub);margin-top:2px;">Challenge → Verificación → Funded</div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="form-group full">
-        <label>Fase Actual</label>
-        <select id="ac_phase">
-          <option value="challenge">🟣 Challenge (Fase 1)</option>
-          <option value="verification">🔵 Verificación (Fase 2)</option>
-          <option value="funded">🟢 Funded</option>
-          <option value="passed">🟡 Passed / En espera</option>
-          <option value="blown">🔴 Blown</option>
-        </select>
-      </div>
-
-      <!-- TARGETS POR FASE -->
-      <div class="form-group">
-        <label>Profit Target Fase 1 (%)</label>
-        <input type="number" id="ac_target" value="10" step="0.1">
-      </div>
-      <div class="form-group" id="ac_target2_wrap" style="display:none;">
-        <label>Profit Target Fase 2 (%)</label>
-        <input type="number" id="ac_target2" value="5" step="0.1">
-      </div>
-      <div class="form-group"><label>% Profit Split</label><input type="number" id="ac_split" value="80"></div>
-
-      <div class="form-sep-label">Gestión de Riesgo Personal</div><div class="form-sep"></div>
-
-      <div class="form-group full">
-        <label>% Riesgo por Trade (sobre balance actual)</label>
-        <input type="number" id="ac_riskPct" value="1" step="0.1" min="0.1" placeholder="Ej: 1">
-      </div>
-
-      <div class="form-sep-label">Reglas de Riesgo de la Firma</div><div class="form-sep"></div>
-
-      <div class="form-group">
-        <label>Daily DD límite (%)</label>
-        <input type="number" id="ac_dailyDD" value="5" step="0.1" placeholder="Ej: 5">
-      </div>
-      <div class="form-group">
-        <label>Max DD total límite (%)</label>
-        <input type="number" id="ac_maxDD" value="10" step="0.1" placeholder="Ej: 10">
-      </div>
-
-      <div class="form-sep-label">Balance del Día (para calcular Daily DD)</div><div class="form-sep"></div>
-      <div class="form-group full">
-        <label>Balance apertura del día ($) — opcional</label>
-        <input type="number" id="ac_dayOpen" step="0.01" placeholder="Balance al abrir la sesión de hoy">
-      </div>
-
+      <div class="form-group"><label>% Riesgo por Trade</label><input type="number" id="ac_riskPct" value="1" step="0.1" min="0.1"></div>
       <div class="form-group"><label>Fecha inicio</label><input type="date" id="ac_start"></div>
+
+      <!-- SECCIÓN CHALLENGE (oculta para funded/propia) -->
+      <div id="ac_challenge_wrap" style="display:contents;">
+        <div class="form-sep-label">Estructura del Challenge</div><div class="form-sep"></div>
+        <div class="form-group full">
+          <label>Cantidad de Fases antes de Funded</label>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;" id="fase1_lbl">
+              <input type="radio" name="ac_fases" id="ac_fases1" value="1" style="width:auto;background:none;border:none;padding:0;" onchange="toggleFase2()">
+              <div style="text-align:center;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--cyan);">1 Fase</div>
+                <div style="font-size:10px;color:var(--sub);margin-top:2px;">Challenge → Funded</div>
+              </div>
+            </label>
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;" id="fase2_lbl">
+              <input type="radio" name="ac_fases" id="ac_fases2" value="2" style="width:auto;background:none;border:none;padding:0;" onchange="toggleFase2()">
+              <div style="text-align:center;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--purple);">2 Fases</div>
+                <div style="font-size:10px;color:var(--sub);margin-top:2px;">Challenge → Verificación → Funded</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>Fase Actual</label>
+          <select id="ac_phase">
+            <option value="challenge">🟣 Challenge (Fase 1)</option>
+            <option value="verification">🔵 Verificación (Fase 2)</option>
+            <option value="funded">🟢 Funded</option>
+            <option value="passed">🟡 Passed / En espera</option>
+            <option value="blown">🔴 Blown</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Profit Target Fase 1 (%)</label>
+          <input type="number" id="ac_target" value="10" step="0.1">
+        </div>
+        <div class="form-group" id="ac_target2_wrap" style="display:none;">
+          <label>Profit Target Fase 2 (%)</label>
+          <input type="number" id="ac_target2" value="5" step="0.1">
+        </div>
+      </div><!-- /ac_challenge_wrap -->
+
+      <!-- SECCIÓN REGLAS FIRMA (visible para challenge y funded, oculta para propia) -->
+      <div id="ac_rules_wrap" style="display:contents;">
+        <div class="form-sep-label">Reglas de la Firma</div><div class="form-sep"></div>
+        <div class="form-group"><label>% Profit Split</label><input type="number" id="ac_split" value="80"></div>
+        <div class="form-group"><label>Daily DD límite (%)</label><input type="number" id="ac_dailyDD" value="5" step="0.1"></div>
+        <div class="form-group full"><label>Max DD total límite (%)</label><input type="number" id="ac_maxDD" value="10" step="0.1"></div>
+        <div class="form-sep-label">Balance del Día</div><div class="form-sep"></div>
+        <div class="form-group full">
+          <label>Balance apertura del día ($) — opcional</label>
+          <input type="number" id="ac_dayOpen" step="0.01" placeholder="Balance al abrir la sesión de hoy">
+        </div>
+      </div><!-- /ac_rules_wrap -->
+
       <div class="form-sep-label">Próximo Trade</div><div class="form-sep"></div>
       <div class="form-group full"><label>Fecha/hora próximo trade permitido</label><input type="datetime-local" id="ac_next"></div>
       <div class="form-group full"><label>Notas</label><textarea id="ac_notes"></textarea></div>
@@ -7927,8 +7946,14 @@ function saveRiskEdit(){
 // ════════════════════════════════════════════════════════════
 // CUENTAS
 // ════════════════════════════════════════════════════════════
-function toggleAccTipo(){
-  // reservado para lógica futura (ej: campos específicos de futuros en cuenta)
+function toggleAccTipo(){}
+
+function toggleAccCategoria(){
+  const cat = document.querySelector('input[name="ac_cat"]:checked')?.value || 'challenge';
+  const challengeWrap = document.getElementById('ac_challenge_wrap');
+  const rulesWrap     = document.getElementById('ac_rules_wrap');
+  if(challengeWrap) challengeWrap.style.display = cat==='challenge' ? 'contents' : 'none';
+  if(rulesWrap)     rulesWrap.style.display     = cat==='propia'    ? 'none'     : 'contents';
 }
 
 function toggleFase2(){
@@ -7970,6 +7995,10 @@ function openAccModal(id=null){
     document.getElementById('ac_target2').value=a.target2||5;
     document.getElementById('ac_start').value=a.startDate||'';
     document.getElementById('ac_next').value=a.nextTrade||'';
+    // set categoria radio
+    const cat = a.categoria||'challenge';
+    document.getElementById(`ac_cat_${cat}`).checked=true;
+    toggleAccCategoria();
     // set tipo radio
     document.getElementById(a.tipo==='futuros'?'ac_tipo_futuros':'ac_tipo_forex').checked=true;
     // set fases radio
@@ -7986,6 +8015,8 @@ function openAccModal(id=null){
     document.getElementById('ac_start').value=todayStr();
     document.getElementById('ac_fases1').checked=true;
     document.getElementById('ac_tipo_forex').checked=true;
+    document.getElementById('ac_cat_challenge').checked=true;
+    toggleAccCategoria();
     toggleFase2();
   }
   openModal('accModal');
@@ -8002,19 +8033,24 @@ function saveAcc(){
   // A partir de ahí los trades del journal se suman automáticamente
   const initialBalance = isNaN(inputBalance) ? size : inputBalance;
 
+  const categoria = document.querySelector('input[name="ac_cat"]:checked')?.value || 'challenge';
+  const phase = categoria==='funded' ? 'funded'
+              : categoria==='propia'  ? 'propia'
+              : document.getElementById('ac_phase').value;
   const a={
     id:editAccId||Date.now(),
     name,firm:document.getElementById('ac_firm').value,
     size, initialBalance,
     manualBalance: null,
-    phase:document.getElementById('ac_phase').value,
-    split:parseFloat(document.getElementById('ac_split').value)||80,
-    dailyDD:parseFloat(document.getElementById('ac_dailyDD').value)||5,
-    maxDD:parseFloat(document.getElementById('ac_maxDD').value)||10,
-    cDaily:0, cMax:0, // calculated automatically now
-    dayOpen:parseFloat(document.getElementById('ac_dayOpen').value)||null,
-    target:parseFloat(document.getElementById('ac_target').value)||10,
-    target2:parseFloat(document.getElementById('ac_target2').value)||5,
+    categoria,
+    phase,
+    split:   categoria!=='propia' ? (parseFloat(document.getElementById('ac_split').value)||80)  : 100,
+    dailyDD: categoria!=='propia' ? (parseFloat(document.getElementById('ac_dailyDD').value)||5)  : 0,
+    maxDD:   categoria!=='propia' ? (parseFloat(document.getElementById('ac_maxDD').value)||10)   : 0,
+    cDaily:0, cMax:0,
+    dayOpen: categoria!=='propia' ? (parseFloat(document.getElementById('ac_dayOpen').value)||null) : null,
+    target:  categoria==='challenge' ? (parseFloat(document.getElementById('ac_target').value)||10) : 0,
+    target2: categoria==='challenge' ? (parseFloat(document.getElementById('ac_target2').value)||5)  : 0,
     numFases,
     tipo: document.getElementById('ac_tipo_futuros').checked ? 'futuros' : 'forex',
     startDate:document.getElementById('ac_start').value,
@@ -8221,18 +8257,23 @@ function renderCuentas(){
     const ddColor=pct=>pct>=80?'pf-red':pct>=50?'pf-gold':'pf-green';
     const card=document.createElement('div');
     card.className=cardClass;
-    card.innerHTML=`<div class="acc-card-top"><div style="flex:1;min-width:0;"><div class="acc-firm" style="display:flex;align-items:center;gap:5px;">${escHtml(a.firm||'Sin firma')}${a.tipo==='futuros'?'<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--orange);background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);padding:1px 5px;border-radius:4px;letter-spacing:.05em;">FUTUROS</span>':''}</div><div class="acc-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(a.name)}</div><div style="margin-top:6px;display:flex;align-items:center;gap:5px;">
-      ${a.numFases===2
-        ? `<span class="badge b-challenge" style="font-size:8px;">C1</span>
-           <span style="color:var(--dim);font-size:10px;">→</span>
-           <span class="badge b-verification" style="font-size:8px;">C2</span>
-           <span style="color:var(--dim);font-size:10px;">→</span>
-           <span class="badge b-funded" style="font-size:8px;">Funded</span>`
-        : `<span class="badge b-challenge" style="font-size:8px;">Challenge</span>
-           <span style="color:var(--dim);font-size:10px;">→</span>
-           <span class="badge b-funded" style="font-size:8px;">Funded</span>`
-      }
-    </div><div style="margin-top:5px;">${phaseBadge(a.phase)}</div></div><div class="acc-size-tag">$${(a.size||0).toLocaleString()}</div></div>
+    const cat = a.categoria || 'challenge';
+    const futBadge = a.tipo==='futuros' ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--orange);background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);padding:1px 5px;border-radius:4px;letter-spacing:.05em;">FUTUROS</span>' : '';
+    const catBadgeHtml = cat==='funded'
+      ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--green);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);padding:2px 7px;border-radius:4px;letter-spacing:.06em;">FONDEADA</span>'
+      : cat==='propia'
+      ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--gold);background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);padding:2px 7px;border-radius:4px;letter-spacing:.06em;">PROPIA</span>'
+      : (a.numFases===2
+          ? `<span class="badge b-challenge" style="font-size:8px;">C1</span><span style="color:var(--dim);font-size:10px;">→</span><span class="badge b-verification" style="font-size:8px;">C2</span><span style="color:var(--dim);font-size:10px;">→</span><span class="badge b-funded" style="font-size:8px;">Funded</span>`
+          : `<span class="badge b-challenge" style="font-size:8px;">Challenge</span><span style="color:var(--dim);font-size:10px;">→</span><span class="badge b-funded" style="font-size:8px;">Funded</span>`);
+    const showTarget = cat==='challenge' && a.phase!=='funded' && a.phase!=='blown';
+    const showDD     = cat!=='propia';
+    const targetBar  = showTarget ? `<div class="prog-row"><div class="prog-meta"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);">Target ${a.phase==='verification'?'Fase 2':'Fase 1'}: ${currentTarget}%</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cyan);">${pnlPct.toFixed(2)}%</span></div><div class="prog-track"><div class="prog-fill pf-cyan" style="width:${targetProg}%"></div></div></div>` : '';
+    const ddBars     = showDD ? `
+      <div class="prog-row"><div class="prog-meta"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);">Daily DD</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${dailyPct>=80?'var(--red)':dailyPct>=50?'var(--orange)':'var(--sub)'};">${cDaily.toFixed(2)}% / ${dailyDD}%</span></div><div class="prog-track"><div class="prog-fill ${ddColor(dailyPct)}" style="width:${dailyPct}%"></div></div></div>
+      <div class="prog-row"><div class="prog-meta"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);">Max DD</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${maxPct>=80?'var(--red)':maxPct>=50?'var(--orange)':'var(--sub)'};">${cMax.toFixed(2)}% / ${maxDD}%</span></div><div class="prog-track"><div class="prog-fill ${ddColor(maxPct)}" style="width:${maxPct}%"></div></div></div>` : '';
+    const splitHtml = (cat==='funded'&&a.split) ? `<div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);margin-bottom:.5rem;">Split: ${a.split}% para vos</div>` : '';
+    card.innerHTML=`<div class="acc-card-top"><div style="flex:1;min-width:0;"><div class="acc-firm" style="display:flex;align-items:center;gap:5px;">${escHtml(a.firm||'Sin firma')} ${futBadge}</div><div class="acc-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(a.name)}</div><div style="margin-top:6px;display:flex;align-items:center;gap:5px;">${catBadgeHtml}</div>${cat==='challenge'?`<div style="margin-top:5px;">${phaseBadge(a.phase)}</div>`:''}</div><div class="acc-size-tag">$${(a.size||0).toLocaleString()}</div></div>
     <div class="acc-card-body">
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px;">
         <div class="acc-balance" style="color:${pnl>=0?'var(--green)':'var(--red)'}">${fmtUSD(effectiveBal)}</div>
@@ -8249,9 +8290,7 @@ function renderCuentas(){
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:.8rem;">
         <span style="font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(56,189,248,.06);color:var(--cyan);border:1px solid rgba(56,189,248,.15);padding:2px 8px;border-radius:4px;">⚡ Auto — ${journalCount} trade${journalCount!==1?'s':''} (${journalPnl>=0?'+':''}${fmtUSD(journalPnl)})</span>
       </div>
-      ${a.phase!=='funded'&&a.phase!=='blown'?`<div class="prog-row"><div class="prog-meta"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);">Target ${a.phase==='verification'?'Fase 2':'Fase 1'}: ${currentTarget}%</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cyan);">${pnlPct.toFixed(2)}%</span></div><div class="prog-track"><div class="prog-fill pf-cyan" style="width:${targetProg}%"></div></div></div>`:''}
-      <div class="prog-row"><div class="prog-meta"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);">Daily DD</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${dailyPct>=80?'var(--red)':dailyPct>=50?'var(--orange)':'var(--sub)'};">${cDaily.toFixed(2)}% / ${dailyDD}%</span></div><div class="prog-track"><div class="prog-fill ${ddColor(dailyPct)}" style="width:${dailyPct}%"></div></div></div>
-      <div class="prog-row"><div class="prog-meta"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);">Max DD</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${maxPct>=80?'var(--red)':maxPct>=50?'var(--orange)':'var(--sub)'};">${cMax.toFixed(2)}% / ${maxDD}%</span></div><div class="prog-track"><div class="prog-fill ${ddColor(maxPct)}" style="width:${maxPct}%"></div></div></div>
+      ${splitHtml}${targetBar}${ddBars}
       ${cdHtml}${alertsHtml}
       ${a.notes?`<div style="font-size:11px;color:var(--sub);padding:.5rem .7rem;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);margin-top:.5rem;">${a.notes}</div>`:''}
     </div>
