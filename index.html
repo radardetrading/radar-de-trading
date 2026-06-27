@@ -2519,6 +2519,16 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
   <!-- DASHBOARD -->
   <div id="page-dashboard" class="page active">
+    <div id="rutinaBanner" style="display:none;margin-bottom:1rem;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.3);border-radius:var(--r2);padding:.7rem 1rem;align-items:center;justify-content:space-between;gap:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;">⚡</span>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--orange);">Todavía no registraste tu rutina de hoy</div>
+          <div style="font-size:10px;color:var(--sub);margin-top:1px;">Completar la rutina antes de operar mejora tu consistencia.</div>
+        </div>
+      </div>
+      <button class="btn sm" style="color:var(--orange);border-color:rgba(251,146,60,.4);white-space:nowrap;" onclick="nav('rutina')">Ir a Rutina →</button>
+    </div>
     <div class="kpi-grid" id="dashKpis"></div>
 
     <!-- RESUMEN DEL DÍA -->
@@ -3590,6 +3600,19 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <!-- HISTORIAL -->
     <div id="rutView-historial" style="display:none;">
+      <!-- Calendario heatmap -->
+      <div class="card" style="padding:1.2rem;margin-bottom:1rem;">
+        <div class="section-label" style="margin-bottom:.8rem;">📅 Últimos 90 días</div>
+        <div id="rutCalendar"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:.8rem;font-size:10px;color:var(--sub);">
+          <span>Menos</span>
+          <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--border2);"></span>
+          <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--orange);"></span>
+          <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--cyan);"></span>
+          <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--green);"></span>
+          <span>Más</span>
+        </div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1rem;">
         <div class="card" style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:1rem;">📈 Consistencia por hábito</div>
@@ -3611,7 +3634,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div class="card" style="padding:1.4rem;margin-bottom:1rem;">
         <div class="section-label" style="margin-bottom:1rem;">⚙ Administrar Hábitos</div>
         <div id="rutHabitosList" style="margin-bottom:1.2rem;"></div>
-        <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:end;">
+        <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;align-items:end;">
           <div class="form-group" style="margin:0;">
             <label>Nombre del hábito</label>
             <input type="text" id="rutNewName" placeholder="Ej: Análisis de estructura...">
@@ -3646,6 +3669,14 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             <select id="rutNewType">
               <option value="check">✓ Check</option>
               <option value="minutes">⏱ Minutos</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>Momento</label>
+            <select id="rutNewTiming">
+              <option value="before">Antes del trade</option>
+              <option value="after">Después del trade</option>
+              <option value="anytime">Cualquier momento</option>
             </select>
           </div>
           <button class="btn primary" onclick="addHabito()" style="height:38px;">+ Agregar</button>
@@ -5697,6 +5728,12 @@ function renderDashboard(){
   checkReglasAlert();
   renderDashInact();
   renderDashPilares();
+  // Banner rutina
+  const bannerEl = document.getElementById('rutinaBanner');
+  if(bannerEl){
+    const rutHoyPct = dayPct(rutDays[todayKey()]||{});
+    bannerEl.style.display = rutHoyPct===0 ? 'flex' : 'none';
+  }
   const n=trades.length, wins=trades.filter(t=>t.result==='WIN').length, losses=trades.filter(t=>t.result==='LOSS').length, bes=trades.filter(t=>t.result==='BE').length;
   const wr=n?wins/n:0;
   const totalPnl=trades.reduce((s,t)=>s+t.pnl,0);
@@ -6010,24 +6047,49 @@ function onTradeAccountChange(){
 // ════════════════════════════════════════════════════════════
 
 function renderTradeRutinaStrip(dateStr){
-  const key = dateStr || todayKey();
+  const key  = dateStr || todayKey();
   const day  = rutDays[key] || {};
-  const pct  = dayPct(day);
-  const color = pct===0 ? 'var(--dim)' : pct===100 ? 'var(--green)' : pct>=50 ? 'var(--cyan)' : 'var(--orange)';
-  const barColor = pct===100 ? 'var(--green)' : pct>=50 ? 'var(--cyan)' : 'var(--orange)';
-  const pctEl = document.getElementById('tRutPct');
-  const barEl = document.getElementById('tRutBar');
-  const habEl = document.getElementById('tRutHabitos');
+  const pctEl= document.getElementById('tRutPct');
+  const barEl= document.getElementById('tRutBar');
+  const habEl= document.getElementById('tRutHabitos');
   if(!pctEl) return;
+
+  if(!rutHabitos.length){
+    pctEl.textContent='Sin hábitos'; pctEl.style.color='var(--dim)';
+    barEl.style.width='0%';
+    habEl.innerHTML='<span style="font-size:10px;color:var(--dim);">Configurá tus hábitos en Rutina Ganadora</span>';
+    return;
+  }
+
+  const isHabDone = h => h.type==='check' ? !!day[h.id] : (parseInt(day[h.id+'_min'])||0)>0;
+  const before  = rutHabitos.filter(h=>(h.timing||'anytime')==='before');
+  const after   = rutHabitos.filter(h=>(h.timing||'anytime')==='after');
+  const anytime = rutHabitos.filter(h=>(h.timing||'anytime')==='anytime');
+
+  const pct = dayPct(day);
+  const color = pct===0?'var(--dim)':pct===100?'var(--green)':pct>=50?'var(--cyan)':'var(--orange)';
   pctEl.textContent = pct===0 ? 'Sin registrar' : pct.toFixed(0)+'%';
   pctEl.style.color = color;
-  barEl.style.width  = pct+'%';
-  barEl.style.background = barColor;
-  if(!rutHabitos.length){ habEl.innerHTML='<span style="font-size:10px;color:var(--dim);">Sin hábitos configurados</span>'; return; }
-  habEl.innerHTML = rutHabitos.map(h=>{
-    const done = h.type==='check' ? !!day[h.id] : (parseInt(day[h.id+'_min'])||0)>0;
-    return `<span title="${escHtml(h.name)}" style="font-size:13px;opacity:${done?1:.25};cursor:default;">${h.icon||'⭐'}</span>`;
-  }).join('');
+  barEl.style.width = pct+'%';
+  barEl.style.background = pct===100?'var(--green)':pct>=50?'var(--cyan)':'var(--orange)';
+
+  const renderGroup = (hab, label, labelColor) => {
+    if(!hab.length) return '';
+    return `<div style="margin-bottom:6px;">
+      <div style="font-size:8px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:${labelColor};margin-bottom:3px;">${label}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        ${hab.map(h=>{
+          const done=isHabDone(h);
+          return `<span title="${escHtml(h.name)}" style="font-size:15px;opacity:${done?1:.2};cursor:default;transition:opacity .2s;">${h.icon||'⭐'}</span>`;
+        }).join('')}
+      </div>
+    </div>`;
+  };
+
+  habEl.innerHTML =
+    renderGroup(before,'Antes del trade','var(--cyan)') +
+    renderGroup(after,'Después del trade','var(--purple)') +
+    renderGroup(anytime,'En cualquier momento','var(--sub)');
 }
 
 function openTradeModal(){
@@ -11247,14 +11309,14 @@ function generatePDFReport(){
 // ════════════════════════════════════════════════════════════
 
 const DEFAULT_HABITOS = [
-  {id:'backtest',  name:'Backtest',        icon:'🔬', type:'minutes', meta:30},
-  {id:'meditacion',name:'Meditación',      icon:'🧘', type:'minutes', meta:10},
-  {id:'visualizacion',name:'Visualización',icon:'🎯', type:'minutes', meta:5},
-  {id:'plan',      name:'Plan del día',    icon:'📋', type:'check',   meta:0},
-  {id:'review',    name:'Review de trades',icon:'📊', type:'check',   meta:0},
-  {id:'ejercicio', name:'Ejercicio',       icon:'💪', type:'minutes', meta:20},
-  {id:'lectura',   name:'Lectura/estudio', icon:'📚', type:'minutes', meta:15},
-  {id:'descanso',  name:'Sin pantallas -1h antes de operar', icon:'😴', type:'check', meta:0},
+  {id:'backtest',     name:'Backtest',        icon:'🔬', type:'minutes', meta:30,  timing:'before'},
+  {id:'meditacion',   name:'Meditación',      icon:'🧘', type:'minutes', meta:10,  timing:'before'},
+  {id:'visualizacion',name:'Visualización',   icon:'🎯', type:'minutes', meta:5,   timing:'before'},
+  {id:'plan',         name:'Plan del día',    icon:'📋', type:'check',   meta:0,   timing:'before'},
+  {id:'review',       name:'Review de trades',icon:'📊', type:'check',   meta:0,   timing:'after'},
+  {id:'ejercicio',    name:'Ejercicio',       icon:'💪', type:'minutes', meta:20,  timing:'anytime'},
+  {id:'lectura',      name:'Lectura/estudio', icon:'📚', type:'minutes', meta:15,  timing:'anytime'},
+  {id:'descanso',     name:'Sin pantallas -1h antes de operar', icon:'😴', type:'check', meta:0, timing:'before'},
 ];
 
 let rutHabitos = JSON.parse(localStorage.getItem('rdm_habitos') || 'null') || DEFAULT_HABITOS;
@@ -11369,52 +11431,53 @@ function renderRutHoy(){
   const streakEl=document.getElementById('rutStreak');
   if(streakEl) streakEl.textContent = streak>0 ? '🔥 '+streak+' días seguidos' : '';
 
-  // Group habits by type
-  const checks = rutHabitos.filter(h=>h.type==='check');
-  const minutes = rutHabitos.filter(h=>h.type==='minutes');
-
-  let html = '';
-
-  if(minutes.length){
-    html += `<div style="margin-bottom:1.2rem;">
-      <div style="font-size:9px;color:var(--dim);font-family:'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem;">⏱ Con tiempo</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">`;
-    minutes.forEach(h=>{
+  // Group habits by timing
+  const renderHabitoCard = h => {
+    if(h.type==='minutes'){
       const val = parseInt(day[h.id+'_min'])||0;
       const done = val > 0;
       const pct = h.meta > 0 ? Math.min(100, val/h.meta*100) : (done?100:0);
-      html += `<div style="background:${done?'rgba(52,211,153,.06)':'var(--glass)'};border:1px solid ${done?'rgba(52,211,153,.25)':'var(--border)'};border-radius:10px;padding:.8rem 1rem;transition:all .2s;">
+      return `<div style="background:${done?'rgba(52,211,153,.06)':'var(--glass)'};border:1px solid ${done?'rgba(52,211,153,.25)':'var(--border)'};border-radius:10px;padding:.8rem 1rem;transition:all .2s;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
           <span style="font-size:13px;">${escHtml(h.icon)}</span>
           <span style="font-size:11px;font-weight:600;color:${done?'var(--green)':'var(--text)'};">${escHtml(h.name)}</span>
           ${done?'<span style="font-size:14px;">✅</span>':'<span style="font-size:14px;opacity:.3;">⭕</span>'}
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
-          <input type="number" min="0" max="999" value="${val||''}" placeholder="${h.meta||0}" 
+          <input type="number" min="0" max="999" value="${val||''}" placeholder="${h.meta||0}"
             oninput="setRutMin('${h.id}',this.value)"
             style="width:70px;font-size:13px;padding:4px 8px;text-align:center;font-family:'JetBrains Mono',monospace;">
           <span style="font-size:10px;color:var(--sub);">min ${h.meta?'/ '+h.meta+'min meta':''}</span>
         </div>
         ${h.meta>0?`<div style="height:4px;border-radius:2px;background:var(--glass2);margin-top:6px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${pct>=100?'var(--green)':'var(--cyan)'};border-radius:2px;transition:width .3s;"></div></div>`:''}
       </div>`;
-    });
-    html += `</div></div>`;
-  }
-
-  if(checks.length){
-    html += `<div style="margin-bottom:1rem;">
-      <div style="font-size:9px;color:var(--dim);font-family:'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem;">✓ Check</div>
-      <div style="display:flex;flex-direction:column;gap:6px;">`;
-    checks.forEach(h=>{
+    } else {
       const done = !!day[h.id];
-      html += `<div onclick="toggleRutCheck('${h.id}')" style="display:flex;align-items:center;gap:10px;padding:.7rem 1rem;background:${done?'rgba(52,211,153,.06)':'var(--glass)'};border:1px solid ${done?'rgba(52,211,153,.25)':'var(--border)'};border-radius:10px;cursor:pointer;transition:all .2s;user-select:none;">
+      return `<div onclick="toggleRutCheck('${h.id}')" style="display:flex;align-items:center;gap:10px;padding:.7rem 1rem;background:${done?'rgba(52,211,153,.06)':'var(--glass)'};border:1px solid ${done?'rgba(52,211,153,.25)':'var(--border)'};border-radius:10px;cursor:pointer;transition:all .2s;user-select:none;">
         <span style="font-size:18px;">${done?'✅':'⭕'}</span>
         <span style="font-size:13px;">${escHtml(h.icon)}</span>
         <span style="font-size:12px;font-weight:${done?'700':'400'};color:${done?'var(--green)':'var(--text)'};">${escHtml(h.name)}</span>
       </div>`;
-    });
-    html += `</div></div>`;
-  }
+    }
+  };
+
+  const sections = [
+    { timing:'before', label:'Antes del trade', color:'var(--cyan)' },
+    { timing:'after',  label:'Después del trade', color:'var(--purple)' },
+    { timing:'anytime',label:'En cualquier momento', color:'var(--sub)' },
+  ];
+
+  let html = '';
+  sections.forEach(sec=>{
+    const group = rutHabitos.filter(h=>(h.timing||'anytime')===sec.timing);
+    if(!group.length) return;
+    html += `<div style="margin-bottom:1.2rem;">
+      <div style="font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem;color:${sec.color};">${sec.label}</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${group.map(renderHabitoCard).join('')}
+      </div>
+    </div>`;
+  });
 
   document.getElementById('rutHoySections').innerHTML = html;
 
@@ -11466,7 +11529,32 @@ function saveRutDay(){
   if(st){ st.textContent='guardado ✓'; clearTimeout(st._t); st._t=setTimeout(()=>st.textContent='',1500); }
 }
 
+function renderRutCalendar(){
+  const el = document.getElementById('rutCalendar');
+  if(!el) return;
+  const days = 91;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const cells = [];
+  for(let i=days-1;i>=0;i--){
+    const d = new Date(today); d.setDate(today.getDate()-i);
+    const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const pct = rutDays[k] ? dayPct(rutDays[k]) : -1;
+    const bg = pct<0?'var(--border2)':pct===100?'var(--green)':pct>=50?'var(--cyan)':pct>0?'var(--orange)':'var(--border2)';
+    const opacity = pct<0?'.3':'1';
+    const label = d.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+    const pctLabel = pct<0?'Sin datos':pct+'%';
+    cells.push(`<div title="${label}: ${pctLabel}" style="width:12px;height:12px;border-radius:2px;background:${bg};opacity:${opacity};cursor:default;flex-shrink:0;"></div>`);
+  }
+  // Agrupar en filas de 7 (semanas)
+  const weeks = [];
+  for(let i=0;i<cells.length;i+=7) weeks.push(cells.slice(i,i+7));
+  el.innerHTML = `<div style="display:flex;gap:3px;flex-wrap:wrap;">
+    ${weeks.map(w=>`<div style="display:flex;flex-direction:column;gap:3px;">${w.join('')}</div>`).join('')}
+  </div>`;
+}
+
 function renderRutHistorial(){
+  renderRutCalendar();
   const sorted=Object.keys(rutDays).sort().reverse();
   const total=sorted.length;
   const perfect=sorted.filter(k=>isDayPerfect(rutDays[k])).length;
@@ -11511,14 +11599,20 @@ function renderRutHistorial(){
       const d=rutDays[k]; const pct=dayPct(d); const perf=isDayPerfect(d);
       const [yr,mo,dy]=k.split('-');
       const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-      return `<div style="display:flex;align-items:center;gap:12px;padding:.6rem .8rem;border-radius:8px;margin-bottom:4px;background:${perf?'rgba(52,211,153,.05)':'var(--glass)'};border:1px solid ${perf?'rgba(52,211,153,.2)':'var(--border)'};">
+      // P&L del día
+      const dayTrades = trades.filter(t=>t.date===k);
+      const dayPnl = dayTrades.reduce((s,t)=>s+(t.pnl||0),0);
+      const hasTrades = dayTrades.length>0;
+      const pnlColor = dayPnl>=0?'var(--green)':'var(--red)';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:.6rem .8rem;border-radius:8px;margin-bottom:4px;background:${perf?'rgba(52,211,153,.05)':'var(--glass)'};border:1px solid ${perf?'rgba(52,211,153,.2)':'var(--border)'};">
         <span style="font-size:14px;">${perf?'🏆':'📅'}</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);min-width:90px;">${months[parseInt(mo)-1]} ${dy}, ${yr}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);min-width:80px;">${months[parseInt(mo)-1]} ${dy}, ${yr}</span>
         <div style="flex:1;height:6px;border-radius:3px;background:var(--glass2);overflow:hidden;">
           <div style="height:100%;width:${pct}%;background:${pct>=100?'var(--green)':pct>=50?'var(--cyan)':'var(--gold)'};border-radius:3px;"></div>
         </div>
         <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${pct>=100?'var(--green)':pct>=50?'var(--cyan)':'var(--gold)'};">${pct.toFixed(0)}%</span>
-        ${d.nota?`<span style="font-size:10px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.nota}">📝 ${d.nota}</span>`:''}
+        ${hasTrades?`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:${pnlColor};background:${dayPnl>=0?'rgba(52,211,153,.08)':'rgba(248,113,113,.08)'};border:1px solid ${dayPnl>=0?'rgba(52,211,153,.2)':'rgba(248,113,113,.2)'};padding:1px 7px;border-radius:10px;white-space:nowrap;">${dayPnl>=0?'+':''}${fmtUSD(dayPnl)} · ${dayTrades.length}t</span>`:'<span style="font-size:9px;color:var(--dim);">sin trades</span>'}
+        ${d.nota?`<span style="font-size:10px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.nota}">📝 ${d.nota}</span>`:''}
       </div>`;
     }).join('') : '<div style="color:var(--sub);font-size:12px;padding:1rem 0;">Sin historial aún.</div>';
   }
@@ -11527,10 +11621,14 @@ function renderRutHistorial(){
 function renderRutHabitos(){
   const el=document.getElementById('rutHabitosList');
   if(!el) return;
+  const timingLabel = t => t==='before'?'<span style="color:var(--cyan);font-size:9px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);padding:1px 6px;border-radius:4px;">Antes</span>'
+                         : t==='after' ?'<span style="color:var(--purple);font-size:9px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);padding:1px 6px;border-radius:4px;">Después</span>'
+                         :              '<span style="color:var(--sub);font-size:9px;background:var(--glass2);padding:1px 6px;border-radius:4px;">Siempre</span>';
   el.innerHTML = rutHabitos.map((h,i)=>`
     <div style="display:flex;align-items:center;gap:10px;padding:.6rem .8rem;border-radius:8px;border:1px solid var(--border);background:var(--glass);margin-bottom:6px;">
       <span style="font-size:16px;">${h.icon}</span>
       <span style="flex:1;font-size:12px;font-weight:600;">${h.name}</span>
+      ${timingLabel(h.timing||'anytime')}
       <span style="font-size:10px;color:var(--sub);background:var(--glass2);padding:2px 7px;border-radius:5px;">${h.type==='minutes'?'⏱ minutos':'✓ check'}</span>
       ${h.type==='minutes'?`<span style="font-size:10px;color:var(--sub);">meta: ${h.meta}min</span>`:''}
       <button class="btn sm danger" onclick="removeHabito(${i})">✕</button>
@@ -11542,9 +11640,10 @@ function addHabito(){
   const name=document.getElementById('rutNewName')?.value.trim();
   const icon=document.getElementById('rutNewIcon')?.value||'⭐';
   const type=document.getElementById('rutNewType')?.value||'check';
+  const timing=document.getElementById('rutNewTiming')?.value||'anytime';
   if(!name){if(window.toast)toast('Escribí un nombre','err');return;}
   const id='h_'+Date.now();
-  rutHabitos.push({id,name,icon,type,meta:type==='minutes'?15:0});
+  rutHabitos.push({id,name,icon,type,meta:type==='minutes'?15:0,timing});
   saveRutStorage();
   document.getElementById('rutNewName').value='';
   document.getElementById('rutNewIcon').value='⭐';
