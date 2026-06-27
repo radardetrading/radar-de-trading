@@ -2775,6 +2775,16 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div id="st_rutina_perf"></div>
     </div>
 
+    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+      <div class="section-label" style="margin-bottom:1rem;">🔗 Impacto de hábitos en el trading</div>
+      <div id="st_habitos_corr"></div>
+    </div>
+
+    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+      <div class="section-label" style="margin-bottom:1rem;">🧠 Diario Mental × Performance</div>
+      <div id="st_diario_corr"></div>
+    </div>
+
   </div>
 
   <!-- BACKTEST / SIMULADOR NEOMAA -->
@@ -9766,7 +9776,139 @@ function renderEstadisticas(){
     }
   }
 
+  // ── Impacto de hábitos (Rutina) ───────────────────────────
+  const habCorrEl = document.getElementById('st_habitos_corr');
+  if(habCorrEl) renderStHabitosCorr(habCorrEl, t);
+
+  // ── Diario Mental × Performance ───────────────────────────
+  const diarioCorrEl = document.getElementById('st_diario_corr');
+  if(diarioCorrEl) renderStDiarioCorr(diarioCorrEl, t);
+
   renderPerfilSetup();
+}
+
+function renderStHabitosCorr(el, filteredTrades){
+  if(!rutHabitos.length || !filteredTrades.length){
+    el.innerHTML='<div style="color:var(--dim);font-size:12px;">Sin hábitos configurados o sin trades.</div>';
+    return;
+  }
+  const habDone = (h, dayData) => {
+    if(!dayData) return false;
+    return h.type==='check' ? !!dayData[h.id] : (parseInt(dayData[h.id+'_min'])||0) > 0;
+  };
+  const mkMetrics = arr => {
+    if(!arr.length) return null;
+    const wins = arr.filter(t=>t.result==='WIN').length;
+    return { n: arr.length, wr: wins/arr.length, avgPnl: arr.reduce((s,t)=>s+(t.pnl||0),0)/arr.length };
+  };
+
+  const rows = rutHabitos.map(h => {
+    const done=[], notDone=[];
+    filteredTrades.forEach(t => {
+      if(!t.date) return;
+      habDone(h, rutDays[t.date]) ? done.push(t) : notDone.push(t);
+    });
+    const mD = mkMetrics(done), mN = mkMetrics(notDone);
+    const deltaWR = mD && mN ? (mD.wr - mN.wr)*100 : null;
+    return { h, mD, mN, deltaWR };
+  }).filter(r => r.mD || r.mN);
+
+  if(!rows.length){ el.innerHTML='<div style="color:var(--dim);font-size:12px;">Sin datos suficientes.</div>'; return; }
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;">
+    ${rows.map(({h, mD, mN, deltaWR})=>{
+      const dc = deltaWR===null?'var(--dim)':deltaWR>2?'var(--green)':deltaWR<-2?'var(--red)':'var(--sub)';
+      const di = deltaWR===null?'':deltaWR>0?'▲':'▼';
+      return `<div style="border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;background:var(--glass);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span style="font-size:16px;">${h.icon||'⭐'}</span>
+            <span style="font-size:12px;font-weight:700;">${escHtml(h.name)}</span>
+          </div>
+          ${deltaWR!==null?`<span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:${dc};">${di}${Math.abs(deltaWR).toFixed(0)}% WR</span>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          ${[{m:mD,label:'✅ Con hábito'},{m:mN,label:'⭕ Sin hábito'}].map(({m,label})=>
+            m ? `<div style="background:var(--glass2);border-radius:7px;padding:.5rem .7rem;">
+              <div style="font-size:9px;color:var(--sub);margin-bottom:3px;">${label}</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:${m.wr>=.5?'var(--green)':'var(--red)'};">${(m.wr*100).toFixed(0)}%</div>
+              <div style="font-size:9px;color:var(--sub);">${m.n} trades</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${m.avgPnl>=0?'var(--green)':'var(--red)'};">${m.avgPnl>=0?'+':''}${fmtUSD(m.avgPnl)} avg</div>
+            </div>`
+            : `<div style="background:var(--glass2);border-radius:7px;padding:.5rem .7rem;opacity:.3;"><div style="font-size:9px;color:var(--sub);">${label}</div><div style="font-size:10px;color:var(--dim);">Sin datos</div></div>`
+          ).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+    </div>`;
+}
+
+function renderStDiarioCorr(el, filteredTrades){
+  if(typeof moodQuestions === 'undefined' || !moodQuestions.length){
+    el.innerHTML='<div style="color:var(--dim);font-size:12px;">Sin preguntas de Diario Mental configuradas.</div>';
+    return;
+  }
+  const qs = moodQuestions.filter(q=>q.tipo==='opciones');
+  if(!qs.length){ el.innerHTML='<div style="color:var(--dim);font-size:12px;">Configurá preguntas de tipo "opciones" en el Diario Mental.</div>'; return; }
+
+  // Para cada pregunta, calcular métricas usando el subconjunto filtrado
+  const mkByQ = q => {
+    const rows = {};
+    filteredTrades.forEach(t => {
+      let val = null;
+      if(t.moodAnswers && t.moodAnswers[q.id]) val = t.moodAnswers[q.id];
+      else if(q.id==='q_before_estado' && t.moodBefore){
+        const legMap={excelente:'🔥 En zona',enfocado:'😎 Enfocado',neutral:'😐 Neutral',ansioso:'😤 Ansioso',revenge:'💢 Revenge',fomo:'😰 FOMO'};
+        val = legMap[t.moodBefore]||null;
+      } else if(q.id==='q_after_estado' && t.moodAfter){
+        const legMap={excelente:'🔥 En zona',enfocado:'😎 Enfocado',neutral:'😐 Neutral',ansioso:'😤 Ansioso',revenge:'💢 Revenge',fomo:'😰 FOMO'};
+        val = legMap[t.moodAfter]||null;
+      }
+      if(!val) return;
+      if(!rows[val]) rows[val]={val,n:0,wins:0,pnl:0};
+      rows[val].n++; if(t.result==='WIN') rows[val].wins++; rows[val].pnl+=(t.pnl||0);
+    });
+    return Object.values(rows).map(r=>({...r, wr:r.n?r.wins/r.n:0, avg:r.n?r.pnl/r.n:0})).filter(r=>r.n>0).sort((a,b)=>b.wr-a.wr);
+  };
+
+  const momColor = m => m==='before'?'var(--cyan)':m==='during'?'var(--gold)':'var(--purple)';
+  const momLabel = m => m==='before'?'Antes del trade':m==='during'?'Durante':'Después del trade';
+
+  let html = `<div style="display:flex;flex-direction:column;gap:14px;">`;
+  qs.forEach(q => {
+    const rows = mkByQ(q);
+    if(!rows.length) return;
+    const maxWR = Math.max(...rows.map(r=>r.wr), 0.001);
+    const qColor = getQColor(q);
+    html += `<div>
+      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${momColor(q.momento)};margin-bottom:.5rem;">${momLabel(q.momento)} — ${escHtml(q.titulo)}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;">
+        ${rows.map(r=>{
+          const barW = (r.wr/maxWR*100).toFixed(0);
+          return `<div style="border:1px solid var(--border);border-radius:9px;padding:.7rem .9rem;background:var(--glass);">
+            <div style="font-size:12px;font-weight:700;margin-bottom:.4rem;">${escHtml(r.val)}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:.3rem;">
+              <div style="flex:1;height:5px;background:var(--glass2);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${barW}%;background:${qColor};border-radius:3px;"></div>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:${r.wr>=.5?'var(--green)':'var(--red)'};">${(r.wr*100).toFixed(0)}%</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:9px;color:var(--sub);">${r.n} trades</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${r.avg>=0?'var(--green)':'var(--red)'};">${r.avg>=0?'+':''}${fmtUSD(r.avg)} avg</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  if(html === '<div style="display:flex;flex-direction:column;gap:14px;"></div>'){
+    el.innerHTML='<div style="color:var(--dim);font-size:12px;">Registrá tu estado mental al cargar trades para ver la correlación.</div>';
+    return;
+  }
+  el.innerHTML = html;
 }
 
 // ════════════════════════════════════════════════════════════
