@@ -11606,21 +11606,22 @@ function renderRutHoy(){
   // Chips para hábitos de check
   const renderCheckChips = (habits) => {
     if(!habits.length) return '';
-    return `<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:.6rem;">
+    return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:.6rem;">
       ${habits.map(h=>{
         const done = !!day[h.id];
         return `<button onclick="toggleRutCheck('${h.id}')" style="
-          display:inline-flex;align-items:center;gap:6px;
-          padding:7px 14px;border-radius:20px;cursor:pointer;
-          border:1.5px solid ${done?'rgba(52,211,153,.5)':'var(--border2)'};
-          background:${done?'rgba(52,211,153,.1)':'var(--glass)'};
-          color:${done?'var(--green)':'var(--sub)'};
-          font-size:12px;font-weight:${done?700:400};
+          display:inline-flex;align-items:center;gap:7px;
+          padding:9px 16px;border-radius:12px;cursor:pointer;
+          border:2px solid ${done?'var(--green)':'rgba(99,160,255,.3)'};
+          background:${done?'rgba(52,211,153,.13)':'var(--bg3)'};
+          color:${done?'var(--green)':'var(--text)'};
+          font-size:12px;font-weight:${done?700:500};
           transition:all .18s;user-select:none;
-          box-shadow:${done?'0 0 10px rgba(52,211,153,.15)':'none'};
+          box-shadow:${done?'0 0 16px rgba(52,211,153,.2),inset 0 1px 0 rgba(52,211,153,.15)':'0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)'};
+          letter-spacing:.01em;
         ">
-          <span style="font-size:13px;line-height:1;">${done?'✓':escHtml(h.icon)}</span>
-          <span>${escHtml(h.name)}</span>
+          <span style="font-size:15px;line-height:1;${done?'':'filter:grayscale(.3);'}">${done?'✅':escHtml(h.icon)}</span>
+          <span style="text-decoration:${done?'line-through':'none'};opacity:${done?.85:1};">${escHtml(h.name)}</span>
         </button>`;
       }).join('')}
     </div>`;
