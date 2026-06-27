@@ -3604,13 +3604,12 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div class="card" style="padding:1.2rem;margin-bottom:1rem;">
         <div class="section-label" style="margin-bottom:.8rem;">📅 Últimos 90 días</div>
         <div id="rutCalendar"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:.8rem;font-size:10px;color:var(--sub);">
-          <span>Menos</span>
-          <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--border2);"></span>
-          <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--orange);"></span>
-          <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--cyan);"></span>
-          <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--green);"></span>
-          <span>Más</span>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:.8rem;font-size:10px;color:var(--sub);flex-wrap:wrap;">
+          <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(255,255,255,.04);border:1px solid var(--border);"></span>Sin datos</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(251,146,60,.15);border:1px solid rgba(251,146,60,.35);"></span>&lt;50%</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.35);"></span>50–99%</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(52,211,153,.18);border:1px solid rgba(52,211,153,.4);"></span>100%</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--cyan);"></span>Punto cian = día con trades</span>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1rem;">
@@ -11529,28 +11528,77 @@ function saveRutDay(){
   if(st){ st.textContent='guardado ✓'; clearTimeout(st._t); st._t=setTimeout(()=>st.textContent='',1500); }
 }
 
+let rutCalOffset = 0;
 function renderRutCalendar(){
   const el = document.getElementById('rutCalendar');
   if(!el) return;
-  const days = 91;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const cells = [];
-  for(let i=days-1;i>=0;i--){
-    const d = new Date(today); d.setDate(today.getDate()-i);
-    const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    const pct = rutDays[k] ? dayPct(rutDays[k]) : -1;
-    const bg = pct<0?'var(--border2)':pct===100?'var(--green)':pct>=50?'var(--cyan)':pct>0?'var(--orange)':'var(--border2)';
-    const opacity = pct<0?'.3':'1';
-    const label = d.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
-    const pctLabel = pct<0?'Sin datos':pct+'%';
-    cells.push(`<div title="${label}: ${pctLabel}" style="width:12px;height:12px;border-radius:2px;background:${bg};opacity:${opacity};cursor:default;flex-shrink:0;"></div>`);
+  const now = new Date();
+  const target = new Date(now.getFullYear(), now.getMonth()+rutCalOffset, 1);
+  const year = target.getFullYear(), month = target.getMonth();
+  const todayStr = now.toISOString().split('T')[0];
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  const dayNames = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  // getDay(): 0=Dom,1=Lun...6=Sáb → convertir a índice Lun=0..Dom=6
+  const firstDow = new Date(year, month, 1).getDay();
+  const startOffset = firstDow===0 ? 6 : firstDow-1;
+
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
+      <button class="btn sm ghost" onclick="rutCalOffset--;renderRutCalendar()">◀</button>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text);">${monthNames[month]} ${year}</span>
+      <button class="btn sm ghost" onclick="rutCalOffset=0;renderRutCalendar()">Hoy</button>
+      <button class="btn sm ghost" onclick="rutCalOffset++;renderRutCalendar()">▶</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">`;
+
+  // Headers
+  dayNames.forEach(d => {
+    html += `<div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);text-align:center;padding:3px 0;">${d}</div>`;
+  });
+
+  // Empty cells before first day
+  for(let i=0;i<startOffset;i++) html += `<div></div>`;
+
+  // Day cells
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const isToday = dateStr===todayStr;
+    const isFuture = dateStr>todayStr;
+    const dayData = rutDays[dateStr];
+    const pct = dayData && !isFuture ? dayPct(dayData) : -1;
+    const hasTrades = trades.some(t=>t.date===dateStr);
+
+    let bg, border, textColor;
+    if(isFuture){
+      bg='rgba(255,255,255,.01)'; border='1px solid var(--border)'; textColor='var(--dim)';
+    } else if(pct<0){
+      bg='rgba(255,255,255,.02)'; border='1px solid var(--border)'; textColor='var(--dim)';
+    } else if(pct===100){
+      const int=0.18; bg=`rgba(52,211,153,${int})`; border=`1px solid rgba(52,211,153,.4)`; textColor='var(--green)';
+    } else if(pct>=50){
+      const int=0.15; bg=`rgba(56,189,248,${int})`; border=`1px solid rgba(56,189,248,.35)`; textColor='var(--cyan)';
+    } else if(pct>0){
+      const int=0.15; bg=`rgba(251,146,60,${int})`; border=`1px solid rgba(251,146,60,.35)`; textColor='var(--orange)';
+    } else {
+      bg='rgba(255,255,255,.02)'; border='1px solid var(--border)'; textColor='var(--dim)';
+    }
+    if(isToday) border='2px solid rgba(56,189,248,.6)';
+
+    const pctLabel = pct<0 ? 'Sin registrar' : pct.toFixed(0)+'%';
+    const titleStr = dateStr+': '+pctLabel+(hasTrades?' · con trades':'');
+
+    html += `<div title="${titleStr}" style="min-height:52px;border-radius:8px;${border};background:${bg};padding:5px 6px;position:relative;cursor:default;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:${isToday?800:500};color:${isToday?'var(--cyan)':isFuture?'var(--dim)':pct>=0?textColor:'var(--dim)'};">${d}</div>
+      ${pct>=0?`<div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:${textColor};margin-top:2px;">${pct.toFixed(0)}%</div>`:''}
+      ${hasTrades&&!isFuture?`<div style="position:absolute;bottom:4px;right:5px;width:5px;height:5px;border-radius:50%;background:${pct===100?'var(--green)':pct>=50?'var(--cyan)':pct>0?'var(--orange)':'var(--dim)'};"></div>`:''}
+      ${isToday?`<div style="position:absolute;bottom:4px;left:5px;width:5px;height:5px;background:var(--cyan);border-radius:50%;box-shadow:0 0 5px var(--cyan);"></div>`:''}
+    </div>`;
   }
-  // Agrupar en filas de 7 (semanas)
-  const weeks = [];
-  for(let i=0;i<cells.length;i+=7) weeks.push(cells.slice(i,i+7));
-  el.innerHTML = `<div style="display:flex;gap:3px;flex-wrap:wrap;">
-    ${weeks.map(w=>`<div style="display:flex;flex-direction:column;gap:3px;">${w.join('')}</div>`).join('')}
-  </div>`;
+
+  html += `</div>`;
+  el.innerHTML = html;
 }
 
 function renderRutHistorial(){
