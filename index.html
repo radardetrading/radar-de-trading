@@ -6353,12 +6353,14 @@ function saveBtCfg(){
 function updateBtCards(){
   ['5k','50k'].forEach(k=>{
     const cfg=NEOMAA[k];
+    if(!cfg) return;
     const el=document.getElementById(`bt_title_${k}`);
     const sub=document.getElementById(`bt_sub_${k}`);
     if(el) el.textContent=fmtUSD(cfg.size);
     const nf=cfg.numFases||2;
     if(sub) sub.textContent=`${cfg.nombre} · ${nf} Fase${nf>1?'s':''} · ${cfg.fase1.target}%${nf>1?' / '+cfg.fase2.target+'%':''} target`;
   });
+  if(!NEOMAA['fut']) NEOMAA['fut'] = JSON.parse(JSON.stringify(NEOMAA_DEFAULT['fut']));
   const cfgFut=NEOMAA['fut'];
   const elFutT=document.getElementById('bt_title_fut');
   const elFutS=document.getElementById('bt_sub_fut');
@@ -6367,7 +6369,7 @@ function updateBtCards(){
   if(elFutB) elFutB.textContent=cfgFut.instrumento||'ES';
   if(elFutS){ const nf=cfgFut.numFases||1; elFutS.textContent=`${cfgFut.nombre} · ${nf} Fase${nf>1?'s':''} · ${cfgFut.fase1.target}% target`; }
   const rsz=document.getElementById('bt_rules_size');
-  if(rsz) rsz.textContent=fmtUSD(NEOMAA[btAccount].size);
+  if(rsz) rsz.textContent=fmtUSD(NEOMAA[btAccount]?.size||0);
 }
 
 function selectBtAccount(key){
