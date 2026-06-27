@@ -2709,7 +2709,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;">
           <label>Tipo de instrumento</label>
-          <select id="st_tipo_instr" onchange="renderEstadisticas()" style="font-size:11px;padding:5px 10px;height:30px;min-width:140px;">
+          <select id="st_tipo_instr" onchange="onStTipoChange()" style="font-size:11px;padding:5px 10px;height:30px;min-width:140px;">
             <option value="">Forex + Futuros</option>
             <option value="forex">Solo Forex</option>
             <option value="futuros">Solo Futuros</option>
@@ -9357,6 +9357,17 @@ function checkReglasWeek(weekTrades, start, end){
 // ════════════════════════════════════════════════════════════
 // ESTADÍSTICAS
 // ════════════════════════════════════════════════════════════
+
+function onStTipoChange(){
+  const isFut = document.getElementById('st_tipo_instr')?.value === 'futuros';
+  const metSel = document.getElementById('st_metrica');
+  if(metSel){
+    const pipsOpt = metSel.querySelector('option[value="pips"]');
+    if(pipsOpt) pipsOpt.style.display = isFut ? 'none' : '';
+    if(isFut && metSel.value === 'pips') metSel.value = 'pnl';
+  }
+  renderEstadisticas();
+}
 
 function stFilterTrades(){
   const periodo   = document.getElementById('st_periodo')?.value   || 'all';
