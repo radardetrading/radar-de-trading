@@ -14251,11 +14251,16 @@ function exportFullPDF(){
 
   // ── CUENTAS ──
   body += sectionTitle('🏦','Cuentas Prop Firm', C.cuentas);
-  body += table(['Cuenta','Fase','Tamaño','Balance','Estado'],
-    d.AC.map(a=>[
-      _esc(a.name||'—'), _esc(a.phase||a.fase||'—'), _exU(_num(a.size)),
-      _exU(_num(a.manualBalance!=null?a.manualBalance:(a.balance!=null?a.balance:a.size))), _esc(a.status||a.estado||'—')
-    ]), C.cuentas);
+  body += table(['Cuenta','Fase','Tamaño','Saldo Actual','P&L Journal','Estado'],
+    d.AC.map(a=>{
+      const bal = getEffectiveBalance(a);
+      const pnl = getJournalPnl(a);
+      return [
+        _esc(a.name||'—'), _esc(a.phase||a.fase||'—'), _exU(_num(a.size)),
+        `<span style="color:${bal>=(a.size||0)?'#34d399':'#f87171'};font-weight:700;">${_exU(bal)}</span>`,
+        colorNum(pnl), _esc(a.status||a.estado||'—')
+      ];
+    }), C.cuentas);
 
   // ── PAGOS ──
   body += sectionTitle('💰','Historial de Pagos', C.pagos);
@@ -14269,8 +14274,28 @@ function exportFullPDF(){
 
   // ── PARES ──
   body += sectionTitle('⚡','Sistema de Pares', C.pares);
-  body += table(['Par','Notas'],
-    d.PR.map(p=>[_esc(p.name||p.par||'—'), _esc(p.notes||p.desc||'')]), C.pares);
+  body += table(['Par','Cuenta A','Cuenta B','Tipo','Días','Notas'],
+    d.PR.map(p=>{
+      const a1 = accObj(p.acc1), a2 = accObj(p.acc2);
+      const dias = (p.dias||[]).map(d=>['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ');
+      return [
+        _esc(p.name||'—'),
+        _esc(a1 ? a1.name : '—'),
+        _esc(a2 ? a2.name : '—'),
+        _esc(p.tipo||'—'),
+        _esc(dias||'—'),
+        _esc(p.notes||'')
+      ];
+    }), C.pares);
+  // Historial de usos de pares
+  if(d.PH.length){
+    body += `<div style="font-size:11px;font-weight:700;color:${C.pares};margin:10px 0 6px;">Historial de usos</div>`;
+    body += table(['Fecha','Par','Resultado','¿Siguen?','Notas'],
+      [...d.PH].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).slice(0,40).map(h=>[
+        _esc(h.fecha||'—'), _esc(h.parName||'—'), _esc(h.res||'—'),
+        _esc(h.siguenJuntas==='si'?'Sí':'No'), _esc(h.notes||'')
+      ]), C.pares);
+  }
 
   // ── REGLAS ──
   body += sectionTitle('📐','Mis Reglas de Trading', C.reglas);
