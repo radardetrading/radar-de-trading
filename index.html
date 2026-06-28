@@ -2553,6 +2553,17 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
   </div>
 
+  <!-- PANEL AYUDA CONTEXTUAL -->
+  <div id="sectionHelpPanel" style="display:none;margin:0 0 1.2rem 0;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.22);border-radius:var(--r2);padding:1rem 1.2rem;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div style="flex:1;">
+        <div id="shpTitle" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:.6rem;"></div>
+        <div id="shpBody" style="font-size:12.5px;line-height:1.65;color:var(--text);"></div>
+      </div>
+      <button onclick="document.getElementById('sectionHelpPanel').style.display='none'" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0;" title="Cerrar panel">&#x2715;</button>
+    </div>
+  </div>
+
   <!-- DASHBOARD -->
   <div id="page-dashboard" class="page active">
     <div class="kpi-grid" id="dashKpis" data-help="KPIs globales: capital total en prop firms, P&L del journal, win rate y profit factor."></div>
@@ -5717,6 +5728,7 @@ function nav(name, fromPopState=false){
   if(ctaLabels[name]){cta.textContent=ctaLabels[name];cta.style.display='';cta.onclick=new Function(ctaActions[name]);}
   else cta.style.display='none';
   currentPage=name;
+  updateSectionHelp(name);
   updateHeader();
   const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:renderReporte,reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas};
   if(renders[name]) renders[name]();
@@ -14963,6 +14975,90 @@ function closeMobileSidebar(){
   }
 })();
 
+
+// ── AYUDA CONTEXTUAL POR SECCIÓN ─────────────────────────────────
+const SECTION_HELP = {
+  dashboard:{
+    t:'📊 Dashboard — Panel Principal',
+    b:'Vista general de todo tu trading. Los <b>KPIs</b> muestran capital total, P&L acumulado, win rate y profit factor. El <b>Resumen del día</b> resume los trades de hoy y si hiciste la rutina. <b>Cuentas activas</b> muestra el estado rápido de cada prop firm y <b>Últimos trades</b> lista las operaciones más recientes.<br><br>💾 <b>¿Cómo guarda Supabase?</b> Cada vez que agregás, editás o eliminás algo, la app lo envía automáticamente a la base de datos en la nube. No necesitás hacer nada manual — el guardado es instantáneo y sincroniza entre dispositivos en tiempo real.'
+  },
+  journal:{
+    t:'📋 Journal — Trades Reales',
+    b:'Registrá cada operación con todos sus detalles: <b>fecha, sesión, instrumento, zona, setup, dirección, entrada, stop, take profit, resultado (WIN/LOSS/BE), P&L y notas</b>. También podés calificar qué tan bien seguiste tu rutina ese día (<b>Rutina del día %</b>).<br><br>Usá los <b>filtros</b> para buscar por texto, resultado, tipo, sesión, instrumento o cuenta.<br><br>📥 <b>Importar:</b> cargá trades masivamente desde Excel (.xlsx) con el botón Importar. 📤 <b>Exportar:</b> bajá todos tus trades como Excel o como backup completo .json desde el botón Exportar.'
+  },
+  calculadora:{
+    t:'📐 Calculadora de Tamaño de Posición',
+    b:'Calculá exactamente <b>cuántos lotes operar</b> para no arriesgar más de lo que decidiste.<br><br><b>Forex:</b> ingresá capital, % de riesgo y stop en pips → te da el tamaño en lotes estándar, mini y micro.<br><b>Futuros:</b> ingresá capital, % de riesgo y stop en ticks → calcula contratos según el valor del tick del instrumento.<br><br>Usala <b>antes de cada trade</b> para mantener una gestión de riesgo consistente, independientemente del tamaño del stop.'
+  },
+  riesgo:{
+    t:'🛡 Simulador de Fondeo',
+    b:'Simulá las reglas de drawdown de tu prop firm para saber cuánto margen te queda antes de violar una regla.<br><br>Ingresá <b>capital inicial, máximo drawdown permitido y drawdown diario máximo</b>. La herramienta calcula en tiempo real los límites exactos de pérdida que no podés superar.<br><br>Muy útil para las <b>fases de evaluación y cuentas fondeadas</b> donde el incumplimiento significa perder la cuenta. Simulá distintos escenarios antes de operar.'
+  },
+  backtest:{
+    t:'🔬 Backtest Challenge',
+    b:'Practicá tu estrategia <b>sin riesgo real</b>. Registrá operaciones hipotéticas con los mismos campos que el journal (setup, zona, sesión, resultado, notas) para ver cómo funcionaría en distintos escenarios de mercado.<br><br>Los resultados se analizan en el <b>Reporte de Backtest</b> junto al Histórico.<br><br>Ideal para <b>validar nuevos setups</b> o analizar tu desempeño en períodos pasados antes de arriesgar capital real.'
+  },
+  historico:{
+    t:'📚 Backtest Histórico',
+    b:'Cargá trades <b>anteriores a Radar</b> para tener un análisis completo de toda tu historia de trading.<br><br>Importá un archivo <b>Excel (.xlsx)</b> con tu historial o cargá trades manualmente. El formato esperado incluye fecha, sesión, instrumento, resultado, P&L, setup y notas.<br><br>Estos trades se combinan con el Backtest Challenge en el <b>Reporte de Backtest</b>, dándote una equity curve y métricas de toda tu carrera.'
+  },
+  reporte:{
+    t:'📈 Reporte de Backtest',
+    b:'Combiná <b>Backtest Histórico + Backtest Challenge</b> en un análisis unificado. Muestra la <b>equity curve</b> completa, expectancy, profit factor, max drawdown, win rate y rachas máximas.<br><br>Filtrá por período, sesión o setup para ver qué condiciones funcionan mejor en tu historial.<br><br>Usá este reporte para decidir si un setup tiene <b>edge estadístico real</b> antes de llevarlo al journal con dinero real.'
+  },
+  reglas:{
+    t:'📐 Mis Reglas',
+    b:'Definí tu <b>plan de trading</b> en reglas concretas (ej: "No opero contra la tendencia mayor", "Máximo 2 trades por día"). Cada vez que rompés una regla podés registrarlo desde el journal.<br><br>La sección muestra cuántas veces violaste cada regla y el <b>impacto en P&L</b> de esas violaciones, ayudándote a ver qué errores te cuestan más dinero.<br><br>Revisala regularmente para detectar patrones de comportamiento y trabajar en la disciplina.'
+  },
+  cuentas:{
+    t:'🏦 Cuentas de Prop Firms',
+    b:'Gestioná todas tus <b>cuentas fondeadas</b> en un solo lugar. Para cada cuenta registrás: firma, fase, capital, drawdown máximo, drawdown actual y fecha del último trade.<br><br>⏰ <b>Pulso de Cuentas (30 días):</b> las prop firms exigen operar al menos una vez cada 30 días. Radar te avisa con colores: 🟢 OK · 🟡 &lt;14 días · 🔴 &lt;7 días · ⚫ vencida.<br><br>📤 <b>Exportar / Importar JSON:</b> hacé backup de todas tus cuentas como .json desde el botón Exportar, y restauralas con Importar. El JSON contiene todos los datos exactamente como están guardados en Supabase.'
+  },
+  pagos:{
+    t:'💰 Pagos — Historial de Splits',
+    b:'Registrá y consultá el <b>historial de splits cobrados</b> de tus cuentas fondeadas. Cada pago tiene fecha, monto, cuenta asociada y notas opcionales.<br><br>Esto te permite llevar un registro claro de <b>cuánto dinero real generaron</b> tus cuentas a lo largo del tiempo, separado del P&L que maneja la prop firm.<br><br>Muy útil para calcular la <b>rentabilidad real</b> de tu actividad: lo que ganaste en splits vs. lo que invertiste en evaluaciones.'
+  },
+  pares:{
+    t:'⚡ Pares de Cuentas',
+    b:'Coordiná cuentas que <b>operan en paralelo</b> para evitar correlación y proteger el drawdown cruzado. Muchas prop firms prohíben operar el mismo instrumento en dos cuentas hermanas al mismo tiempo.<br><br>Acá podés agrupar cuentas en pares y ver en cuáles tenés posiciones activas simultáneas, ayudándote a gestionar el <b>riesgo agregado</b> cuando manejás múltiples cuentas.<br><br>Importante para traders que gestionan varias cuentas fondeadas en paralelo.'
+  },
+  diario:{
+    t:'🧠 Diario Mental',
+    b:'Registrá tu <b>estado psicológico y emocional</b> antes y después de cada sesión: energía, ansiedad, confianza y notas libres de cómo te sentiste.<br><br>Con el tiempo podés correlacionar tu <b>estado emocional con tu rendimiento</b>: identificar si operás peor cuando estás ansioso, si las rachas de pérdidas afectan tus decisiones, o en qué condiciones mentales generás los mejores resultados.<br><br>El trading psicológico es tan importante como el técnico — registrarlo te da datos objetivos sobre vos mismo.'
+  },
+  rutina:{
+    t:'⚡ Rutina Ganadora',
+    b:'Definí los <b>hábitos de preparación diaria</b> que querés cumplir antes de operar: revisar el calendario económico, analizar HTF, hacer ejercicio, meditar, etc.<br><br>Cada día marcás qué cumpliste. La barra llega al 100% cuando completás todo. Este porcentaje se registra en los trades del journal como <b>Rutina del día %</b>.<br><br>En Estadísticas podés ver si hay correlación entre <b>qué tanto completaste la rutina y tu rendimiento</b>. Muchos traders mejoran notablemente operando solo con rutina &gt;80% completada.'
+  },
+  metas:{
+    t:'🎯 Mis Metas',
+    b:'Definí <b>objetivos concretos y medibles</b>: alcanzar X% de win rate, llegar a $Y de P&L mensual, no superar Z% de drawdown, o mantener N días de disciplina seguidos.<br><br>Cada meta tiene fecha de vencimiento y Radar hace el <b>seguimiento automático</b> comparando contra tus datos reales del journal.<br><br>Las metas te dan dirección y ayudan a mantener el foco en el largo plazo, especialmente en etapas difíciles. Revisalas y ajustalas según tu progreso.'
+  },
+  estadisticas:{
+    t:'📊 Estadísticas — Análisis de Rendimiento',
+    b:'Análisis profundo de tu performance desde múltiples ángulos:<br><br>📍 <b>Zona × Resultado:</b> qué zonas (OB, FVG, etc.) te dan mejores entradas · ⚡ <b>Setup × Resultado:</b> tus setups más rentables · 🕐 <b>Sesión × P&L:</b> en qué horarios operás mejor · 📅 <b>Día × Win Rate:</b> si hay días de la semana donde consistentemente operás mejor · 📈 <b>Equity Curve:</b> evolución del capital en el tiempo.<br><br>Filtrá por cuenta y período para análisis más específicos. Estos datos son la base para mejorar con evidencia real.'
+  },
+  semanal:{
+    t:'📅 Resumen Semanal',
+    b:'Vista consolidada de <b>cada semana de trading</b>: cuántos trades hiciste, P&L total, win rate, profit factor y la evolución del capital semana a semana.<br><br>Te permite identificar rápidamente <b>semanas buenas vs. malas</b> y ver tendencias en el tiempo: ¿hubo mejora en los últimos meses? ¿Hay semanas problemáticas recurrentes?<br><br>Combinalo con el Diario Mental para cruzar tu estado psicológico semanal con tus resultados y encontrar patrones de comportamiento.'
+  },
+  reportes:{
+    t:'📑 Reportes — Exportar e Importar',
+    b:'Exportá toda tu data en distintos formatos:<br><br>📄 <b>PDF:</b> reporte estilizado con KPIs, trades y gráficos, listo para compartir o archivar.<br>📊 <b>Excel:</b> todas tus tablas (journal, cuentas, estadísticas, pagos) en un .xlsx multi-hoja.<br>💾 <b>JSON — Backup completo:</b> exporta TODO el estado de la app (trades + backtest + cuentas + reglas + pagos + rutina) como .json. Guardalo como backup de seguridad. Para restaurar, usá <b>Importar JSON</b> — reemplaza todos los datos con los del archivo.<br><br>⚠️ Supabase guarda todo automáticamente en la nube, pero el <b>JSON es tu backup manual</b>: si necesitás restaurar a un punto específico, el JSON es tu herramienta.'
+  }
+};
+
+function updateSectionHelp(page){
+  const panel = document.getElementById('sectionHelpPanel');
+  if(!panel) return;
+  if(!helpModeActive){ panel.style.display='none'; return; }
+  const data = SECTION_HELP[page];
+  if(!data){ panel.style.display='none'; return; }
+  document.getElementById('shpTitle').textContent = data.t;
+  document.getElementById('shpBody').innerHTML = data.b;
+  panel.style.display = 'block';
+}
+
 // ── MODO AYUDA ────────────────────────────────────────────────
 let helpModeActive = false;
 function toggleHelpMode(){
@@ -14975,6 +15071,7 @@ function toggleHelpMode(){
   if(banner) banner.style.display = helpModeActive ? 'block' : 'none';
   if(!helpModeActive && tip) tip.classList.remove('visible');
   if(typeof toast==='function') toast(helpModeActive ? '? Modo ayuda activo — pasa el cursor por los elementos' : 'Modo ayuda desactivado','ok');
+  updateSectionHelp(currentPage);
 }
 document.addEventListener('mouseover', e=>{
   if(!helpModeActive) return;
