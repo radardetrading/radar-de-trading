@@ -3538,14 +3538,6 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <!-- KPIs SECUNDARIOS -->
       <div class="kpi-grid" id="histKpis2" style="margin-bottom:1.5rem;"></div>
 
-      <!-- CURVA DE EQUITY -->
-      <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-          <div class="section-label">📈 Curva de Equity Acumulada</div>
-          <div id="histEqInfo" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);"></div>
-        </div>
-        <canvas id="histEquityChart" height="80"></canvas>
-      </div>
 
       <!-- DISTRIBUCIÓN R + STREAK -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
@@ -3559,35 +3551,11 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
       </div>
 
-      <!-- PERFORMANCE POR SESIÓN + DÍA SEMANA -->
+      <!-- CONFIRMACIÓN + CONSISTENCY -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">🕒 Performance por Sesión</div>
-          <div id="histSessionBox"></div>
-        </div>
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">📅 Performance por Día de Semana</div>
-          <div id="histDowBox"></div>
-        </div>
-      </div>
-
-      <!-- ZONA + CONFIRMACIÓN -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">📍 Performance por Zona</div>
-          <div id="histZonaBox"></div>
-        </div>
         <div class="card" style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:1rem;">🎯 Performance por Confirmación</div>
           <div id="histConfBox"></div>
-        </div>
-      </div>
-
-      <!-- PAR + CONSISTENCY -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">💱 Performance por Par</div>
-          <div id="histPairBox"></div>
         </div>
         <div class="card" style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:1rem;">⚖️ Consistency Rule</div>
@@ -13119,8 +13087,10 @@ function renderHistKpis(m){
 }
 
 function renderHistEquityChart(enriched){
+  const _eqEl = document.getElementById('histEquityChart');
+  if(!_eqEl) return;
   if(histEqChart) histEqChart.destroy();
-  const ctx = document.getElementById('histEquityChart').getContext('2d');
+  const ctx = _eqEl.getContext('2d');
   const labels = enriched.map((t,i)=> (i % Math.max(1, Math.floor(enriched.length/20)) === 0 ? t.date.slice(5) : ''));
   let data;
   if(histView === 'R')      data = enriched.map(t=> +t.cumR.toFixed(2));
@@ -13273,6 +13243,7 @@ function groupStats(enriched, keyFn){
 function renderGroupBox(boxId, enriched, keyFn, opts={}){
   const stats = groupStats(enriched, keyFn);
   const box = document.getElementById(boxId);
+  if(!box) return;
   if(!stats.length){ box.innerHTML = '<div style="font-size:11px;color:var(--sub);text-align:center;padding:1rem;">Sin datos</div>'; return; }
   const limit = opts.limit || 10;
   const shown = stats.slice(0, limit);
