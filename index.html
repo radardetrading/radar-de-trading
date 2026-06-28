@@ -3250,6 +3250,70 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
       </div>
 
+      <!-- ════════════════ SIMULADOR — ¿CUÁNTAS VECES HUBIERA PASADO? ════════════════ -->
+      <div class="card" style="padding:1.4rem;margin-bottom:1.5rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text);margin-bottom:.35rem;">🏆 Simulador de Fondeo — todos los trades</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
+          Tomá todos tus trades históricos en orden cronológico y simulá cuántas veces hubieras pasado (o reventado) una prueba de fondeo real. Cada vez que se cumple el objetivo o se toca el DD, empieza un intento nuevo con los trades siguientes.
+        </div>
+
+        <!-- PARÁMETROS -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1rem;align-items:end;">
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:5px;">FASES</div>
+            <div style="display:flex;gap:0;background:var(--glass2);border-radius:8px;padding:3px;">
+              <button id="sfPhaseBtn1" onclick="setSfPhases(1)" style="flex:1;background:transparent;color:var(--sub);border:none;border-radius:6px;padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;">1</button>
+              <button id="sfPhaseBtn2" onclick="setSfPhases(2)" style="flex:1;background:var(--cyan);color:#000;border:none;border-radius:6px;padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;">2</button>
+            </div>
+          </div>
+
+          <div>
+            <div id="sfP1LabelTxt" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:5px;">OBJETIVO F1 (%)</div>
+            <input type="number" id="sfP1Target" value="8" min="0.1" max="99" step="0.5"
+              style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);outline:none;">
+          </div>
+
+          <div id="sfP2Wrap">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:5px;">OBJETIVO F2 (%)</div>
+            <input type="number" id="sfP2Target" value="5" min="0.1" max="99" step="0.5"
+              style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);outline:none;">
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:5px;">DD MÁX (%)</div>
+            <input type="number" id="sfMaxDD" value="10" min="0.5" max="99" step="0.5"
+              style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);outline:none;">
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:5px;">DD DIARIO (% · 0=off)</div>
+            <input type="number" id="sfDailyDD" value="5" min="0" max="99" step="0.5"
+              style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);outline:none;">
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:5px;">TIPO DD</div>
+            <select id="sfDDType"
+              style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);outline:none;">
+              <option value="trailing">Trailing (desde pico)</option>
+              <option value="static">Estático (desde inicio)</option>
+            </select>
+          </div>
+
+        </div>
+
+        <button onclick="simularChallengeTodos()" style="width:100%;padding:9px;background:var(--cyan);color:#000;border:none;border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:1.2rem;letter-spacing:.04em;">▶ SIMULAR</button>
+
+        <!-- RESULTADOS (ocultos hasta simular) -->
+        <div id="sfAllResults" style="display:none;">
+          <div id="sfAllKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;margin-bottom:1.2rem;"></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:.6rem;">LÍNEA DE TIEMPO — cada cuadrado = un intento (pasá el cursor para detalles)</div>
+          <div id="sfAllTimeline" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.9rem;"></div>
+          <div id="sfAllLegend" style="font-size:10.5px;color:var(--sub);line-height:1.8;"></div>
+        </div>
+      </div>
+
       <!-- HEATMAP MENSUAL -->
       <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
         <div class="section-label" style="margin-bottom:1rem;">🗓️ Heatmap por Mes</div>
@@ -14975,6 +15039,163 @@ function closeMobileSidebar(){
   }
 })();
 
+
+
+// ── SIMULADOR DE FONDEO — TODOS LOS TRADES ────────────────────────
+let sfPhasesCount = 2;
+
+function setSfPhases(n){
+  sfPhasesCount = n;
+  const b1 = document.getElementById('sfPhaseBtn1');
+  const b2 = document.getElementById('sfPhaseBtn2');
+  const w2 = document.getElementById('sfP2Wrap');
+  const lbl = document.getElementById('sfP1LabelTxt');
+  if(b1){ b1.style.background = n===1?'var(--cyan)':'transparent'; b1.style.color = n===1?'#000':'var(--sub)'; }
+  if(b2){ b2.style.background = n===2?'var(--cyan)':'transparent'; b2.style.color = n===2?'#000':'var(--sub)'; }
+  if(w2) w2.style.display = n===2?'':'none';
+  if(lbl) lbl.textContent = n===1?'OBJETIVO (%)':'OBJETIVO F1 (%)';
+}
+
+function simularChallengeTodos(){
+  const enriched = window._histEnriched;
+  if(!enriched || !enriched.length){ toast('Cargá trades históricos primero','err'); return; }
+
+  const p1Target    = parseFloat(document.getElementById('sfP1Target').value) || 8;
+  const p2Target    = sfPhasesCount >= 2 ? (parseFloat(document.getElementById('sfP2Target').value) || 5) : 0;
+  const maxDD       = parseFloat(document.getElementById('sfMaxDD').value) || 10;
+  const dailyDDLim  = parseFloat(document.getElementById('sfDailyDD').value) || 0;
+  const ddType      = document.getElementById('sfDDType').value;
+
+  const sorted = [...enriched].sort((a,b)=>(a.date||'')<(b.date||'')?-1:1);
+
+  const attempts = [];
+  let phase = 1;
+  let attemptPnl = 0, attemptPeak = 0, phasePnl = 0;
+  let dayPnl = {}, attemptTrades = 0;
+
+  const resetAttempt = ()=>{ phase=1; attemptPnl=0; attemptPeak=0; phasePnl=0; dayPnl={}; attemptTrades=0; };
+
+  for(let i=0; i<sorted.length; i++){
+    const t = sorted[i];
+    const pnl = t.pctGan || 0;
+    attemptTrades++;
+
+    // DD diario
+    if(dailyDDLim > 0){
+      const d = t.date || 'x';
+      dayPnl[d] = (dayPnl[d]||0) + pnl;
+      if(dayPnl[d] <= -dailyDDLim){
+        attempts.push({result:'fail', failPhase:phase, reason:'dailydd', trades:attemptTrades});
+        resetAttempt(); continue;
+      }
+    }
+
+    attemptPnl += pnl;
+    phasePnl   += pnl;
+    if(attemptPnl > attemptPeak) attemptPeak = attemptPnl;
+
+    // DD total
+    const ddVal = ddType==='trailing' ? (attemptPeak - attemptPnl) : -attemptPnl;
+    if(ddVal >= maxDD){
+      attempts.push({result:'fail', failPhase:phase, reason:'dd', trades:attemptTrades});
+      resetAttempt(); continue;
+    }
+
+    // Objetivo de fase
+    if(phase===1 && phasePnl >= p1Target){
+      if(sfPhasesCount===1){
+        attempts.push({result:'pass', trades:attemptTrades});
+        resetAttempt(); continue;
+      }
+      phase=2; phasePnl=0; dayPnl={};
+    } else if(phase===2 && phasePnl >= p2Target){
+      attempts.push({result:'pass', trades:attemptTrades});
+      resetAttempt(); continue;
+    }
+  }
+
+  // Intento parcial al final
+  if(attemptTrades > 0){
+    attempts.push({result:'partial', phase, phasePnl, attemptPnl, trades:attemptTrades});
+  }
+
+  renderFondeoAllResults(attempts);
+}
+
+function renderFondeoAllResults(attempts){
+  const resEl      = document.getElementById('sfAllResults');
+  const kpisEl     = document.getElementById('sfAllKpis');
+  const timelineEl = document.getElementById('sfAllTimeline');
+  const legendEl   = document.getElementById('sfAllLegend');
+  if(!resEl) return;
+
+  const passed  = attempts.filter(a=>a.result==='pass');
+  const failed  = attempts.filter(a=>a.result==='fail');
+  const failF1  = failed.filter(a=>a.failPhase===1);
+  const failF2  = failed.filter(a=>a.failPhase===2);
+  const partial = attempts.find(a=>a.result==='partial');
+  const total   = passed.length + failed.length;
+  const wr      = total > 0 ? passed.length / total * 100 : 0;
+  const completos = attempts.filter(a=>a.result!=='partial');
+  const avgTrades = completos.length ? Math.round(completos.reduce((s,a)=>s+a.trades,0)/completos.length) : 0;
+
+  const fmt1 = v => v%1===0 ? v : v.toFixed(1);
+
+  const kpiData = [
+    {l:'TOTAL INTENTOS', v:total,               c:'var(--text)'},
+    {l:'✅ PASADOS',      v:passed.length,        c:'var(--green)'},
+    {l:'❌ FALLADOS',     v:failed.length,        c:'var(--red)'},
+    {l:'TASA DE PASE',   v:fmt1(wr)+'%',         c:wr>=50?'var(--green)':'var(--red)'},
+    {l:'TRADES/INTENTO', v:avgTrades||'-',        c:'var(--cyan)'},
+  ];
+  if(sfPhasesCount>=2 && failF2.length>0){
+    kpiData.push({l:'FALLOS EN F1', v:failF1.length, c:'rgba(248,113,113,.9)'});
+    kpiData.push({l:'FALLOS EN F2', v:failF2.length, c:'rgba(251,146,60,.9)'});
+  }
+
+  kpisEl.innerHTML = kpiData.map(k=>`
+    <div style="background:var(--glass2);border-radius:var(--r2);padding:.65rem .9rem;text-align:center;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.07em;margin-bottom:4px;">${k.l}</div>
+      <div style="font-size:19px;font-weight:800;color:${k.c};font-family:'JetBrains Mono',monospace;">${k.v}</div>
+    </div>
+  `).join('');
+
+  // Timeline
+  timelineEl.innerHTML = attempts.map((a,idx)=>{
+    let bg, lbl, title;
+    if(a.result==='pass'){
+      bg='var(--green)'; lbl='✓';
+      title=`Intento ${idx+1}: PASÓ (${a.trades} trades)`;
+    } else if(a.result==='fail'){
+      const why = a.reason==='dailydd' ? 'DD diario' : 'DD total';
+      if(a.failPhase===1){
+        bg='var(--red)'; lbl='✗';
+        title=`Intento ${idx+1}: FALLÓ en Fase 1 (${a.trades} trades · ${why})`;
+      } else {
+        bg='rgba(251,146,60,.95)'; lbl='✗';
+        title=`Intento ${idx+1}: FALLÓ en Fase 2 (${a.trades} trades · ${why})`;
+      }
+    } else {
+      bg='rgba(255,255,255,.1)'; lbl='…';
+      const pct = typeof a.phasePnl==='number' ? a.phasePnl.toFixed(2)+'%' : '?';
+      title=`Trades restantes (incompleto) · Fase ${a.phase} · ${pct} acumulado · ${a.trades} trades`;
+    }
+    return `<div title="${title}" style="width:26px;height:26px;border-radius:5px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${a.result==='pass'?'#000':'#fff'};cursor:default;flex-shrink:0;">${lbl}</div>`;
+  }).join('');
+
+  // Leyenda
+  let det = `<span style="color:var(--green);">■</span> Pasó &nbsp;`;
+  det += `<span style="color:var(--red);">■</span> Falló en F1 &nbsp;`;
+  if(sfPhasesCount>=2) det += `<span style="color:rgba(251,146,60,.9);">■</span> Falló en F2 &nbsp;`;
+  det += `<span style="color:rgba(255,255,255,.2);">■</span> Incompleto`;
+  if(partial){
+    const ps = sfPhasesCount===1 ? '' : ` (Fase ${partial.phase})`;
+    const pct = typeof partial.phasePnl==='number' ? partial.phasePnl.toFixed(2)+'%' : '?';
+    det += `<br><b>Estado final con los trades restantes:</b> ${partial.trades} trades sin cerrar ciclo${ps} · ${pct} en la fase actual.`;
+  }
+  legendEl.innerHTML = det;
+  resEl.style.display = 'block';
+}
 
 // ── AYUDA CONTEXTUAL POR SECCIÓN ─────────────────────────────────
 const SECTION_HELP = {
