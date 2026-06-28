@@ -3158,166 +3158,6 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
       </div>
 
-      <!-- KPIs PRINCIPALES -->
-      <div class="kpi-grid" id="histKpis" style="margin-bottom:1.5rem;"></div>
-
-      <!-- KPIs SECUNDARIOS -->
-      <div class="kpi-grid" id="histKpis2" style="margin-bottom:1.5rem;"></div>
-
-      <!-- CURVA DE EQUITY -->
-      <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-          <div class="section-label">📈 Curva de Equity Acumulada</div>
-          <div id="histEqInfo" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);"></div>
-        </div>
-        <canvas id="histEquityChart" height="80"></canvas>
-      </div>
-
-      <!-- DISTRIBUCIÓN R + STREAK -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">📊 Distribución de Resultados (R)</div>
-          <canvas id="histDistChart" height="170"></canvas>
-        </div>
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">🔥 Análisis de Rachas</div>
-          <div id="histStreakBox"></div>
-        </div>
-      </div>
-
-      <!-- PERFORMANCE POR SESIÓN + DÍA SEMANA -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">🕒 Performance por Sesión</div>
-          <div id="histSessionBox"></div>
-        </div>
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">📅 Performance por Día de Semana</div>
-          <div id="histDowBox"></div>
-        </div>
-      </div>
-
-      <!-- ZONA + CONFIRMACIÓN -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">📍 Performance por Zona</div>
-          <div id="histZonaBox"></div>
-        </div>
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">🎯 Performance por Confirmación</div>
-          <div id="histConfBox"></div>
-        </div>
-      </div>
-
-      <!-- PAR + CONSISTENCY -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">💱 Performance por Par</div>
-          <div id="histPairBox"></div>
-        </div>
-        <div class="card" style="padding:1.2rem;">
-          <div class="section-label" style="margin-bottom:1rem;">⚖️ Consistency Rule</div>
-          <div id="histConsistencyBox"></div>
-        </div>
-      </div>
-
-      <!-- ════════════════ ¿QUÉ SESIÓN TE FONDEA? ════════════════ -->
-      <div class="card" style="padding:1.4rem;margin-bottom:1.5rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:10px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">🔍 ¿Qué Sesión te Fondea?</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;">CUENTA</span>
-            <div style="display:flex;gap:0;background:var(--glass2);border-radius:8px;padding:3px;">
-              <button class="hsim-acct-btn active" id="hsim_acct_5k" onclick="setHistSimAccount('5k')" style="background:var(--cyan);color:#fff;border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">5K</button>
-              <button class="hsim-acct-btn" id="hsim_acct_50k" onclick="setHistSimAccount('50k')" style="background:transparent;color:var(--sub);border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">50K</button>
-            </div>
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--sub);margin-bottom:.5rem;line-height:1.5;">
-          Corro <b style="color:var(--text);">solo los trades de cada sesión</b>, en orden, contra los targets de la cuenta seleccionada. Un <b style="color:var(--gold);">ciclo completo</b> = pasar Fase 1 → Fase 2 → Funded y retirar <b style="color:var(--green);">+6%</b>. Ahí cuenta 1 fondeo, se reinicia, y sigue contando cuántas veces lo lográs con tu racha histórica. Si el DD máximo revienta, el ciclo se corta y arranca otro desde Fase 1.
-        </div>
-        <div id="histSimRules" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);margin-bottom:1.1rem;"></div>
-
-        <!-- Tarjetas por sesión -->
-        <div id="histSimCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:1.3rem;"></div>
-
-        <!-- Veredicto global -->
-        <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r3);padding:1.1rem 1.2rem;">
-          <div class="section-label" style="margin-bottom:.8rem;">🏁 Veredicto</div>
-          <div id="histSimVerdict" style="font-size:12px;color:var(--sub);"></div>
-        </div>
-      </div>
-
-      <!-- ════════════════ SIMULADOR — ¿CUÁNTAS VECES HUBIERA PASADO? ════════════════ -->
-      <div class="card" style="padding:1.4rem;margin-bottom:1.5rem;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text);margin-bottom:.35rem;">🏆 Simulador de Fondeo — todos los trades</div>
-        <div style="font-size:11px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
-          Tomá todos tus trades históricos en orden cronológico y simulá cuántas veces hubieras pasado (o reventado) una prueba de fondeo real. Cada vez que se cumple el objetivo o se toca el DD, empieza un intento nuevo con los trades siguientes.
-        </div>
-
-        <!-- CONTROLES SUPERIORES -->
-        <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:1rem;">
-          <div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">FASES</div>
-            <div style="display:flex;gap:0;background:var(--glass2);border-radius:8px;padding:3px;">
-              <button id="sfPhaseBtn1" onclick="setSfPhases(1)" style="flex:1;background:transparent;color:var(--sub);border:none;border-radius:6px;padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;">1</button>
-              <button id="sfPhaseBtn2" onclick="setSfPhases(2)" style="flex:1;background:var(--cyan);color:#000;border:none;border-radius:6px;padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;">2</button>
-            </div>
-          </div>
-          <div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">TIPO DD</div>
-            <select id="sfDDType" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);outline:none;cursor:pointer;">
-              <option value="trailing">Trailing (desde pico)</option>
-              <option value="static">Estático (desde inicio)</option>
-            </select>
-          </div>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);letter-spacing:.04em;padding-bottom:3px;">
-            <input type="checkbox" id="sfFundedEnabled" onchange="setSfFunded(this.checked)" style="accent-color:var(--cyan);width:14px;height:14px;">
-            SIMULAR FASE FONDEADA
-          </label>
-        </div>
-
-        <!-- PARÁMETROS POR FASE -->
-        <div style="display:flex;gap:8px;margin-bottom:1rem;">
-          <div style="flex:1;min-width:0;background:rgba(56,189,248,.04);border:1px solid rgba(56,189,248,.25);border-radius:var(--r2);padding:.8rem;">
-<div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--cyan);text-align:center;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(56,189,248,.25);">FASE 1</div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">OBJETIVO (%)</label><input type="number" id="sfP1Target" value="8" min="0.1" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="sfP1DD" value="10" min="0.5" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="sfP1DailyDD" value="5" min="0" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div></div>
-          <div id="sfP2Box" style="flex:1;min-width:0;background:rgba(56,189,248,.04);border:1px solid rgba(56,189,248,.25);border-radius:var(--r2);padding:.8rem;">
-<div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--cyan);text-align:center;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(56,189,248,.25);">FASE 2</div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">OBJETIVO (%)</label><input type="number" id="sfP2Target" value="5" min="0.1" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="sfP2DD" value="5" min="0.5" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="sfP2DailyDD" value="5" min="0" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div></div>
-          <div id="sfFundedBox" style="display:none;flex:1;min-width:0;background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:.8rem;">
-<div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:#f59e0b;text-align:center;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(245,158,11,.3);">FONDEADA</div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">RETIRO OBJ. (%)</label><input type="number" id="sfWithdrawal" value="6" min="0.1" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="sfFundedDD" value="5" min="0.5" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="sfFundedDailyDD" value="0" min="0" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div></div>
-        </div>
-
-                <!-- Rango de fechas -->
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:1rem;">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;white-space:nowrap;">PERÍODO</span>
-          <input type="date" id="sfDateFrom" style="box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;padding:5px 8px;">
-          <span style="color:var(--sub);font-size:12px;">→</span>
-          <input type="date" id="sfDateTo" style="box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;padding:5px 8px;">
-          <button onclick="document.getElementById('sfDateFrom').value='';document.getElementById('sfDateTo').value='';"
-            style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">
-            Todo
-          </button>
-        </div>
-
-        <button onclick="simularChallengeTodos()" style="width:100%;padding:9px;background:var(--cyan);color:#000;border:none;border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:1.2rem;letter-spacing:.04em;">▶ SIMULAR</button>
-
-        <!-- RESULTADOS (ocultos hasta simular) -->
-        <div id="sfAllResults" style="display:none;">
-          <div id="sfAllKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;margin-bottom:1.2rem;"></div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:.6rem;">LÍNEA DE TIEMPO — cada cuadrado = un intento (pasá el cursor para detalles)</div>
-          <div id="sfAllTimeline" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.9rem;"></div>
-          <div id="sfAllLegend" style="font-size:10.5px;color:var(--sub);line-height:1.8;"></div>
-        </div>
-      </div>
-
-      <!-- HEATMAP MENSUAL -->
-      <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
-        <div class="section-label" style="margin-bottom:1rem;">🗓️ Heatmap por Mes</div>
-        <div id="histHeatmap"></div>
-      </div>
-
       <!-- TABLA DE TRADES -->
       <div id="histTradesCard" class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
@@ -3683,6 +3523,174 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <div class="section-label" style="margin-bottom:1rem;">🎯 Por Zona</div>
           <div id="repByZona"></div>
         </div>
+
+      <div id="histAnalysisSection" style="display:none;">
+
+        <div style="margin:1.8rem 0 1.2rem;padding-top:1.4rem;border-top:1px solid var(--border2);">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--sub);text-transform:uppercase;margin-bottom:.3rem;">─────── Análisis Backtest Histórico ───────</div>
+          <div style="font-size:11px;color:var(--dim);">Análisis independiente de los trades históricos importados</div>
+        </div>
+
+      <!-- KPIs PRINCIPALES -->
+      <div class="kpi-grid" id="histKpis" style="margin-bottom:1.5rem;"></div>
+
+      <!-- KPIs SECUNDARIOS -->
+      <div class="kpi-grid" id="histKpis2" style="margin-bottom:1.5rem;"></div>
+
+      <!-- CURVA DE EQUITY -->
+      <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="section-label">📈 Curva de Equity Acumulada</div>
+          <div id="histEqInfo" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);"></div>
+        </div>
+        <canvas id="histEquityChart" height="80"></canvas>
+      </div>
+
+      <!-- DISTRIBUCIÓN R + STREAK -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
+        <div class="card" style="padding:1.2rem;">
+          <div class="section-label" style="margin-bottom:1rem;">📊 Distribución de Resultados (R)</div>
+          <canvas id="histDistChart" height="170"></canvas>
+        </div>
+        <div class="card" style="padding:1.2rem;">
+          <div class="section-label" style="margin-bottom:1rem;">🔥 Análisis de Rachas</div>
+          <div id="histStreakBox"></div>
+        </div>
+      </div>
+
+      <!-- PERFORMANCE POR SESIÓN + DÍA SEMANA -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
+        <div class="card" style="padding:1.2rem;">
+          <div class="section-label" style="margin-bottom:1rem;">🕒 Performance por Sesión</div>
+          <div id="histSessionBox"></div>
+        </div>
+        <div class="card" style="padding:1.2rem;">
+          <div class="section-label" style="margin-bottom:1rem;">📅 Performance por Día de Semana</div>
+          <div id="histDowBox"></div>
+        </div>
+      </div>
+
+      <!-- ZONA + CONFIRMACIÓN -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
+        <div class="card" style="padding:1.2rem;">
+          <div class="section-label" style="margin-bottom:1rem;">📍 Performance por Zona</div>
+          <div id="histZonaBox"></div>
+        </div>
+        <div class="card" style="padding:1.2rem;">
+          <div class="section-label" style="margin-bottom:1rem;">🎯 Performance por Confirmación</div>
+          <div id="histConfBox"></div>
+        </div>
+      </div>
+
+      <!-- PAR + CONSISTENCY -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
+        <div class="card" style="padding:1.2rem;">
+          <div class="section-label" style="margin-bottom:1rem;">💱 Performance por Par</div>
+          <div id="histPairBox"></div>
+        </div>
+        <div class="card" style="padding:1.2rem;">
+          <div class="section-label" style="margin-bottom:1rem;">⚖️ Consistency Rule</div>
+          <div id="histConsistencyBox"></div>
+        </div>
+      </div>
+
+      <!-- ════════════════ ¿QUÉ SESIÓN TE FONDEA? ════════════════ -->
+      <div class="card" style="padding:1.4rem;margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">🔍 ¿Qué Sesión te Fondea?</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;">CUENTA</span>
+            <div style="display:flex;gap:0;background:var(--glass2);border-radius:8px;padding:3px;">
+              <button class="hsim-acct-btn active" id="hsim_acct_5k" onclick="setHistSimAccount('5k')" style="background:var(--cyan);color:#fff;border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">5K</button>
+              <button class="hsim-acct-btn" id="hsim_acct_50k" onclick="setHistSimAccount('50k')" style="background:transparent;color:var(--sub);border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">50K</button>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:.5rem;line-height:1.5;">
+          Corro <b style="color:var(--text);">solo los trades de cada sesión</b>, en orden, contra los targets de la cuenta seleccionada. Un <b style="color:var(--gold);">ciclo completo</b> = pasar Fase 1 → Fase 2 → Funded y retirar <b style="color:var(--green);">+6%</b>. Ahí cuenta 1 fondeo, se reinicia, y sigue contando cuántas veces lo lográs con tu racha histórica. Si el DD máximo revienta, el ciclo se corta y arranca otro desde Fase 1.
+        </div>
+        <div id="histSimRules" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);margin-bottom:1.1rem;"></div>
+
+        <!-- Tarjetas por sesión -->
+        <div id="histSimCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:1.3rem;"></div>
+
+        <!-- Veredicto global -->
+        <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r3);padding:1.1rem 1.2rem;">
+          <div class="section-label" style="margin-bottom:.8rem;">🏁 Veredicto</div>
+          <div id="histSimVerdict" style="font-size:12px;color:var(--sub);"></div>
+        </div>
+      </div>
+
+      <!-- ════════════════ SIMULADOR — ¿CUÁNTAS VECES HUBIERA PASADO? ════════════════ -->
+      <div class="card" style="padding:1.4rem;margin-bottom:1.5rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text);margin-bottom:.35rem;">🏆 Simulador de Fondeo — todos los trades</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
+          Tomá todos tus trades históricos en orden cronológico y simulá cuántas veces hubieras pasado (o reventado) una prueba de fondeo real. Cada vez que se cumple el objetivo o se toca el DD, empieza un intento nuevo con los trades siguientes.
+        </div>
+
+        <!-- CONTROLES SUPERIORES -->
+        <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:1rem;">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">FASES</div>
+            <div style="display:flex;gap:0;background:var(--glass2);border-radius:8px;padding:3px;">
+              <button id="sfPhaseBtn1" onclick="setSfPhases(1)" style="flex:1;background:transparent;color:var(--sub);border:none;border-radius:6px;padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;">1</button>
+              <button id="sfPhaseBtn2" onclick="setSfPhases(2)" style="flex:1;background:var(--cyan);color:#000;border:none;border-radius:6px;padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;">2</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">TIPO DD</div>
+            <select id="sfDDType" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);outline:none;cursor:pointer;">
+              <option value="trailing">Trailing (desde pico)</option>
+              <option value="static">Estático (desde inicio)</option>
+            </select>
+          </div>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);letter-spacing:.04em;padding-bottom:3px;">
+            <input type="checkbox" id="sfFundedEnabled" onchange="setSfFunded(this.checked)" style="accent-color:var(--cyan);width:14px;height:14px;">
+            SIMULAR FASE FONDEADA
+          </label>
+        </div>
+
+        <!-- PARÁMETROS POR FASE -->
+        <div style="display:flex;gap:8px;margin-bottom:1rem;">
+          <div style="flex:1;min-width:0;background:rgba(56,189,248,.04);border:1px solid rgba(56,189,248,.25);border-radius:var(--r2);padding:.8rem;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--cyan);text-align:center;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(56,189,248,.25);">FASE 1</div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">OBJETIVO (%)</label><input type="number" id="sfP1Target" value="8" min="0.1" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="sfP1DD" value="10" min="0.5" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="sfP1DailyDD" value="5" min="0" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div></div>
+          <div id="sfP2Box" style="flex:1;min-width:0;background:rgba(56,189,248,.04);border:1px solid rgba(56,189,248,.25);border-radius:var(--r2);padding:.8rem;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--cyan);text-align:center;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(56,189,248,.25);">FASE 2</div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">OBJETIVO (%)</label><input type="number" id="sfP2Target" value="5" min="0.1" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="sfP2DD" value="5" min="0.5" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="sfP2DailyDD" value="5" min="0" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div></div>
+          <div id="sfFundedBox" style="display:none;flex:1;min-width:0;background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:.8rem;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:#f59e0b;text-align:center;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(245,158,11,.3);">FONDEADA</div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">RETIRO OBJ. (%)</label><input type="number" id="sfWithdrawal" value="6" min="0.1" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="sfFundedDD" value="5" min="0.5" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div><div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="sfFundedDailyDD" value="0" min="0" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div></div>
+        </div>
+
+                <!-- Rango de fechas -->
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:1rem;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;white-space:nowrap;">PERÍODO</span>
+          <input type="date" id="sfDateFrom" style="box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;padding:5px 8px;">
+          <span style="color:var(--sub);font-size:12px;">→</span>
+          <input type="date" id="sfDateTo" style="box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;padding:5px 8px;">
+          <button onclick="document.getElementById('sfDateFrom').value='';document.getElementById('sfDateTo').value='';"
+            style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">
+            Todo
+          </button>
+        </div>
+
+        <button onclick="simularChallengeTodos()" style="width:100%;padding:9px;background:var(--cyan);color:#000;border:none;border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:1.2rem;letter-spacing:.04em;">▶ SIMULAR</button>
+
+        <!-- RESULTADOS (ocultos hasta simular) -->
+        <div id="sfAllResults" style="display:none;">
+          <div id="sfAllKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;margin-bottom:1.2rem;"></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:.6rem;">LÍNEA DE TIEMPO — cada cuadrado = un intento (pasá el cursor para detalles)</div>
+          <div id="sfAllTimeline" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.9rem;"></div>
+          <div id="sfAllLegend" style="font-size:10.5px;color:var(--sub);line-height:1.8;"></div>
+        </div>
+      </div>
+
+      <!-- HEATMAP MENSUAL -->
+      <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
+        <div class="section-label" style="margin-bottom:1rem;">🗓️ Heatmap por Mes</div>
+        <div id="histHeatmap"></div>
+      </div>
+      </div>
       </div>
 
     </div>
@@ -13027,14 +13035,18 @@ function renderHistorico(){
   if(!histTrades.length){
     if(empty) empty.style.display = 'block';
     if(content) content.style.display = 'none';
+    const haEmpty = document.getElementById('histAnalysisSection');
+    if(haEmpty) haEmpty.style.display = 'none';
     return;
   }
   if(empty) empty.style.display = 'none';
   if(content) content.style.display = 'block';
+  const haData = document.getElementById('histAnalysisSection');
+  if(haData) haData.style.display = 'block';
 
   // Deshabilitar hover movement en kpi-boxes del historico
   setTimeout(()=>{
-    document.querySelectorAll('#page-historico .kpi-box').forEach(el=>{
+    document.querySelectorAll('#histAnalysisSection .kpi-box').forEach(el=>{
       el.style.transition='none';
       el.onmouseenter=null;
       el.onmouseleave=null;
