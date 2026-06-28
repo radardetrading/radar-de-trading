@@ -139,7 +139,10 @@
 [data-theme="light"] .kpi-pill{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.1);}
 [data-theme="light"] .logo-mark{background:linear-gradient(135deg,#0284c7,#0369a1);}
 [data-theme="light"] .mood-btn{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.1);color:#5a6478;}
-[data-theme="light"] img{mix-blend-mode:multiply!important;}
+[data-theme="light"] .sidebar-logo img,
+[data-theme="light"] .login-logo-wrap img,
+[data-theme="light"] .lp-brand-mark,
+[data-theme="light"] .lp-mock-logo{mix-blend-mode:multiply;}
 
 /* ── SLATE THEME (pastel: lavanda suave) ─────────────────────── */
 [data-theme="slate"]{
@@ -9769,8 +9772,8 @@ function renderEstadisticas(){
     } else {
       const buckets = [
         { label:'Sin rutina', color:'var(--dim)',    filter: x => (x.rutinaDelDia||0) === 0 },
-        { label:'1–50%',      color:'var(--orange)', filter: x => (x.rutinaDelDia||0) >  0 && (x.rutinaDelDia||0) <= 50 },
-        { label:'51–99%',     color:'var(--cyan)',   filter: x => (x.rutinaDelDia||0) >  50 && (x.rutinaDelDia||0) < 100 },
+        { label:'1–49%',      color:'var(--orange)', filter: x => (x.rutinaDelDia||0) >  0 && (x.rutinaDelDia||0) <  50 },
+        { label:'50–99%',     color:'var(--cyan)',   filter: x => (x.rutinaDelDia||0) >= 50 && (x.rutinaDelDia||0) < 100 },
         { label:'100% ⭐',    color:'var(--green)',  filter: x => (x.rutinaDelDia||0) === 100 },
       ].map(b => {
         const g = conRut.filter(b.filter);
