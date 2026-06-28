@@ -5800,7 +5800,7 @@ function nav(name, fromPopState=false){
   currentPage=name;
   updateSectionHelp(name);
   updateHeader();
-  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:renderReporte,reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas};
+  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas};
   if(renders[name]) renders[name]();
   if(!fromPopState) history.pushState({page:name}, '', location.href);
 }
