@@ -10525,9 +10525,7 @@ function exportExcel(){
     +'<table>'+csvToHtmlRows(c)+'</table><br>'
     +'<table>'+csvToHtmlRows(s)+'</table><br>'
     +'<table>'+csvToHtmlRows(p)+'</table>'
-    +'<div id="helpTooltip"></div>
-<div id="helpBanner" style="display:none;">? Modo Ayuda activo — Pasa el cursor por cualquier elemento para ver que hace · Clic en ? para salir</div>
-</body></html>';
+    +'</body></html>';
 
   const blob=new Blob(['\ufeff'+wb],{type:'application/vnd.ms-excel;charset=utf-8'});
   const a=document.createElement('a');
@@ -14992,5 +14990,7 @@ document.addEventListener('mouseout', e=>{
   if(tip) tip.classList.remove('visible');
 });
 </script>
+<div id="helpTooltip"></div>
+<div id="helpBanner" style="display:none;">? Modo Ayuda activo — Pasa el cursor por cualquier elemento para ver que hace · Clic en ? para salir</div>
 </body>
 </html>
