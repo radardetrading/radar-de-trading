@@ -1307,6 +1307,33 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   font-weight:400; color:var(--sub);
 }
 @keyframes idleIn{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ── MODO AYUDA ──────────────────────────────────────────────── */
+#helpTooltip{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  background:rgba(8,14,26,.97);border:1px solid rgba(56,189,248,.4);
+  border-radius:14px;padding:10px 18px 11px;max-width:440px;width:max-content;
+  z-index:10000;font-size:12px;line-height:1.55;color:var(--text);
+  box-shadow:0 8px 40px rgba(0,0,0,.6);
+  pointer-events:none;opacity:0;transition:opacity .18s;text-align:center;
+}
+#helpTooltip.visible{opacity:1;}
+body.help-mode [data-help]{
+  outline:1px dashed rgba(56,189,248,.3)!important;
+  outline-offset:3px;cursor:help!important;
+}
+#helpBtn.active{
+  background:rgba(56,189,248,.15)!important;
+  border-color:rgba(56,189,248,.55)!important;
+  color:var(--cyan)!important;
+}
+#helpBanner{
+  position:fixed;top:0;left:0;right:0;z-index:9998;
+  background:rgba(56,189,248,.12);border-bottom:1px solid rgba(56,189,248,.25);
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);
+  text-align:center;padding:5px;pointer-events:none;
+}
 </style>
 <style id="mobile-responsive">
 /* ═══════════════════════════════════════════════
@@ -2412,36 +2439,36 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   </div>
   <nav class="nav">
     <div class="nav-section">Overview</div>
-    <div class="nav-item active" onclick="nav('dashboard')"><span class="nav-icon">⬡</span>Dashboard</div>
+    <div class="nav-item active" onclick="nav('dashboard')" data-help="Panel principal: KPIs globales, estado de cuentas activas, ultimos trades y evolucion del capital."><span class="nav-icon">⬡</span>Dashboard</div>
 
     <div class="nav-section">Operativa</div>
-    <div class="nav-item" onclick="nav('journal')"><span class="nav-icon">📋</span>Journal</div>
-    <div class="nav-item" onclick="nav('calculadora')"><span class="nav-icon">📐</span>Calculadora de Tamaño de Posición</div>
-    <div class="nav-item" onclick="nav('riesgo')"><span class="nav-icon">🛡</span>Calculadora de Riesgo</div>
+    <div class="nav-item" onclick="nav('journal')" data-help="Journal: registra cada trade real con entrada, salida, resultado, setup y notas."><span class="nav-icon">📋</span>Journal</div>
+    <div class="nav-item" onclick="nav('calculadora')" data-help="Calculadora de Posicion: ingresa tu capital, riesgo % y stop loss para saber cuantos lotes operar."><span class="nav-icon">📐</span>Calculadora de Tamaño de Posición</div>
+    <div class="nav-item" onclick="nav('riesgo')" data-help="Simulador de Fondeo: visualiza reglas de drawdown, objetivos por fase y margen disponible en tu prop firm."><span class="nav-icon">🛡</span>Calculadora de Riesgo</div>
 
     <div class="nav-section">Backtest</div>
-    <div class="nav-item" onclick="nav('backtest')"><span class="nav-icon">🔬</span>Backtest Challenge</div>
-    <div class="nav-item" onclick="nav('historico')"><span class="nav-icon">📚</span>Backtest Histórico</div>
-    <div class="nav-item" onclick="nav('reporte')"><span class="nav-icon">📈</span>Reporte de Backtest</div>
+    <div class="nav-item" onclick="nav('backtest')" data-help="Backtest Challenge: practica tu estrategia sin riesgo real. Registra setups, zonas y resultados."><span class="nav-icon">🔬</span>Backtest Challenge</div>
+    <div class="nav-item" onclick="nav('historico')" data-help="Backtest Historico: carga trades pasados desde Excel para analizar tu performance antes de Radar."><span class="nav-icon">📚</span>Backtest Histórico</div>
+    <div class="nav-item" onclick="nav('reporte')" data-help="Reporte de Backtest: combina Historico + Backtest en equity curve con expectancy y max DD."><span class="nav-icon">📈</span>Reporte de Backtest</div>
 
     <div class="nav-section">Análisis</div>
-    <div class="nav-item" onclick="nav('reglas')"><span class="nav-icon">📐</span>Mis Reglas</div>
+    <div class="nav-item" onclick="nav('reglas')" data-help="Mis Reglas: define tu plan de trading. Cada vez que rompes una regla podes registrarlo y ver el impacto."><span class="nav-icon">📐</span>Mis Reglas</div>
 
     <div class="nav-section">Cuentas</div>
-    <div class="nav-item" onclick="nav('cuentas')"><span class="nav-icon">🏦</span>Cuentas</div>
-    <div class="nav-item" onclick="nav('pagos')"><span class="nav-icon">💰</span>Pagos</div>
-    <div class="nav-item" onclick="nav('pares')"><span class="nav-icon">⚡</span>Pares</div>
+    <div class="nav-item" onclick="nav('cuentas')" data-help="Cuentas: gestiona tus prop firms, fases, saldo, drawdown y cuenta regresiva de inactividad (30 dias)."><span class="nav-icon">🏦</span>Cuentas</div>
+    <div class="nav-item" onclick="nav('pagos')" data-help="Pagos: registra y consulta el historial de splits cobrados de tus prop firms."><span class="nav-icon">💰</span>Pagos</div>
+    <div class="nav-item" onclick="nav('pares')" data-help="Pares: coordina cuentas que operan en paralelo para evitar correlacion y proteger el drawdown cruzado."><span class="nav-icon">⚡</span>Pares</div>
 
     <div class="nav-section">Psicología</div>
-    <div class="nav-item" onclick="nav('diario')"><span class="nav-icon">🧠</span>Diario Mental</div>
-    <div class="nav-item" onclick="nav('rutina')"><span class="nav-icon">⚡</span>Rutina Ganadora</div>
+    <div class="nav-item" onclick="nav('diario')" data-help="Diario Mental: registra tu estado emocional y psicologico antes y despues de cada sesion de trading."><span class="nav-icon">🧠</span>Diario Mental</div>
+    <div class="nav-item" onclick="nav('rutina')" data-help="Rutina Ganadora: segui tus habitos diarios de preparacion y analiza como correlacionan con tu rendimiento."><span class="nav-icon">⚡</span>Rutina Ganadora</div>
     <div class="nav-section">Metas</div>
-    <div class="nav-item" onclick="nav('metas')"><span class="nav-icon">🎯</span>Mis Metas</div>
+    <div class="nav-item" onclick="nav('metas')" data-help="Mis Metas: define objetivos de P&L, win rate o rachas y segui tu avance en el tiempo."><span class="nav-icon">🎯</span>Mis Metas</div>
 
     <div class="nav-section">Reportes</div>
-    <div class="nav-item" onclick="nav('estadisticas')"><span class="nav-icon">📊</span>Estadísticas</div>
-    <div class="nav-item" onclick="nav('semanal')"><span class="nav-icon">📅</span>Resumen Semanal</div>
-    <div class="nav-item" onclick="nav('reportes')"><span class="nav-icon">📑</span>Reportes PDF</div>
+    <div class="nav-item" onclick="nav('estadisticas')" data-help="Estadisticas: analiza tu rendimiento por zona, setup, sesion, instrumento y dia de semana."><span class="nav-icon">📊</span>Estadísticas</div>
+    <div class="nav-item" onclick="nav('semanal')" data-help="Resumen Semanal: vista consolidada de la semana con trades, P&L, win rate y evolucion del capital."><span class="nav-icon">📅</span>Resumen Semanal</div>
+    <div class="nav-item" onclick="nav('reportes')" data-help="Reportes: exporta todo tu historial a PDF estilizado o Excel multi-hoja con un solo clic."><span class="nav-icon">📑</span>Reportes PDF</div>
   </nav>
   <div class="sidebar-bottom">
     <div style="margin-bottom:.7rem;">
@@ -2493,9 +2520,9 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div class="kpi-pill"><div class="kpi-l">P&L</div><div class="kpi-v" id="hPnl">$0</div></div>
         <div class="kpi-pill"><div class="kpi-l">Win Rate</div><div class="kpi-v" id="hWR">0%</div></div>
       </div>
-      <button id="ddBell" onclick="showDDAlerts()" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red);border-radius:var(--r);padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;animation:dangerPulse 2s infinite;">⚠ DD Alert</button>
+      <button id="ddBell" onclick="showDDAlerts()" data-help="Alerta: alguna cuenta esta cerca del limite maximo de drawdown de la prop firm." style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red);border-radius:var(--r);padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;animation:dangerPulse 2s infinite;">⚠ DD Alert</button>
       <div id="themeWrap" style="position:relative;display:inline-block;">
-        <button id="themeToggle" onclick="toggleThemeMenu(event)" title="Cambiar tema" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;">🌙</button>
+        <button id="themeToggle" onclick="toggleThemeMenu(event)" data-help="Cambia entre tema Dark (negro), Slate (gris-lila) y Light (blanco)." title="Cambiar tema" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;">🌙</button>
         <div id="themeMenu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:5px;min-width:160px;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.4);">
           <button onclick="setTheme('dark')" class="theme-opt" data-theme-opt="dark" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;border-radius:var(--r);text-align:left;transition:background .15s;">
             <span style="font-size:15px;">🌙</span><span style="flex:1;">Dark</span><span id="themeCheck-dark" style="color:var(--cyan);font-weight:700;"></span>
@@ -2509,7 +2536,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
       </div>
       <div id="idleWrap" style="position:relative;display:inline-block;">
-        <button id="idleToggle" onclick="toggleIdleMenu(event)" title="Cierre por inactividad" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;">🔒</button>
+        <button id="idleToggle" onclick="toggleIdleMenu(event)" data-help="Configura el tiempo de inactividad tras el cual la sesion se cierra automaticamente." title="Cierre por inactividad" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;">🔒</button>
         <div id="idleMenu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:5px;min-width:210px;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.4);">
           <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);padding:6px 10px 4px;">⏳ Cerrar sesión tras inactividad</div>
           <button onclick="setIdleLimit(5)"  class="idle-opt" data-idle="5"  style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;border-radius:var(--r);text-align:left;transition:background .15s;"><span style="flex:1;">5 minutos</span><span id="idleCheck-5"  style="color:var(--cyan);font-weight:700;"></span></button>
@@ -2520,14 +2547,15 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <button onclick="setIdleLimit(0)"  class="idle-opt" data-idle="0"  style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;border-radius:var(--r);text-align:left;transition:background .15s;"><span style="flex:1;">Nunca (desactivado)</span><span id="idleCheck-0"  style="color:var(--cyan);font-weight:700;"></span></button>
         </div>
       </div>
-      <button id="logoutBtn" onclick="confirmarSalir()" title="Cerrar sesión" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.08);color:var(--red);cursor:pointer;transition:all .2s;">⏻</button>
-      <button class="btn primary" id="topbarCta" onclick="openMainCta()">+ Nuevo Trade</button>
+      <button id="helpBtn" onclick="toggleHelpMode()" title="Modo ayuda" style="font-size:14px;font-weight:800;padding:5px 11px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;font-family:'JetBrains Mono',monospace;color:var(--sub);">?</button>
+      <button id="logoutBtn" onclick="confirmarSalir()" data-help="Cerrar sesion y volver a la pantalla de login." title="Cerrar sesión" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.08);color:var(--red);cursor:pointer;transition:all .2s;">⏻</button>
+      <button class="btn primary" id="topbarCta" onclick="openMainCta()" data-help="Abri el formulario para registrar un nuevo trade real en el journal.">+ Nuevo Trade</button>
     </div>
   </div>
 
   <!-- DASHBOARD -->
   <div id="page-dashboard" class="page active">
-    <div class="kpi-grid" id="dashKpis"></div>
+    <div class="kpi-grid" id="dashKpis" data-help="KPIs globales: capital total en prop firms, P&L del journal, win rate y profit factor."></div>
 
     <!-- RESUMEN DEL DÍA -->
     <div id="dashHoyPanel" style="margin-bottom:1.2rem;">
@@ -2552,7 +2580,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
 
     <!-- BANNER RUTINA -->
-    <div id="rutinaBanner" style="display:none;margin-bottom:.8rem;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.3);border-radius:var(--r2);padding:.7rem 1rem;align-items:center;justify-content:space-between;gap:12px;">
+    <div id="rutinaBanner" data-help="Recordatorio: todavia no completaste la Rutina Ganadora de hoy. Conviene hacerlo antes de operar." style="display:none;margin-bottom:.8rem;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.3);border-radius:var(--r2);padding:.7rem 1rem;align-items:center;justify-content:space-between;gap:12px;">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:18px;">⚡</span>
         <div>
@@ -2604,7 +2632,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
       <div class="card" style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">P&L por Sesión</div>
-        <div id="sessionBars"></div>
+        <div id="sessionBars" data-help="P&L por sesion de mercado (Londres, NY, Asia, Frankfurt). Te muestra en que horario operas mejor."></div>
       </div>
       <div class="card" style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">P&L por Día</div>
@@ -2616,7 +2644,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
       <div>
         <div class="section-row"><div class="section-label">Cuentas Activas</div><button class="btn sm" onclick="nav('cuentas')">Ver todas →</button></div>
-        <div id="dashCuentas"></div>
+        <div id="dashCuentas" data-help="Estado actual de tus cuentas con saldo y P&L por cuenta."></div>
       </div>
       <div>
         <div class="section-row"><div class="section-label">Últimos Trades</div><button class="btn sm" onclick="nav('journal')">Ver journal →</button></div>
@@ -2629,7 +2657,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <div id="page-journal" class="page">
     <div class="journal-header">
       <div class="filters">
-        <input type="text" id="jSearch" placeholder="Setup, notas, cuenta..." oninput="journalPage=1;renderJournal()">
+        <input type="text" id="jSearch" data-help="Buscador del journal: filtra trades por setup, notas, cuenta o cualquier texto." placeholder="Setup, notas, cuenta..." oninput="journalPage=1;renderJournal()">
         <select id="jResult" onchange="journalPage=1;renderJournal()"><option value="">Todos</option><option value="WIN">WIN</option><option value="LOSS">LOSS</option><option value="BE">BE</option></select>
         <select id="jType" onchange="journalPage=1;renderJournal()"><option value="">LONG+SHORT</option><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
         <select id="jSession" onchange="journalPage=1;renderJournal()"><option value="">Todas sesiones</option><option value="Londres">Londres</option><option value="NY">NY</option><option value="Asia">Asia</option><option value="Frankfurt">Frankfurt</option></select>
@@ -2643,7 +2671,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <option value="XAUUSD">XAUUSD</option><option value="US30">US30</option><option value="NAS100">NAS100</option>
         </select>
         <select id="jAccount" onchange="journalPage=1;renderJournal()"><option value="">Todas las cuentas</option></select>
-        <select id="jTipoInstr" onchange="journalPage=1;renderJournal()"><option value="">Forex + Futuros</option><option value="forex">Solo Forex</option><option value="futuros">Solo Futuros</option></select>
+        <select id="jTipoInstr" data-help="Filtra el journal para ver solo trades Forex, solo Futuros, o ambos." onchange="journalPage=1;renderJournal()"><option value="">Forex + Futuros</option><option value="forex">Solo Forex</option><option value="futuros">Solo Futuros</option></select>
         <select id="jZona" onchange="journalPage=1;renderJournal()"><option value="">Todas las zonas</option></select>
         <select id="jOrder" onchange="journalPage=1;renderJournal()">
           <option value="desc">Más nuevo primero</option>
@@ -2743,22 +2771,22 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.2rem;">
       <div class="card" style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">📍 Zona × Resultado</div>
-        <div id="st_zona_result"></div>
+        <div id="st_zona_result" data-help="Rendimiento por zona de precio (OB, FVG, etc.). Ves que zonas te dan mejores resultados."></div>
       </div>
       <div class="card" style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">⚡ Setup × Resultado</div>
-        <div id="st_setup_result"></div>
+        <div id="st_setup_result" data-help="Rendimiento por setup o confluencia. Identifica cuales son tus mejores entradas."></div>
       </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.2rem;">
       <div class="card" style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">🕐 Sesión × P&L</div>
-        <div id="st_session_pnl"></div>
+        <div id="st_session_pnl" data-help="P&L y win rate por sesion de mercado. Detecta tus horarios mas rentables."></div>
       </div>
       <div class="card" style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">📅 Día de semana × Win Rate</div>
-        <div id="st_dow_wr"></div>
+        <div id="st_dow_wr" data-help="Win rate por dia de la semana. Ves si hay dias donde consistentemente operas mejor o peor."></div>
       </div>
     </div>
 
@@ -3305,7 +3333,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <!-- CUENTAS -->
   <div id="page-cuentas" class="page">
     <div class="kpi-grid" id="cuentasKpis"></div>
-    <div class="inact-panel" id="inactividadPanel" style="display:none"></div>
+    <div class="inact-panel" id="inactividadPanel" data-help="Pulso de Cuentas: monitoreo de los 30 dias de inactividad exigidos por las prop firms. Rojo = urgente." style="display:none"></div>
     <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
       <input type="text" id="cSearch" placeholder="Buscar cuenta, firma..." oninput="renderCuentas()" style="flex:1;min-width:180px;font-size:11px;padding:7px 10px;">
       <select id="cPhase" onchange="renderCuentas()" style="font-size:11px;padding:7px 10px;">
@@ -3615,7 +3643,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div id="rutHoySections"></div>
         <div style="margin-top:1.2rem;display:flex;align-items:center;gap:10px;">
           <div id="rutProgress" style="flex:1;height:10px;border-radius:5px;background:var(--glass2);overflow:hidden;">
-            <div id="rutProgressBar" style="height:100%;border-radius:5px;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .4s;width:0%"></div>
+            <div id="rutProgressBar" data-help="Progreso de la rutina de hoy. Completa todos los habitos para llegar al 100%." style="height:100%;border-radius:5px;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .4s;width:0%"></div>
           </div>
           <span id="rutProgressLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);white-space:nowrap;">0%</span>
         </div>
@@ -10497,7 +10525,9 @@ function exportExcel(){
     +'<table>'+csvToHtmlRows(c)+'</table><br>'
     +'<table>'+csvToHtmlRows(s)+'</table><br>'
     +'<table>'+csvToHtmlRows(p)+'</table>'
-    +'</body></html>';
+    +'<div id="helpTooltip"></div>
+<div id="helpBanner" style="display:none;">? Modo Ayuda activo — Pasa el cursor por cualquier elemento para ver que hace · Clic en ? para salir</div>
+</body></html>';
 
   const blob=new Blob(['\ufeff'+wb],{type:'application/vnd.ms-excel;charset=utf-8'});
   const a=document.createElement('a');
@@ -14934,6 +14964,33 @@ function closeMobileSidebar(){
     };
   }
 })();
+
+// ── MODO AYUDA ────────────────────────────────────────────────
+let helpModeActive = false;
+function toggleHelpMode(){
+  helpModeActive = !helpModeActive;
+  document.body.classList.toggle('help-mode', helpModeActive);
+  const btn    = document.getElementById('helpBtn');
+  const banner = document.getElementById('helpBanner');
+  const tip    = document.getElementById('helpTooltip');
+  if(btn)    btn.classList.toggle('active', helpModeActive);
+  if(banner) banner.style.display = helpModeActive ? 'block' : 'none';
+  if(!helpModeActive && tip) tip.classList.remove('visible');
+  if(typeof toast==='function') toast(helpModeActive ? '? Modo ayuda activo — pasa el cursor por los elementos' : 'Modo ayuda desactivado','ok');
+}
+document.addEventListener('mouseover', e=>{
+  if(!helpModeActive) return;
+  const el  = e.target.closest('[data-help]');
+  const tip = document.getElementById('helpTooltip');
+  if(!tip) return;
+  if(el){ tip.textContent = el.getAttribute('data-help'); tip.classList.add('visible'); }
+  else   { tip.classList.remove('visible'); }
+});
+document.addEventListener('mouseout', e=>{
+  if(!helpModeActive) return;
+  const tip = document.getElementById('helpTooltip');
+  if(tip) tip.classList.remove('visible');
+});
 </script>
 </body>
 </html>
