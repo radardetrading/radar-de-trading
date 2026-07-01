@@ -6870,7 +6870,8 @@ function btCalcResult(){
 function openBtModal(){
   editBtTradeId=null;
   document.getElementById('btModalTitle').textContent='Nuevo Trade — Backtest';
-  document.getElementById('b_date').value=todayStr();
+  const lastBtTrade = [...btTrades].filter(t=>t.account===btAccount).sort((a,b)=>b.id-a.id)[0];
+  document.getElementById('b_date').value=lastBtTrade?.date||todayStr();
   document.getElementById('b_hora').value='';
   document.getElementById('b_tv').value='';
   document.getElementById('b_notes').value='';
@@ -6892,9 +6893,8 @@ function openBtModal(){
 
   // Pre-rellenar riesgo en $ desde el último trade o desde la cuenta activa
   const cfg = NEOMAA[btAccount];
-  const lastTrade = [...btTrades].filter(t=>t.account===btAccount).sort((a,b)=>b.id-a.id)[0];
-  if(lastTrade?.riskUSD){
-    document.getElementById('b_risk_usd').value = lastTrade.riskUSD;
+  if(lastBtTrade?.riskUSD){
+    document.getElementById('b_risk_usd').value = lastBtTrade.riskUSD;
   } else if(cfg?.size){
     // default 1% de la cuenta
     document.getElementById('b_risk_usd').value = +(cfg.size * 0.01).toFixed(2);
