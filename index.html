@@ -5732,12 +5732,23 @@ async function chequearSesion(){
 }
 
 // Oculta la landing y deja ver el login con contraseña
-function mostrarLogin(){
+function mostrarLoginUI(){
   const lp = document.getElementById('landing');
   if(lp) lp.classList.add('hide');
   const login = document.getElementById('loginOverlay');
   if(login) login.style.display = 'flex';
   setTimeout(()=>{ const e=document.getElementById('loginEmail'); if(e) e.focus(); }, 350);
+}
+function mostrarLogin(){
+  mostrarLoginUI();
+  history.pushState({page:'login'}, '', location.href);
+}
+// Vuelve de login a la landing (sin loguearse)
+function volverALandingUI(){
+  const login = document.getElementById('loginOverlay');
+  if(login) login.style.display = 'none';
+  const lp = document.getElementById('landing');
+  if(lp) lp.classList.remove('hide');
 }
 
 // Helpers de los botones del login
@@ -5794,6 +5805,12 @@ function nav(name, fromPopState=false){
 
 window.addEventListener('popstate', e=>{
   const page = e.state && e.state.page;
+  if(!CURRENT_USER){
+    // Todavía no inició sesión: solo alternar landing ↔ login, sin trabar el back del navegador.
+    if(page==='login') mostrarLoginUI();
+    else volverALandingUI();
+    return;
+  }
   if(!page || page==='_root'){
     history.go(1);
     return;
