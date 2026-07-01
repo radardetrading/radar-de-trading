@@ -814,6 +814,17 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   mix-blend-mode:screen;
   filter:drop-shadow(0 0 12px rgba(251,191,36,.3));
 }
+.radar-sweep{position:relative;display:inline-block;line-height:0;}
+.radar-sweep::after{
+  content:'';position:absolute;pointer-events:none;
+  left:28%;top:9.3%;width:40%;height:60%;
+  border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(255,221,140,0) 0deg,rgba(255,221,140,.9) 16deg,rgba(255,221,140,0) 46deg);
+  mix-blend-mode:screen;
+  filter:blur(1px);
+  animation:radarSweepSpin 3.2s linear infinite;
+}
+@keyframes radarSweepSpin{ to{ transform:rotate(360deg); } }
 .login-title{
   position:relative; margin:0 0 .25rem; font-size:1.35rem; font-weight:800;
   letter-spacing:.3px; color:var(--text);
@@ -2083,7 +2094,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <!-- NAV -->
   <header class="lp-nav">
     <div class="lp-brand">
-      <img class="lp-brand-mark" src="logo.png" alt="Radar De Trading">
+      <span class="radar-sweep"><img class="lp-brand-mark" src="logo.png" alt="Radar De Trading"></span>
       <span class="lp-brand-txt">RADAR<span class="lp-brand-sub">DE TRADING</span></span>
     </div>
     <nav class="lp-menu">
@@ -2237,7 +2248,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div class="lp-mock">
       <div class="lp-mock-head">
         <div class="lp-mock-brand">
-          <img class="lp-mock-logo" src="logo.png" alt="">
+          <span class="radar-sweep"><img class="lp-mock-logo" src="logo.png" alt=""></span>
           <span>Dashboard</span>
         </div>
         <div class="lp-mock-date">01 May 2024 – 31 May 2024 &#9662;</div>
@@ -2412,7 +2423,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 <div id="loginOverlay">
   <div class="login-card">
     <div class="login-glow"></div>
-    <div class="login-logo-wrap"><img src="logo.png" alt="Radar de Trading"></div>
+    <div class="login-logo-wrap"><span class="radar-sweep"><img src="logo.png" alt="Radar de Trading"></span></div>
     <h2 class="login-title">Radar De Trading</h2>
     <p class="login-sub">Tu centro de control</p>
     <div class="login-field">
@@ -2434,7 +2445,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 <!-- ── SIDEBAR ─────────────────────────── -->
 <div class="sidebar">
   <div class="sidebar-logo" style="padding:1rem 1rem .8rem;text-align:center;">
-    <img src="logo.png" alt="Radar de Trading" style="width:182px;height:auto;display:block;margin:0 auto .5rem;filter:drop-shadow(0 0 14px rgba(251,191,36,.25));">
+    <span class="radar-sweep" style="display:block;margin:0 auto .5rem;width:182px;"><img src="logo.png" alt="Radar de Trading" style="width:182px;height:auto;display:block;filter:drop-shadow(0 0 14px rgba(251,191,36,.25));"></span>
   </div>
   <nav class="nav">
     <div class="nav-section">Overview</div>
