@@ -2569,7 +2569,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <!-- RESUMEN DEL DÍA -->
     <div id="dashHoyPanel" style="margin-bottom:1.2rem;">
-      <div class="card" style="padding:1rem 1.2rem;">
+      <div class="card" data-help="Resumen del día de hoy: trades cerrados, P&L y estado de tu operativa en la sesión actual." style="padding:1rem 1.2rem;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);margin-bottom:.8rem;">📅 Hoy</div>
         <div id="dashHoyBody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;"></div>
       </div>
@@ -2603,7 +2603,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <!-- MIS REGLAS DE TRADING (PILARES) -->
     <div id="dashPilaresPanel" style="margin-bottom:1.2rem;">
-      <div class="card" style="padding:1rem 1.2rem;border-left:3px solid var(--gold);">
+      <div class="card" data-help="Tus reglas/pilares de trading definidos en Mis Reglas, para tenerlos siempre a la vista antes de operar." style="padding:1rem 1.2rem;border-left:3px solid var(--gold);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">🎯 Mis Reglas de Trading</div>
           <button class="btn sm ghost" onclick="openPilaresModal()" style="font-size:10px;">✎ Editar</button>
@@ -2611,7 +2611,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div id="dashPilaresList" style="display:flex;flex-direction:column;gap:7px;"></div>
       </div>
     </div>
-    <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
+    <div class="card" data-help="Calendario de trading: cada día se pinta verde (ganador), rojo (perdedor) o gris (breakeven) según el P&L de ese día. El día de hoy tiene un borde celeste." style="padding:1.2rem;margin-bottom:1.5rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
         <div class="section-label" id="calMonthLabel">Calendario</div>
         <div style="display:flex;gap:4px;">
@@ -2630,13 +2630,13 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
     </div>
         <div class="charts-grid">
-      <div class="card chart-full" style="padding:1.2rem;">
+      <div class="card chart-full" data-help="Evolución acumulada de tu capital a lo largo del tiempo, sumando el P&L de cada trade del Journal en orden cronológico." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">Curva de Equity — Journal</div>
         <canvas id="equityChart" height="70"></canvas>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Proporción de trades ganadores (WIN), perdedores (LOSS) y en punto de equilibrio (BE) sobre el total del Journal." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">Win/Loss/BE</div>
         <canvas id="donutChart" height="160"></canvas>
       </div>
@@ -2646,7 +2646,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
       <div class="card" style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">P&L por Día</div>
-        <div id="dowBars"></div>
+        <div id="dowBars" data-help="P&L acumulado agrupado por día de la semana (Lunes a Domingo). Te muestra qué días te rinden más o menos."></div>
       </div>
     </div>
 
@@ -2658,7 +2658,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
       <div>
         <div class="section-row"><div class="section-label">Últimos Trades</div><button class="btn sm" onclick="nav('journal')">Ver journal →</button></div>
-        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Par</th><th>Tipo</th><th>Pips</th><th>P&L</th><th>Res.</th></tr></thead><tbody id="dashTrades"></tbody></table></div>
+        <div class="table-wrap" data-help="Los trades más recientes que cargaste en el Journal, con su resultado final (WIN/LOSS/BE)."><table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Par</th><th>Tipo</th><th>Pips</th><th>P&L</th><th>Res.</th></tr></thead><tbody id="dashTrades"></tbody></table></div>
       </div>
     </div>
   </div>
@@ -2800,33 +2800,33 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
     </div>
 
-    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+    <div class="card" data-help="Combina zona de precio y setup a la vez, para ver qué combinación específica te da mejores resultados (no cada una por separado)." style="padding:1.2rem;margin-bottom:1.2rem;">
       <div class="section-label" style="margin-bottom:.8rem;">🔀 Zona + Setup — Tabla cruzada</div>
       <div id="st_cruce_zona_setup"></div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.2rem;">
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Relación riesgo:beneficio promedio que obtenés con cada setup, para ver cuáles te rinden más por unidad de riesgo." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">📐 R:R promedio por Setup</div>
         <div id="st_rr_setup"></div>
       </div>
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Tus rachas ganadoras y perdedoras más largas registradas en el Journal." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">🏆 Rachas</div>
         <div id="st_rachas"></div>
       </div>
     </div>
 
-    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+    <div class="card" data-help="Compara tu rendimiento en los días que completaste la Rutina Ganadora contra los días que no, para ver si la rutina impacta en tus resultados." style="padding:1.2rem;margin-bottom:1.2rem;">
       <div class="section-label" style="margin-bottom:.8rem;">⚡ Rutina × Performance</div>
       <div id="st_rutina_perf"></div>
     </div>
 
-    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+    <div class="card" data-help="Correlaciona cada hábito individual de tu Rutina Ganadora (no el total) con tu win rate y P&L, para ver cuáles hábitos realmente impactan tu trading." style="padding:1.2rem;margin-bottom:1.2rem;">
       <div class="section-label" style="margin-bottom:1rem;">🔗 Impacto de hábitos en el trading</div>
       <div id="st_habitos_corr"></div>
     </div>
 
-    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+    <div class="card" data-help="Cruza tu estado emocional registrado en el Diario Mental con el resultado de tus trades, para ver qué estados te llevan a mejores o peores decisiones." style="padding:1.2rem;margin-bottom:1.2rem;">
       <div class="section-label" style="margin-bottom:1rem;">🧠 Diario Mental × Performance</div>
       <div id="st_diario_corr"></div>
     </div>
@@ -2911,13 +2911,13 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
 
     <!-- FASE PROGRESS -->
-    <div id="bt_phase_banner" style="margin-bottom:1.5rem;"></div>
+    <div id="bt_phase_banner" data-help="Progreso de la fase actual del challenge simulado: cuánto llevás del target y cuánto margen te queda antes de tocar el drawdown máximo." style="margin-bottom:1.5rem;"></div>
 
     <!-- KPIs -->
     <div class="kpi-grid" id="btKpis" style="margin-bottom:1.5rem;"></div>
 
     <!-- EQUITY CHART -->
-    <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
+    <div class="card" data-help="Evolución del capital simulado a medida que cargás trades en el Backtest Challenge. El color de la etiqueta indica la fase actual (Challenge, Verification o Funded)." style="padding:1.2rem;margin-bottom:1.5rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
         <div class="section-label">Curva de Equity — Simulación</div>
         <div id="bt_phase_tag" style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;"></div>
@@ -2951,11 +2951,11 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <!-- MÉTRICAS DE ZONAS + REGLAS -->
     <div id="btAnalyticsPanel" style="display:none;margin-bottom:1.5rem;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <div class="card" style="padding:1.2rem;">
+        <div class="card" data-help="Rendimiento de tus trades simulados agrupados por zona de reacción, para ver qué zonas te dan mejores resultados en el Backtest Challenge." style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:.8rem;">📍 Zonas — Rendimiento</div>
           <div id="btZonaMetrics"></div>
         </div>
-        <div class="card" style="padding:1.2rem;">
+        <div class="card" data-help="Cuántas veces cumpliste o rompiste cada regla rápida del Backtest en los trades simulados." style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:.8rem;">✅ Reglas — Cumplimiento</div>
           <div id="btRulesMetrics"></div>
         </div>
@@ -2976,7 +2976,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div id="btSessionCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-bottom:1.5rem;"></div>
 
       <!-- Comparativa global -->
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Conclusión de la simulación por sesión: qué sesión te haría pasar el challenge simulado más rápido, corriendo solo esos trades en orden cronológico." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.9rem;">🏁 ¿Qué sesión te pasa el challenge?</div>
         <div id="btSessionVerdict" style="font-size:12px;color:var(--sub);"></div>
       </div>
@@ -3167,7 +3167,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
 
       <!-- TABLA DE TRADES -->
-      <div id="histTradesCard" class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
+      <div id="histTradesCard" class="card" data-help="Listado de los trades históricos importados desde tu Excel, con su resultado en R y % de riesgo/ganancia. Se analizan aparte del Backtest Challenge." style="padding:1.2rem;margin-bottom:1.5rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
           <div class="section-label">📋 Trades Históricos</div>
           <div style="display:flex;gap:6px;align-items:center;">
@@ -3205,7 +3205,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div id="paresToday" style="margin-bottom:1.5rem;"></div>
     <div id="paresAlerts" style="margin-bottom:1rem;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Calendario de la semana con qué par de cuentas te toca operar cada día, según la configuración de Mis Pares." style="padding:1.2rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
           <div class="section-label">Calendario Semanal</div>
           <div style="display:flex;gap:4px;">
@@ -3217,7 +3217,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div class="cal-grid" id="paresCal"></div>
         <div id="paresCalDetail"></div>
       </div>
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Grupos de cuentas que operás en paralelo para evitar correlación y proteger el drawdown cruzado entre ellas." style="padding:1.2rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
           <div class="section-label">Mis Pares</div>
           <button class="btn sm primary" onclick="openParModal()">+ Nuevo</button>
@@ -3225,7 +3225,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div id="paresList"></div>
       </div>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap" data-help="Registro día por día de qué par usaste, el resultado y si decidiste mantener las cuentas pareadas o hacer un cambio.">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.9rem 1.1rem;border-bottom:1px solid var(--border);">
         <div class="section-label">Historial de Uso</div>
         <button class="btn sm primary" onclick="openUsoModal()">+ Registrar Día</button>
@@ -3235,7 +3235,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
 
     <!-- CATÁLOGO DE INSTRUMENTOS DE FUTUROS -->
-    <div class="table-wrap" style="margin-top:1.5rem;">
+    <div class="table-wrap" data-help="Catálogo de contratos de futuros con sus valores de tick, usados por la Calculadora de Futuros para saber cuánto vale cada punto de movimiento." style="margin-top:1.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.9rem 1.1rem;border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="section-label">📊 Instrumentos de Futuros</div>
@@ -3278,7 +3278,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
       <button class="btn primary" onclick="openPagoModal()">+ Registrar Pago</button>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap" data-help="Historial de splits cobrados: Monto es lo que te quedó vos, Bruto es la ganancia total antes de aplicar el % de split con la prop firm.">
       <table><thead><tr><th>#</th><th>Fecha</th><th>Cuenta</th><th>Firma</th><th>Monto</th><th>% Split</th><th>Bruto</th><th>Notas</th><th></th></tr></thead><tbody id="pagosBody"></tbody></table>
       <div id="pagosEmpty" class="empty" style="display:none"><div class="empty-icon">💰</div>Sin pagos aún.</div>
     </div>
@@ -3293,22 +3293,22 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <!-- Gráficos por momento -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:1.5rem;" id="diarioChartGrid">
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Win rate de tus trades agrupado por el estado emocional que respondiste en el Diario Mental al cargarlos." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">Win Rate por Estado Mental</div>
         <div id="moodStats"></div>
       </div>
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="P&L promedio de tus trades agrupado por el estado emocional que respondiste en el Diario Mental." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">P&L por Estado Mental</div>
         <div id="moodPnl"></div>
       </div>
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Compara tus respuestas de estado mental antes, durante y después del trade, para ver cómo cambia tu psicología a lo largo de la operación." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">Antes vs Durante vs Después</div>
         <div id="moodMomentos"></div>
       </div>
     </div>
 
     <!-- Configurador de preguntas -->
-    <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
+    <div class="card" data-help="Preguntas que se te hacen en el Diario Mental al cargar un trade (ej. '¿Cómo te sentís?'). Podés crear tus propias preguntas y elegir en qué momento se muestran." style="padding:1.2rem;margin-bottom:1.5rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px;">
         <div class="section-label">⚙️ Preguntas de Estado Mental</div>
         <button class="btn sm primary" onclick="openMoodQModal()">+ Nueva Pregunta</button>
@@ -3317,7 +3317,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
 
     <!-- Entradas del diario -->
-    <div id="diarioEntradasCard" class="card" style="padding:1.2rem;">
+    <div id="diarioEntradasCard" class="card" data-help="Historial de todas tus respuestas del Diario Mental, vinculadas a cada trade." style="padding:1.2rem;">
       <div class="section-label" style="margin-bottom:1rem;">📖 Entradas del Diario</div>
       <div id="diarioList"></div>
       <div id="diarioEmpty" class="empty" style="display:none"><div class="empty-icon">🧠</div>Sin entradas. Registrá tu estado al cargar un trade.</div>
@@ -3401,14 +3401,14 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
 
       <!-- Comparativa mes a mes -->
-      <div class="card" style="padding:1.4rem;">
+      <div class="card" data-help="Compara P&L, win rate y trades mes a mes, para ver tu evolución en el tiempo." style="padding:1.4rem;">
         <div class="section-label" style="margin-bottom:1rem;">📊 Comparativa Mensual</div>
         <div id="repComparativa"></div>
       </div>
     </div>
 
     <!-- Preview -->
-    <div class="card" style="padding:1.4rem;" id="repPreviewCard">
+    <div class="card" data-help="Vista previa de cómo va a quedar el reporte antes de exportarlo en PDF o Excel." style="padding:1.4rem;" id="repPreviewCard">
       <div class="section-label" style="margin-bottom:1rem;">👁 Preview del Reporte</div>
       <div id="repPreview" style="color:var(--sub);font-size:12px;text-align:center;padding:2rem;">Configurá el reporte y hacé click en Preview</div>
     </div>
@@ -3507,7 +3507,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
 
       <!-- Diagnóstico de consistencia -->
-      <div class="card" style="padding:1.4rem;margin-bottom:1.4rem;" id="repDiagCard">
+      <div class="card" data-help="Compara las métricas del Backtest Histórico contra las del Backtest Challenge para ver si al simular en el challenge seguís respetando el edge (la ventaja estadística) que mostrás en tu historial real." style="padding:1.4rem;margin-bottom:1.4rem;" id="repDiagCard">
         <div class="section-label" style="margin-bottom:1rem;">🧭 Diagnóstico: ¿Tu backtest sigue tu edge histórico?</div>
         <div id="repDiag"></div>
       </div>
@@ -3515,19 +3515,19 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <!-- Desgloses comparativos -->
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.7rem;">◆ Desgloses (Universo Combinado)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.4rem;">
-        <div class="card" style="padding:1.4rem;">
+        <div class="card" data-help="Rendimiento (trades, win rate, P&L) agrupado por sesión de mercado, combinando histórico + backtest." style="padding:1.4rem;">
           <div class="section-label" style="margin-bottom:1rem;">🕐 Por Sesión</div>
           <div id="repBySession"></div>
         </div>
-        <div class="card" style="padding:1.4rem;">
+        <div class="card" data-help="Rendimiento agrupado por día de la semana, combinando histórico + backtest." style="padding:1.4rem;">
           <div class="section-label" style="margin-bottom:1rem;">📅 Por Día de Semana</div>
           <div id="repByDow"></div>
         </div>
-        <div class="card" style="padding:1.4rem;">
+        <div class="card" data-help="Rendimiento agrupado por par/instrumento operado, combinando histórico + backtest." style="padding:1.4rem;">
           <div class="section-label" style="margin-bottom:1rem;">⚡ Por Par</div>
           <div id="repByPair"></div>
         </div>
-        <div class="card" style="padding:1.4rem;">
+        <div class="card" data-help="Rendimiento agrupado por zona de precio (ej. OB, FVG, PDL), combinando histórico + backtest." style="padding:1.4rem;">
           <div class="section-label" style="margin-bottom:1rem;">🎯 Por Zona</div>
           <div id="repByZona"></div>
         </div>
@@ -3549,11 +3549,11 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
       <!-- DISTRIBUCIÓN R + STREAK -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-        <div class="card" style="padding:1.2rem;">
+        <div class="card" data-help="Histograma de cuántos trades cerraron en cada múltiplo de R (riesgo). Te muestra si tus ganancias/pérdidas se concentran cerca de 1R o si tenés cola larga de resultados grandes." style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:1rem;">📊 Distribución de Resultados (R)</div>
           <canvas id="histDistChart" height="170"></canvas>
         </div>
-        <div class="card" style="padding:1.2rem;">
+        <div class="card" data-help="Rachas ganadoras y perdedoras consecutivas más largas de tu historial, para dimensionar la variancia que podés esperar." style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:1rem;">🔥 Análisis de Rachas</div>
           <div id="histStreakBox"></div>
         </div>
@@ -3561,18 +3561,18 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
       <!-- CONFIRMACIÓN + CONSISTENCY -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-        <div class="card" style="padding:1.2rem;">
+        <div class="card" data-help="Rendimiento agrupado por tipo de confirmación/confluencia usada para entrar al trade (ej. ruptura de estructura, FVG, etc.)." style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:1rem;">🎯 Performance por Confirmación</div>
           <div id="histConfBox"></div>
         </div>
-        <div class="card" style="padding:1.2rem;">
+        <div class="card" data-help="Chequea la regla de consistencia que exigen muchas prop firms: que tu mejor día no represente una porción demasiado grande de tu ganancia total (ej. máx 30-50%)." style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:1rem;">⚖️ Consistency Rule</div>
           <div id="histConsistencyBox"></div>
         </div>
       </div>
 
       <!-- ════════════════ ¿QUÉ SESIÓN TE FONDEA? ════════════════ -->
-      <div class="card" style="padding:1.4rem;margin-bottom:1.5rem;">
+      <div class="card" data-help="Simula tu historial operando solo con los trades de cada sesión (Londres, NY, Asia, Frankfurt) contra los targets de la cuenta elegida, para ver qué sesión te fondearía más rápido y con menos vueltas." style="padding:1.4rem;margin-bottom:1.5rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:10px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">🔍 ¿Qué Sesión te Fondea?</div>
@@ -3594,7 +3594,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div id="histSimCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:1.3rem;"></div>
 
         <!-- Veredicto global -->
-        <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r3);padding:1.1rem 1.2rem;">
+        <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r3);padding:1.1rem 1.2rem;" data-help="Conclusión en texto de la simulación por sesión: qué sesión te hubiera fondeado más rápido según tu historial.">
           <div class="section-label" style="margin-bottom:.8rem;">🏁 Veredicto</div>
           <div id="histSimVerdict" style="font-size:12px;color:var(--sub);"></div>
         </div>
@@ -3663,7 +3663,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
 
       <!-- HEATMAP MENSUAL -->
-      <div class="card" style="padding:1.2rem;margin-bottom:1.5rem;">
+      <div class="card" data-help="Mapa de calor con el P&L de cada mes de tu historial: verde más intenso = mejor mes, rojo más intenso = peor mes." style="padding:1.2rem;margin-bottom:1.5rem;">
         <div class="section-label" style="margin-bottom:1rem;">🗓️ Heatmap por Mes</div>
         <div id="histHeatmap"></div>
       </div>
@@ -3689,7 +3689,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <!-- HOY -->
     <div id="rutView-hoy">
-      <div id="rutinaHoyCard" class="card" style="padding:1.4rem;margin-bottom:1rem;">
+      <div id="rutinaHoyCard" class="card" data-help="Checklist de tu Rutina Ganadora de hoy. La barra de abajo muestra qué % de hábitos completaste; anotá una nota del día para recordar cómo te sentiste." style="padding:1.4rem;margin-bottom:1rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
           <div>
             <div class="section-label" id="rutFechaLabel">Rutina de hoy</div>
@@ -3714,7 +3714,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <!-- HISTORIAL -->
     <div id="rutView-historial" style="display:none;">
       <!-- Calendario heatmap -->
-      <div class="card" style="padding:1.2rem;margin-bottom:1rem;">
+      <div class="card" data-help="Heatmap de los últimos 90 días: color más verde = mayor % de hábitos completados ese día. El punto celeste marca los días en los que además operaste." style="padding:1.2rem;margin-bottom:1rem;">
         <div class="section-label" style="margin-bottom:.8rem;">📅 Últimos 90 días</div>
         <div id="rutCalendar"></div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:.8rem;font-size:10px;color:var(--sub);flex-wrap:wrap;">
@@ -3726,16 +3726,16 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1rem;">
-        <div class="card" style="padding:1.2rem;">
+        <div class="card" data-help="Porcentaje de días en que cumpliste cada hábito individual, para ver cuáles sostenés mejor en el tiempo." style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:1rem;">📈 Consistencia por hábito</div>
           <div id="rutHistHabitos"></div>
         </div>
-        <div class="card" style="padding:1.2rem;">
+        <div class="card" data-help="Cantidad de días en los que completaste el 100% de tu Rutina Ganadora." style="padding:1.2rem;">
           <div class="section-label" style="margin-bottom:1rem;">🏆 Días perfectos</div>
           <div id="rutHistPerfect"></div>
         </div>
       </div>
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Listado día por día de tu Rutina Ganadora: hábitos completados y nota del día." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">📅 Historial completo</div>
         <div id="rutHistList"></div>
       </div>
@@ -3743,7 +3743,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <!-- HÁBITOS -->
     <div id="rutView-habitos" style="display:none;">
-      <div class="card" style="padding:1.4rem;margin-bottom:1rem;">
+      <div class="card" data-help="Lista de hábitos que forman tu Rutina Ganadora. Podés agregar, editar o borrar hábitos tipo check (sí/no) o de minutos." style="padding:1.4rem;margin-bottom:1rem;">
         <div class="section-label" style="margin-bottom:1rem;">⚙ Administrar Hábitos</div>
         <div id="rutHabitosList" style="margin-bottom:1.2rem;"></div>
         <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;align-items:end;">
@@ -3872,7 +3872,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           </div>
         </div>
       </div>
-      <div class="card" style="padding:1.5rem;">
+      <div class="card" data-help="Resultado de la calculadora: tamaño de posición en lotes, precios de stop loss y take profit, y dinero en juego, calculados a partir de los parámetros de la izquierda." style="padding:1.5rem;">
         <div class="section-label" style="margin-bottom:1rem;">📊 Niveles Calculados</div>
         <div id="calcLevels"></div>
         <div id="calcSendBar" style="margin-top:1rem;display:none;">
@@ -3913,7 +3913,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             </div>
           </div>
         </div>
-        <div class="card" style="padding:1.5rem;">
+        <div class="card" data-help="Resultado de la calculadora de futuros: cantidad de contratos, riesgo real en dólares y ganancia potencial según el R:R objetivo." style="padding:1.5rem;">
           <div class="section-label" style="margin-bottom:1rem;">📊 Resultado</div>
           <div id="calcFutLevels"></div>
         </div>
@@ -3925,7 +3925,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <!-- CALCULADORA DE RIESGO -->
   <div id="page-riesgo" class="page">
     <div style="max-width:600px;margin:0 auto;">
-      <div class="card" style="padding:1.5rem;">
+      <div class="card" data-help="Simulador de Fondeo: configurá el tamaño de cuenta, fases, objetivos de ganancia y límites de drawdown de tu prop firm para ver cuánto margen tenés disponible en cada fase." style="padding:1.5rem;">
         <div class="section-label" style="margin-bottom:1.2rem;">⚙ Parámetros de la Simulación</div>
 
         <!-- Parámetros globales -->
@@ -3999,26 +3999,26 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
     <div class="kpi-grid" id="semanalKpis" style="margin-bottom:1.5rem;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="P&L y trades de esta semana agrupados por día (Lunes a Viernes)." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">Días de la Semana</div>
         <div id="semanalDias"></div>
       </div>
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Rendimiento de esta semana agrupado por par/instrumento operado." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">Por Par de Divisas</div>
         <div id="semanalPares"></div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Rendimiento de esta semana agrupado por sesión de mercado." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">Por Sesión</div>
         <div id="semanalSesiones"></div>
       </div>
-      <div class="card" style="padding:1.2rem;">
+      <div class="card" data-help="Cuántas reglas de tu plan de trading respetaste o rompiste durante esta semana." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:1rem;">Verificación de Reglas</div>
         <div id="semanalReglas"></div>
       </div>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap" data-help="Todos los trades cargados en el Journal durante esta semana.">
       <div style="padding:.9rem 1.1rem;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);">Trades de la Semana</div>
       <table><thead><tr><th>Fecha</th><th>Par</th><th>Cuenta</th><th>Tipo</th><th>Sesión</th><th>Pips</th><th>P&L</th><th>R:R</th><th>Resultado</th></tr></thead>
       <tbody id="semanalTrades"></tbody></table>
@@ -4037,7 +4037,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div id="reglasList"></div>
         <div id="reglasEmpty" class="empty" style="display:none"><div class="empty-icon">📐</div>Sin reglas definidas.<br>Agregá tus reglas para que la app te avise cuando las rompés.</div>
       </div>
-      <div>
+      <div data-help="Cuántas veces respetaste o rompiste cada regla, y el impacto en P&L de esas violaciones, para detectar qué reglas te cuestan más plata cuando las rompés.">
         <div class="section-label" style="margin-bottom:1rem;">🔍 Análisis de Cumplimiento</div>
         <div id="reglasAnalysis"></div>
       </div>
@@ -11877,7 +11877,7 @@ function renderRutCorrelacion(){
   let html = '';
 
   // Card global
-  html += `<div class="card" style="padding:1.4rem;margin-bottom:1.2rem;">
+  html += `<div class="card" data-help="Agrupa tus trades según qué % de la Rutina Ganadora habías completado ese día (0%, <50%, 50-99%, 100%) y compara el win rate y P&L promedio de cada grupo." style="padding:1.4rem;margin-bottom:1.2rem;">
     <div class="section-label" style="margin-bottom:1rem;">📊 Rutina del día vs rendimiento</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
     ${bucketTrades.map(b=>{
@@ -11932,7 +11932,7 @@ function renderRutCorrelacion(){
     const deltaColor = deltaWR===null?'var(--dim)':deltaWR>0?'var(--green)':deltaWR<0?'var(--red)':'var(--sub)';
     const deltaIcon  = deltaWR===null?'—':deltaWR>0?'▲':'▼';
 
-    html += `<div class="card" style="padding:1.2rem;margin-bottom:.8rem;">
+    html += `<div class="card" data-help="Compara tu win rate y P&L promedio en los días que cumpliste este hábito vs los días que no, para medir su impacto real en tu trading." style="padding:1.2rem;margin-bottom:.8rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;flex-wrap:wrap;gap:8px;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:20px;">${h.icon||'⭐'}</span>
