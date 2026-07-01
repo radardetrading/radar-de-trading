@@ -2843,7 +2843,10 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div id="bt_card_5k" onclick="selectBtAccount('5k')" style="cursor:pointer;border-radius:var(--r3);border:2px solid rgba(56,189,248,.5);background:linear-gradient(135deg,rgba(56,189,248,.1),rgba(56,189,248,.03));padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
         <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--cyan);opacity:.06;border-radius:50%;filter:blur(20px);pointer-events:none;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);" id="bt_lbl_5k">Cuenta Seleccionada</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);" id="bt_lbl_5k">Cuenta Seleccionada</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.1em;color:var(--cyan);background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.25);padding:1px 6px;border-radius:4px;">FOREX</span>
+          </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <div style="width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 8px var(--cyan);" id="bt_dot_5k"></div>
             <button class="btn sm" style="font-size:9px;z-index:2;" onclick="event.stopPropagation();openBtCfgModal('5k')">✎ Editar</button>
@@ -2857,7 +2860,10 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div id="bt_card_50k" onclick="selectBtAccount('50k')" style="cursor:pointer;border-radius:var(--r3);border:2px solid var(--border);background:rgba(255,255,255,.02);padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
         <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--purple);opacity:.04;border-radius:50%;filter:blur(20px);pointer-events:none;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);" id="bt_lbl_50k">Cuenta Disponible</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);" id="bt_lbl_50k">Cuenta Disponible</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.1em;color:var(--cyan);background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.25);padding:1px 6px;border-radius:4px;">FOREX</span>
+          </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <div style="width:8px;height:8px;background:var(--border2);border-radius:50%;" id="bt_dot_50k"></div>
             <button class="btn sm" style="font-size:9px;z-index:2;" onclick="event.stopPropagation();openBtCfgModal('50k')">✎ Editar</button>
@@ -2871,7 +2877,10 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div id="bt_card_fut" onclick="selectBtAccount('fut')" style="cursor:pointer;border-radius:var(--r3);border:2px solid var(--border);background:rgba(255,255,255,.02);padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
         <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--orange);opacity:.04;border-radius:50%;filter:blur(20px);pointer-events:none;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);" id="bt_lbl_fut">Cuenta Disponible</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);" id="bt_lbl_fut">Cuenta Disponible</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.1em;color:var(--orange);background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);padding:1px 6px;border-radius:4px;">FUTUROS</span>
+          </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <div style="width:8px;height:8px;background:var(--border2);border-radius:50%;" id="bt_dot_fut"></div>
             <button class="btn sm" style="font-size:9px;z-index:2;" onclick="event.stopPropagation();openBtCfgModal('fut')">✎ Editar</button>
