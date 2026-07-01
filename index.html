@@ -2840,7 +2840,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:1.5rem;">
 
       <!-- CUENTA A -->
-      <div id="bt_card_5k" onclick="selectBtAccount('5k')" style="cursor:pointer;border-radius:var(--r3);border:2px solid rgba(56,189,248,.5);background:linear-gradient(135deg,rgba(56,189,248,.1),rgba(56,189,248,.03));padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
+      <div id="bt_card_5k" onclick="selectBtAccount('5k')" data-help="Cuenta simulada de Forex para el Backtest Challenge. Clic para elegirla y cargarle trades de práctica; el botón Editar cambia su tamaño, fases y targets." style="cursor:pointer;border-radius:var(--r3);border:2px solid rgba(56,189,248,.5);background:linear-gradient(135deg,rgba(56,189,248,.1),rgba(56,189,248,.03));padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
         <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--cyan);opacity:.06;border-radius:50%;filter:blur(20px);pointer-events:none;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
           <div style="display:flex;align-items:center;gap:6px;">
@@ -2857,7 +2857,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
 
       <!-- CUENTA B -->
-      <div id="bt_card_50k" onclick="selectBtAccount('50k')" style="cursor:pointer;border-radius:var(--r3);border:2px solid var(--border);background:rgba(255,255,255,.02);padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
+      <div id="bt_card_50k" onclick="selectBtAccount('50k')" data-help="Cuenta simulada de Forex para el Backtest Challenge. Clic para elegirla y cargarle trades de práctica; el botón Editar cambia su tamaño, fases y targets." style="cursor:pointer;border-radius:var(--r3);border:2px solid var(--border);background:rgba(255,255,255,.02);padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
         <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--purple);opacity:.04;border-radius:50%;filter:blur(20px);pointer-events:none;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
           <div style="display:flex;align-items:center;gap:6px;">
@@ -2874,7 +2874,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
 
       <!-- CUENTA C — FUTUROS -->
-      <div id="bt_card_fut" onclick="selectBtAccount('fut')" style="cursor:pointer;border-radius:var(--r3);border:2px solid var(--border);background:rgba(255,255,255,.02);padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
+      <div id="bt_card_fut" onclick="selectBtAccount('fut')" data-help="Cuenta simulada de Futuros para el Backtest Challenge. Clic para elegirla y cargarle trades de práctica; el badge muestra el instrumento (ej. ES) y el botón Editar cambia tamaño, fases y targets." style="cursor:pointer;border-radius:var(--r3);border:2px solid var(--border);background:rgba(255,255,255,.02);padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .2s;">
         <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--orange);opacity:.04;border-radius:50%;filter:blur(20px);pointer-events:none;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
           <div style="display:flex;align-items:center;gap:6px;">
@@ -8058,7 +8058,7 @@ function renderPares(){
       const a1=accObj(par.acc1),a2=accObj(par.acc2);
       const lastUso=paresHist.find(h=>h.parId===par.id);
       const sigTag=lastUso===undefined?'':lastUso.siguenJuntas?`<span class="badge b-funded" style="font-size:9px;">✓ Siguen juntas</span>`:`<span class="badge" style="background:rgba(249,115,22,.1);color:var(--orange);border:1px solid rgba(249,115,22,.2);font-size:9px;">↻ Cambio pendiente</span>`;
-      return`<div class="pair-card" style="border-color:${par.color}55;">
+      return`<div class="pair-card" data-help="Par de cuentas que operás en paralelo el mismo día para evitar correlación. Muestra firma, nombre, saldo y fase de cada cuenta del par, y si mantuvieron el pareo (Siguen juntas) o hay un cambio pendiente." style="border-color:${par.color}55;">
         <div class="pair-card-top" style="background:${par.color}10;border-bottom:1px solid ${par.color}33;">
           <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:2px;">HOY — ${weekDays[wn]}</div><div style="font-size:16px;font-weight:700;color:${par.color};">${par.name}</div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);background:var(--bg4);border:1px solid var(--border);padding:2px 6px;border-radius:4px;">${par.tipo}</span>${sigTag}</div>
@@ -8499,6 +8499,7 @@ function renderCuentas(){
     const ddColor=pct=>pct>=80?'pf-red':pct>=50?'pf-gold':'pf-green';
     const card=document.createElement('div');
     card.className=cardClass;
+    card.setAttribute('data-help','Tarjeta de cuenta: arriba, firma, nombre y fase (Challenge/Verification/Funded). En el cuerpo, balance actual, P&L en $ y %, trades del journal vinculados, tu progreso hacia el target de la fase y las barras de Daily DD / Max DD respecto al límite que permite la prop firm.');
     const cat = a.categoria || 'challenge';
     const futBadge = a.tipo==='futuros' ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--orange);background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);padding:1px 5px;border-radius:4px;letter-spacing:.05em;">FUTUROS</span>' : '';
     const catBadgeHtml = cat==='funded'
@@ -14798,7 +14799,7 @@ function renderMetaCard(m){
 
   const cardCls = estado==='lograda' ? ' is-lograda' : (estado==='cancelada' ? ' is-cancelada' : '');
 
-  return `<div class="meta-card${cardCls}" id="meta-${m.id}" style="--accent:${accent}">
+  return `<div class="meta-card${cardCls}" id="meta-${m.id}" data-help="Tarjeta de meta: título y estado (Pendiente/En progreso/Lograda), tipo y fecha límite si tiene, y una barra de Progreso que indica qué tan cerca estás de cumplirla." style="--accent:${accent}">
     <div class="meta-card-header">
       <div class="meta-card-icon">${m.cat==='trading'?'📊':'🌱'}</div>
       <div class="meta-card-title">${titulo}</div>
@@ -15339,6 +15340,86 @@ document.addEventListener('mouseout', e=>{
   const tip = document.getElementById('helpTooltip');
   if(tip) tip.classList.remove('visible');
 });
+
+// ── DESCRIPCIONES DE KPI-BOX (modo ayuda) ──────────────────────
+const KPI_HELP = {
+  'Trades':'Cantidad total de operaciones registradas en este período o cuenta.',
+  'Trades con estado':'Trades que tienen un estado emocional cargado en el Diario Mental.',
+  'Win Rate':'Porcentaje de trades ganadores sobre el total de trades cerrados.',
+  'Profit Factor':'Ganancia bruta dividida por pérdida bruta. Mayor a 1 significa que el sistema es rentable; por debajo de 1, pierde plata.',
+  'Avg WIN':'Ganancia promedio de los trades cerrados en positivo.',
+  'Avg LOSS':'Pérdida promedio de los trades cerrados en negativo.',
+  'Avg R Real':'Múltiplo de R promedio realmente obtenido (resultado dividido por el riesgo asumido en cada trade).',
+  'Expectancy':'Ganancia esperada por trade, en R, combinando win rate y relación riesgo:beneficio. Positivo = sistema con edge.',
+  'R:R Promedio':'Relación riesgo:beneficio promedio de tus trades (cuánto arriesgás vs. cuánto podés ganar).',
+  'R Total':'Suma de todos los resultados expresados en múltiplos de R (riesgo).',
+  'Max DD':'Máxima caída de capital desde un pico hasta un valle, en el período analizado.',
+  'Max Drawdown':'Máxima caída de capital desde un pico hasta un valle, en el período analizado.',
+  'Max Win Streak':'Racha más larga de trades ganadores consecutivos.',
+  'Max Loss Streak':'Racha más larga de trades perdedores consecutivos.',
+  'Racha Máx':'Racha ganadora más larga (número de arriba) y racha perdedora más larga (debajo), en trades consecutivos.',
+  'Equity Final':'Capital resultante al final de la simulación de backtest.',
+  'TP':'Cantidad de trades cerrados en Take Profit (ganadores).',
+  'SL':'Cantidad de trades cerrados en Stop Loss (perdedores).',
+  'BE':'Cantidad de trades cerrados en Break Even (sin ganancia ni pérdida).',
+  'P&L Total':'Resultado neto (ganancia o pérdida) acumulado en el período.',
+  'P&L Journal':'Resultado neto acumulado de los trades reales registrados en el Journal.',
+  'P&L Semanal':'Resultado neto acumulado durante la semana seleccionada.',
+  'P&L Cuentas':'Resultado neto acumulado de todas tus cuentas de prop firm.',
+  'P&L USD':'Resultado neto expresado en dólares (estimado a partir del historial).',
+  'Capital Prop Firms':'Suma del capital de todas tus cuentas de prop firms activas.',
+  'Capital Total':'Suma del tamaño de cuenta de todas tus cuentas cargadas.',
+  'Total Cuentas':'Cantidad total de cuentas de prop firm cargadas.',
+  'Funded':'Cantidad de cuentas que ya pasaron el challenge y están en fase fondeada.',
+  'En Peligro':'Cuentas cerca de tocar su límite máximo de drawdown.',
+  'Blown':'Cuentas reventadas: violaron el drawdown máximo permitido y quedaron descalificadas.',
+  'Total Cobrado':'Suma de todos los splits/pagos cobrados de tus prop firms.',
+  'Nro de Pagos':'Cantidad de pagos (splits) recibidos.',
+  'Ganancia Bruta':'Ganancia total generada antes de aplicar el split con la prop firm.',
+  'Promedio/Pago':'Monto promedio cobrado por cada pago recibido.',
+  'Contratos':'Cantidad máxima de contratos de futuros que podés operar según tu riesgo definido.',
+  'Riesgo Real':'Monto en dólares que realmente arriesgás con la cantidad de contratos calculada.',
+  'Target':'Ganancia objetivo en dólares y en puntos, según el ratio riesgo:beneficio elegido.',
+  'Point Value':'Valor en dólares de cada punto que se mueve el contrato de futuros.',
+  'Lotes Estándar':'Tamaño de posición recomendado en lotes estándar (y su equivalente en mini/micro lotes).',
+  'Riesgo Máximo':'Monto en dólares que arriesgás si el precio llega al stop loss.',
+  'Ganancia Potencial':'Ganancia estimada en dólares si el precio llega al take profit, según el ratio riesgo:beneficio.',
+  'SL en Pips':'Distancia entre la entrada y el stop loss, expresada en pips.',
+  'Respetadas':'Reglas de tu plan de trading que respetaste en el período.',
+  'Rotas Hoy':'Reglas de tu plan de trading que rompiste hoy.',
+  'Sin Operar':'Reglas que no aplicaron porque no operaste o no correspondía evaluarlas.',
+  'Mejor estado':'Estado emocional con mejor rendimiento (mayor win rate) en tus trades.',
+  'Peor estado':'Estado emocional con peor rendimiento (menor win rate) en tus trades.',
+  'Mayor P&L promedio':'Estado emocional asociado al mayor P&L promedio por trade.',
+  'Meses con datos':'Cantidad de meses con al menos un trade registrado.',
+  'Mejor mes':'Mes con mayor P&L acumulado.',
+  'Peor mes':'Mes con menor P&L acumulado (o mayor pérdida).',
+  '🔥 Racha actual':'Días consecutivos completando tu Rutina Ganadora.',
+  '🏆 Días perfectos':'Días en los que completaste el 100% de los hábitos de tu Rutina Ganadora.',
+  '📈 Consistencia media':'Porcentaje promedio de cumplimiento de tu Rutina Ganadora.',
+  '📅 Días registrados':'Cantidad total de días con la Rutina Ganadora registrada.',
+  '🎯 Total Metas':'Cantidad total de metas creadas.',
+  '✅ Logradas':'Metas que ya alcanzaste.',
+  '🔄 En Progreso':'Metas que estás persiguiendo actualmente.',
+  '⏳ Pendientes':'Metas que todavía no empezaste a trabajar.',
+};
+function applyKpiHelp(root){
+  (root||document).querySelectorAll('.kpi-box:not([data-help])').forEach(box=>{
+    const lbl = box.querySelector('.kpi-label');
+    if(!lbl) return;
+    const key = lbl.textContent.trim().replace(/\s*\([^)]*\)\s*$/,'');
+    const help = KPI_HELP[key];
+    if(help) box.setAttribute('data-help', help);
+  });
+}
+applyKpiHelp(document);
+new MutationObserver(muts=>{
+  muts.forEach(m=>m.addedNodes.forEach(n=>{
+    if(n.nodeType!==1) return;
+    if(n.matches?.('.kpi-box')) applyKpiHelp(n.parentElement||document);
+    else if(n.querySelector?.('.kpi-box')) applyKpiHelp(n);
+  }));
+}).observe(document.body,{childList:true,subtree:true});
 </script>
 <div id="helpTooltip"></div>
 <div id="helpBanner" style="display:none;">? Modo Ayuda activo — Pasa el cursor por cualquier elemento para ver que hace · Clic en ? para salir</div>
