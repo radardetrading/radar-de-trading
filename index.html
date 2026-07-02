@@ -2728,12 +2728,16 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
     </div>
         <div class="charts-grid">
-      <div class="card chart-full" data-help="Evolución acumulada a lo largo del tiempo. En modo Dinero suma el P&L de cada trade sobre el capital inicial; en modo R:R suma el múltiplo riesgo/beneficio de cada trade, independiente del tamaño de cuenta." style="padding:1.2rem;">
+      <div class="card chart-full" data-help="Evolución acumulada a lo largo del tiempo, según el modo elegido: Dinero (capital + P&L), R:R (múltiplo riesgo/beneficio, independiente del tamaño de cuenta), Pips, Drawdown (caída % desde el máximo de equity), Retorno % (P&L sobre el capital inicial) o Comisiones acumuladas." style="padding:1.2rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
           <div class="section-label">Curva de Equity — Journal</div>
-          <div style="display:flex;gap:4px;">
-            <button class="btn sm primary" id="eqModeMoneyBtn" onclick="setEqMode('money')">Dinero</button>
-            <button class="btn sm ghost" id="eqModeRRBtn" onclick="setEqMode('rr')">R:R</button>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <button class="btn sm primary" id="eqModeBtn-money" onclick="setEqMode('money')">Dinero</button>
+            <button class="btn sm ghost" id="eqModeBtn-rr" onclick="setEqMode('rr')">R:R</button>
+            <button class="btn sm ghost" id="eqModeBtn-pips" onclick="setEqMode('pips')">Pips</button>
+            <button class="btn sm ghost" id="eqModeBtn-dd" onclick="setEqMode('dd')">Drawdown</button>
+            <button class="btn sm ghost" id="eqModeBtn-pct" onclick="setEqMode('pct')">Retorno %</button>
+            <button class="btn sm ghost" id="eqModeBtn-comm" onclick="setEqMode('comm')">Comisiones</button>
           </div>
         </div>
         <canvas id="equityChart" height="70"></canvas>
@@ -6021,11 +6025,14 @@ function updateHeader(){
 // ════════════════════════════════════════════════════════════
 let eqChart,donutChart,btEqChart;
 let calOffset=0;
-let eqMode='money'; // 'money' | 'rr'
+let eqMode='money'; // 'money' | 'rr' | 'pips' | 'dd' | 'pct' | 'comm'
+const EQ_MODES=['money','rr','pips','dd','pct','comm'];
 function setEqMode(mode){
   eqMode=mode;
-  document.getElementById('eqModeMoneyBtn').className='btn sm '+(mode==='money'?'primary':'ghost');
-  document.getElementById('eqModeRRBtn').className='btn sm '+(mode==='rr'?'primary':'ghost');
+  EQ_MODES.forEach(m=>{
+    const btn=document.getElementById('eqModeBtn-'+m);
+    if(btn) btn.className='btn sm '+(m===mode?'primary':'ghost');
+  });
   renderDashboard();
 }
 
@@ -6067,22 +6074,33 @@ function renderDashboard(){
   `;
   const sorted=[...trades].sort((a,b)=>a.date>b.date?1:-1);
   const accSize=accounts.reduce((s,a)=>s+(a.size||0),0)||10000;
-  let eq=accSize, eqR=0;
-  const eqData=[accSize], eqRData=[0], eqLabels=['Inicio'];
+  let eq=accSize, eqR=0, eqPips=0, eqComm=0, peak=accSize;
+  const eqData=[accSize], eqRData=[0], eqPipsData=[0], eqDDData=[0], eqPctData=[0], eqCommData=[0], eqLabels=['Inicio'];
   sorted.forEach(t=>{
     eq+=t.pnl; eqData.push(+eq.toFixed(2));
     eqR+=(typeof t.rr==='number'?t.rr:0); eqRData.push(+eqR.toFixed(2));
+    eqPips+=(t.pips||0); eqPipsData.push(+eqPips.toFixed(1));
+    eqComm+=(t.commission||0); eqCommData.push(+eqComm.toFixed(2));
+    peak=Math.max(peak,eq);
+    eqDDData.push(+((eq-peak)/peak*100).toFixed(2));
+    eqPctData.push(+((eq-accSize)/accSize*100).toFixed(2));
     eqLabels.push(t.date?.slice(5)||'');
   });
   if(eqChart) eqChart.destroy();
   const ctx=document.getElementById('equityChart').getContext('2d');
-  const isRR=eqMode==='rr';
-  const lineColor=isRR?'#fbbf24':'#10b981';
+  const EQ_CFG={
+    money:{data:eqData, color:'#10b981', fmt:v=>'$'+v.toFixed(0)},
+    rr:{data:eqRData, color:'#fbbf24', fmt:v=>v.toFixed(1)+'R'},
+    pips:{data:eqPipsData, color:'#38bdf8', fmt:v=>v.toFixed(0)+'p'},
+    dd:{data:eqDDData, color:'#f87171', fmt:v=>v.toFixed(1)+'%'},
+    pct:{data:eqPctData, color:'#a78bfa', fmt:v=>v.toFixed(1)+'%'},
+    comm:{data:eqCommData, color:'#fb923c', fmt:v=>'$'+v.toFixed(0)}
+  };
+  const cfg=EQ_CFG[eqMode]||EQ_CFG.money;
   const gr=ctx.createLinearGradient(0,0,0,200);
-  gr.addColorStop(0,isRR?'rgba(251,191,36,.2)':'rgba(16,185,129,.2)');
-  gr.addColorStop(1,isRR?'rgba(251,191,36,0)':'rgba(16,185,129,0)');
-  const eqPlotData=isRR?eqRData:eqData;
-  eqChart=new Chart(ctx,{type:'line',data:{labels:eqLabels,datasets:[{data:eqPlotData,borderColor:lineColor,backgroundColor:gr,borderWidth:2,pointRadius:eqPlotData.length>30?0:3,tension:.35,fill:true}]},options:chartOpts(isRR?'rr':'money')});
+  gr.addColorStop(0,cfg.color+'33');
+  gr.addColorStop(1,cfg.color+'00');
+  eqChart=new Chart(ctx,{type:'line',data:{labels:eqLabels,datasets:[{data:cfg.data,borderColor:cfg.color,backgroundColor:gr,borderWidth:2,pointRadius:cfg.data.length>30?0:3,tension:.35,fill:true}]},options:chartOpts(cfg.fmt)});
 
   // donut
   if(donutChart) donutChart.destroy();
@@ -6284,9 +6302,9 @@ function renderJZonaStats(){
   }).join('');
 }
 
-function chartOpts(mode){
-  const isRR=mode==='rr';
-  return{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7d94',font:{family:'JetBrains Mono',size:9}},grid:{color:'#1e2a3a'}},y:{ticks:{color:'#6b7d94',font:{family:'JetBrains Mono',size:9},callback:v=>isRR?v.toFixed(1)+'R':'$'+v.toFixed(0)},grid:{color:'#1e2a3a'}}}};
+function chartOpts(fmt){
+  fmt=fmt||(v=>'$'+v.toFixed(0));
+  return{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7d94',font:{family:'JetBrains Mono',size:9}},grid:{color:'#1e2a3a'}},y:{ticks:{color:'#6b7d94',font:{family:'JetBrains Mono',size:9},callback:fmt},grid:{color:'#1e2a3a'}}}};
 }
 
 // ════════════════════════════════════════════════════════════
