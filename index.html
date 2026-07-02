@@ -2728,8 +2728,14 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
     </div>
         <div class="charts-grid">
-      <div class="card chart-full" data-help="Evolución acumulada de tu capital a lo largo del tiempo, sumando el P&L de cada trade del Journal en orden cronológico." style="padding:1.2rem;">
-        <div class="section-label" style="margin-bottom:1rem;">Curva de Equity — Journal</div>
+      <div class="card chart-full" data-help="Evolución acumulada a lo largo del tiempo. En modo Dinero suma el P&L de cada trade sobre el capital inicial; en modo R:R suma el múltiplo riesgo/beneficio de cada trade, independiente del tamaño de cuenta." style="padding:1.2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="section-label">Curva de Equity — Journal</div>
+          <div style="display:flex;gap:4px;">
+            <button class="btn sm primary" id="eqModeMoneyBtn" onclick="setEqMode('money')">Dinero</button>
+            <button class="btn sm ghost" id="eqModeRRBtn" onclick="setEqMode('rr')">R:R</button>
+          </div>
+        </div>
         <canvas id="equityChart" height="70"></canvas>
       </div>
     </div>
@@ -6015,6 +6021,13 @@ function updateHeader(){
 // ════════════════════════════════════════════════════════════
 let eqChart,donutChart,btEqChart;
 let calOffset=0;
+let eqMode='money'; // 'money' | 'rr'
+function setEqMode(mode){
+  eqMode=mode;
+  document.getElementById('eqModeMoneyBtn').className='btn sm '+(mode==='money'?'primary':'ghost');
+  document.getElementById('eqModeRRBtn').className='btn sm '+(mode==='rr'?'primary':'ghost');
+  renderDashboard();
+}
 
 
 
@@ -6054,12 +6067,22 @@ function renderDashboard(){
   `;
   const sorted=[...trades].sort((a,b)=>a.date>b.date?1:-1);
   const accSize=accounts.reduce((s,a)=>s+(a.size||0),0)||10000;
-  let eq=accSize; const eqData=[accSize], eqLabels=['Inicio'];
-  sorted.forEach(t=>{eq+=t.pnl;eqData.push(+eq.toFixed(2));eqLabels.push(t.date?.slice(5)||'');});
+  let eq=accSize, eqR=0;
+  const eqData=[accSize], eqRData=[0], eqLabels=['Inicio'];
+  sorted.forEach(t=>{
+    eq+=t.pnl; eqData.push(+eq.toFixed(2));
+    eqR+=(typeof t.rr==='number'?t.rr:0); eqRData.push(+eqR.toFixed(2));
+    eqLabels.push(t.date?.slice(5)||'');
+  });
   if(eqChart) eqChart.destroy();
   const ctx=document.getElementById('equityChart').getContext('2d');
-  const gr=ctx.createLinearGradient(0,0,0,200);gr.addColorStop(0,'rgba(16,185,129,.2)');gr.addColorStop(1,'rgba(16,185,129,0)');
-  eqChart=new Chart(ctx,{type:'line',data:{labels:eqLabels,datasets:[{data:eqData,borderColor:'#10b981',backgroundColor:gr,borderWidth:2,pointRadius:eqData.length>30?0:3,tension:.35,fill:true}]},options:chartOpts()});
+  const isRR=eqMode==='rr';
+  const lineColor=isRR?'#fbbf24':'#10b981';
+  const gr=ctx.createLinearGradient(0,0,0,200);
+  gr.addColorStop(0,isRR?'rgba(251,191,36,.2)':'rgba(16,185,129,.2)');
+  gr.addColorStop(1,isRR?'rgba(251,191,36,0)':'rgba(16,185,129,0)');
+  const eqPlotData=isRR?eqRData:eqData;
+  eqChart=new Chart(ctx,{type:'line',data:{labels:eqLabels,datasets:[{data:eqPlotData,borderColor:lineColor,backgroundColor:gr,borderWidth:2,pointRadius:eqPlotData.length>30?0:3,tension:.35,fill:true}]},options:chartOpts(isRR?'rr':'money')});
 
   // donut
   if(donutChart) donutChart.destroy();
@@ -6261,8 +6284,9 @@ function renderJZonaStats(){
   }).join('');
 }
 
-function chartOpts(){
-  return{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7d94',font:{family:'JetBrains Mono',size:9}},grid:{color:'#1e2a3a'}},y:{ticks:{color:'#6b7d94',font:{family:'JetBrains Mono',size:9},callback:v=>'$'+v.toFixed(0)},grid:{color:'#1e2a3a'}}}};
+function chartOpts(mode){
+  const isRR=mode==='rr';
+  return{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7d94',font:{family:'JetBrains Mono',size:9}},grid:{color:'#1e2a3a'}},y:{ticks:{color:'#6b7d94',font:{family:'JetBrains Mono',size:9},callback:v=>isRR?v.toFixed(1)+'R':'$'+v.toFixed(0)},grid:{color:'#1e2a3a'}}}};
 }
 
 // ════════════════════════════════════════════════════════════
