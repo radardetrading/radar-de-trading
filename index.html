@@ -2728,7 +2728,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
     </div>
         <div class="charts-grid">
-      <div class="card chart-full" data-help="Evolución acumulada a lo largo del tiempo, según el modo elegido: Dinero (capital + P&L), R:R (múltiplo riesgo/beneficio de cada trade — es una racha de aciertos/errores, NO un % de cuenta: si operás varias cuentas de distinto tamaño, cada trade suma 1R por igual sin importar cuántos dólares representaba, así que un R muy negativo puede darse perfectamente sin haber roto tu regla de riesgo por trade), Pips, Drawdown (caída % desde el máximo de equity), Retorno % (P&L sobre el capital inicial, sí expresado como % real de cuenta) o Comisiones acumuladas. Usá el selector de cuenta para no mezclar cuentas de distinto tamaño en la misma curva." style="padding:1.2rem;">
+      <div class="card chart-full" data-help="Evolución acumulada a lo largo del tiempo, según el modo elegido: Dinero (capital + P&L), R:R (múltiplo riesgo/beneficio de cada trade — es una racha de aciertos/errores, NO un % de cuenta: si operás varias cuentas de distinto tamaño, cada trade suma 1R por igual sin importar cuántos dólares representaba, así que un R muy negativo puede darse perfectamente sin haber roto tu regla de riesgo por trade), Pips, Drawdown (caída % desde el máximo de equity), Retorno % (P&L sobre el capital inicial, sí expresado como % real de cuenta), Comisiones acumuladas o % Riesgo (el % de capital que arriesgaste en CADA trade puntual, no acumulado — sirve para verificar que venís respetando tu regla de riesgo por operación). Usá el selector de cuenta para no mezclar cuentas de distinto tamaño en la misma curva." style="padding:1.2rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:8px;">
           <div class="section-label">Curva de Equity — Journal</div>
           <select id="eqAccountFilter" onchange="renderDashboard()" style="font-size:10px;padding:5px 10px;height:28px;min-width:160px;">
@@ -2742,6 +2742,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <button class="btn sm ghost" id="eqModeBtn-dd" onclick="setEqMode('dd')">Drawdown</button>
           <button class="btn sm ghost" id="eqModeBtn-pct" onclick="setEqMode('pct')">Retorno %</button>
           <button class="btn sm ghost" id="eqModeBtn-comm" onclick="setEqMode('comm')">Comisiones</button>
+          <button class="btn sm ghost" id="eqModeBtn-riesgo" onclick="setEqMode('riesgo')">% Riesgo</button>
         </div>
         <canvas id="equityChart" height="70"></canvas>
       </div>
@@ -5975,6 +5976,17 @@ function calcPips(type,entry,close){return type==='LONG'?(close-entry)*10000:(en
 function calcPnl(pips,lots){return pips*10*lots;}
 function calcRR(type,entry,sl,close){const slp=type==='LONG'?(entry-sl)*10000:(sl-entry)*10000;const cp=type==='LONG'?(close-entry)*10000:(entry-close)*10000;return slp!==0?cp/slp:0;}
 function calcRisk(type,entry,sl,lots,acc){const slp=type==='LONG'?(entry-sl)*10000:(sl-entry)*10000;return (slp*10*lots)/(acc||10000);}
+// % del capital arriesgado en ESE trade puntual (no acumulado).
+// Forex guarda 'risk' como fracción del tamaño de cuenta (calcRisk); Futuros guarda 'riskUSD' en dólares,
+// así que hay que dividirlo por el tamaño de la cuenta correspondiente para obtener el mismo %.
+function tradeRiskPct(t){
+  if(t.tipo==='futuros'){
+    const a=accounts.find(a=>a.id===t.accountId);
+    const size=a?(a.initialBalance||a.size||10000):10000;
+    return size>0 ? (t.riskUSD||0)/size*100 : 0;
+  }
+  return (t.risk||0)*100;
+}
 function getResult(pnl){return pnl>0.01?'WIN':pnl<-0.01?'LOSS':'BE';}
 function phaseLabel(p){return{challenge:'Challenge',verification:'Verificación',funded:'Funded',passed:'Passed',blown:'Blown'}[p]||p;}
 function phaseBadge(p){return`<span class="badge b-${p}">${phaseLabel(p)}</span>`;}
@@ -6029,7 +6041,7 @@ function updateHeader(){
 let eqChart,donutChart,btEqChart;
 let calOffset=0;
 let eqMode='money'; // 'money' | 'rr' | 'pips' | 'dd' | 'pct' | 'comm'
-const EQ_MODES=['money','rr','pips','dd','pct','comm'];
+const EQ_MODES=['money','rr','pips','dd','pct','comm','riesgo'];
 function setEqMode(mode){
   eqMode=mode;
   EQ_MODES.forEach(m=>{
@@ -6087,7 +6099,7 @@ function renderDashboard(){
   const sorted=[...eqTrades].sort((a,b)=>a.date>b.date?1:-1);
   const accSize=eqAcc?(eqAcc.initialBalance||eqAcc.size||10000):(accounts.reduce((s,a)=>s+(a.size||0),0)||10000);
   let eq=accSize, eqR=0, eqPips=0, eqComm=0, peak=accSize;
-  const eqData=[accSize], eqRData=[0], eqPipsData=[0], eqDDData=[0], eqPctData=[0], eqCommData=[0], eqLabels=['Inicio'];
+  const eqData=[accSize], eqRData=[0], eqPipsData=[0], eqDDData=[0], eqPctData=[0], eqCommData=[0], eqRiskData=[null], eqLabels=['Inicio'];
   sorted.forEach(t=>{
     eq+=t.pnl; eqData.push(+eq.toFixed(2));
     eqR+=(typeof t.rr==='number'?t.rr:0); eqRData.push(+eqR.toFixed(2));
@@ -6096,6 +6108,7 @@ function renderDashboard(){
     peak=Math.max(peak,eq);
     eqDDData.push(+((eq-peak)/peak*100).toFixed(2));
     eqPctData.push(+((eq-accSize)/accSize*100).toFixed(2));
+    eqRiskData.push(+tradeRiskPct(t).toFixed(2));
     eqLabels.push(t.date?.slice(5)||'');
   });
   if(eqChart) eqChart.destroy();
@@ -6106,7 +6119,8 @@ function renderDashboard(){
     pips:{data:eqPipsData, color:'#38bdf8', fmt:v=>v.toFixed(0)+'p'},
     dd:{data:eqDDData, color:'#f87171', fmt:v=>v.toFixed(1)+'%'},
     pct:{data:eqPctData, color:'#a78bfa', fmt:v=>v.toFixed(1)+'%'},
-    comm:{data:eqCommData, color:'#fb923c', fmt:v=>'$'+v.toFixed(0)}
+    comm:{data:eqCommData, color:'#fb923c', fmt:v=>'$'+v.toFixed(0)},
+    riesgo:{data:eqRiskData, color:'#22d3ee', fmt:v=>v.toFixed(1)+'%'}
   };
   const cfg=EQ_CFG[eqMode]||EQ_CFG.money;
   const gr=ctx.createLinearGradient(0,0,0,200);
