@@ -5791,13 +5791,13 @@ function playRadarPing(){
   try{
     if(!radarAudioCtx) radarAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
     if(radarAudioCtx.state==='suspended') radarAudioCtx.resume();
-    const ctx = radarAudioCtx, now = ctx.currentTime, dur = 1.2;
+    const ctx = radarAudioCtx, now = ctx.currentTime, dur = 1.6;
 
-    // Eco: linea de delay con feedback filtrado, simula el eco submarino del sonar
-    const delay = ctx.createDelay(2);
-    delay.delayTime.setValueAtTime(0.34, now);
+    // Eco: linea de delay con feedback filtrado, mas pausado, simula el barrido lento de un radar
+    const delay = ctx.createDelay(3);
+    delay.delayTime.setValueAtTime(0.7, now);
     const feedback = ctx.createGain();
-    feedback.gain.setValueAtTime(0.48, now);
+    feedback.gain.setValueAtTime(0.42, now);
     const delayFilter = ctx.createBiquadFilter();
     delayFilter.type = 'lowpass';
     delayFilter.frequency.setValueAtTime(1600, now);
@@ -5825,7 +5825,7 @@ function playRadarPing(){
 
     osc.start(now); osc.stop(now+dur);
     harm.start(now); harm.stop(now+dur);
-    setTimeout(()=>{ try{ delay.disconnect(); feedback.disconnect(); delayFilter.disconnect(); masterGain.disconnect(); }catch(_){} }, 3500);
+    setTimeout(()=>{ try{ delay.disconnect(); feedback.disconnect(); delayFilter.disconnect(); masterGain.disconnect(); }catch(_){} }, 5500);
   }catch(e){}
 }
 document.querySelectorAll('#landing .lp-enter-btn, #landing .lp-cta-btn, #landing .lp-car-btn').forEach(btn=>{
