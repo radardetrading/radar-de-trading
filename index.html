@@ -1120,6 +1120,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
 .lp-section-title{text-align:center;font-size:1.9rem;font-weight:900;letter-spacing:.2px;margin:0 0 .7rem;}
 .lp-section-sub{text-align:center;color:var(--sub);font-size:.95rem;line-height:1.6;margin:0 auto 3rem;max-width:420px;}
 .lp-feat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2rem;}
+.lp-group-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;}
 .lp-feat-card{
   text-align:left;padding:1.4rem 1.2rem;
   border:1px solid rgba(99,160,255,.14);border-radius:16px;
@@ -1319,6 +1320,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   .lp-title{font-size:3rem;}
   .lp-menu{display:none;}
   .lp-feat-grid{grid-template-columns:repeat(2,1fr);}
+  .lp-group-grid{grid-template-columns:repeat(2,1fr);}
   .lp-mock-kpis{grid-template-columns:repeat(2,1fr);}
   .lp-mock-grid{grid-template-columns:1fr;}
   .lp-closer{grid-template-columns:1fr;text-align:center;}
@@ -1330,6 +1332,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   .lp-hero{padding:2rem 1.1rem 3rem;}
   .lp-title{font-size:2.4rem;}
   .lp-feat-grid{grid-template-columns:1fr;}
+  .lp-group-grid{grid-template-columns:1fr;}
   .lp-mock-kpis{grid-template-columns:1fr;}
   .lp-stats{grid-template-columns:1fr;}
   .lp-radar{max-width:300px;}
@@ -2133,7 +2136,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
     <nav class="lp-menu">
       <a href="#lp-top" class="lp-menu-link active">Inicio</a>
-      <a href="#lp-features" class="lp-menu-link">Funcionalidades</a>
+      <a href="#lp-groups" class="lp-menu-link">Funcionalidades</a>
       <a href="#lp-preview" class="lp-menu-link">Dashboard</a>
       <a href="#lp-closer" class="lp-menu-link">Filosofía</a>
       <a href="#lp-contact" class="lp-menu-link">Contacto</a>
@@ -2240,6 +2243,50 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <button class="lp-car-btn lp-car-next" onclick="lpCarMove(1)" aria-label="Siguiente">&#8594;</button>
       <div class="lp-car-dots" id="lpCfDots"></div>
       <div class="lp-cf-desc-area" id="lpCfDesc"></div>
+    </div>
+  </section>
+
+  <!-- QUÉ INCLUYE -->
+  <section class="lp-features lp-reveal" id="lp-groups">
+    <h2 class="lp-section-title">TODO LO QUE <span class="lp-accent">INCLUYE</span></h2>
+    <p class="lp-section-sub">Un solo lugar para operar, analizar y controlar tu cabeza.</p>
+    <div class="lp-group-grid">
+      <div class="lp-feat-card lp-reveal lp-rd1">
+        <span class="lp-feat-num">01</span>
+        <div class="lp-feat-ico">&#11040;</div>
+        <h3>DASHBOARD &amp; JOURNAL</h3>
+        <p>Todo tu día de un vistazo — capital, P&amp;L, win rate, calendario de trades — y el registro completo de cada operación con entrada, salida, setup y notas.</p>
+      </div>
+      <div class="lp-feat-card lp-reveal lp-rd2">
+        <span class="lp-feat-num">02</span>
+        <div class="lp-feat-ico">&#128300;</div>
+        <h3>BACKTEST &amp; REPORTE</h3>
+        <p>Practicá tu estrategia sin arriesgar capital real, cruzala con tu historial y mirá si tu edge se sostiene cuando lo llevás al challenge.</p>
+      </div>
+      <div class="lp-feat-card lp-reveal lp-rd3">
+        <span class="lp-feat-num">03</span>
+        <div class="lp-feat-ico">&#127974;</div>
+        <h3>CUENTAS &amp; PAGOS</h3>
+        <p>Gestioná todas tus prop firms, drawdown diario y máximo, pares de cuentas en paralelo, y el historial de splits cobrados.</p>
+      </div>
+      <div class="lp-feat-card lp-reveal lp-rd4">
+        <span class="lp-feat-num">04</span>
+        <div class="lp-feat-ico">&#128202;</div>
+        <h3>ESTADÍSTICAS &amp; REGLAS</h3>
+        <p>Encontrá tu edge real por zona, sesión, setup y día — y medí cuánto te cuesta en plata romper tus propias reglas.</p>
+      </div>
+      <div class="lp-feat-card lp-reveal lp-rd5">
+        <span class="lp-feat-num">05</span>
+        <div class="lp-feat-ico">&#129504;</div>
+        <h3>PSICOLOGÍA</h3>
+        <p>Diario mental, rutina ganadora y metas: la parte del trading que no se ve en un gráfico de equity.</p>
+      </div>
+      <div class="lp-feat-card lp-reveal lp-rd1">
+        <span class="lp-feat-num">06</span>
+        <div class="lp-feat-ico">&#128196;</div>
+        <h3>REPORTES</h3>
+        <p>Exportá todo a PDF o Excel, con resumen semanal y comparativas mes a mes.</p>
+      </div>
     </div>
   </section>
 
