@@ -5791,17 +5791,28 @@ function playRadarPing(){
   try{
     if(!radarAudioCtx) radarAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
     if(radarAudioCtx.state==='suspended') radarAudioCtx.resume();
-    const ctx = radarAudioCtx, now = ctx.currentTime;
-    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    const ctx = radarAudioCtx, now = ctx.currentTime, dur = 1.6;
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.0001, now);
+    masterGain.gain.exponentialRampToValueAtTime(0.3, now+0.015);
+    masterGain.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+    masterGain.connect(ctx.destination);
+
+    const osc = ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(1500, now);
-    osc.frequency.exponentialRampToValueAtTime(700, now+0.22);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.22, now+0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now+0.4);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now+0.45);
+    osc.frequency.setValueAtTime(950, now);
+    osc.connect(masterGain);
+
+    const harm = ctx.createOscillator();
+    harm.type = 'sine';
+    harm.frequency.setValueAtTime(1900, now);
+    const harmGain = ctx.createGain();
+    harmGain.gain.setValueAtTime(0.18, now);
+    harm.connect(harmGain).connect(masterGain);
+
+    osc.start(now); osc.stop(now+dur);
+    harm.start(now); harm.stop(now+dur);
   }catch(e){}
 }
 document.querySelectorAll('#landing .lp-enter-btn, #landing .lp-cta-btn, #landing .lp-car-btn').forEach(btn=>{
