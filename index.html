@@ -2728,17 +2728,20 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
     </div>
         <div class="charts-grid">
-      <div class="card chart-full" data-help="Evolución acumulada a lo largo del tiempo, según el modo elegido: Dinero (capital + P&L), R:R (múltiplo riesgo/beneficio, independiente del tamaño de cuenta), Pips, Drawdown (caída % desde el máximo de equity), Retorno % (P&L sobre el capital inicial) o Comisiones acumuladas." style="padding:1.2rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <div class="card chart-full" data-help="Evolución acumulada a lo largo del tiempo, según el modo elegido: Dinero (capital + P&L), R:R (múltiplo riesgo/beneficio de cada trade — es una racha de aciertos/errores, NO un % de cuenta: si operás varias cuentas de distinto tamaño, cada trade suma 1R por igual sin importar cuántos dólares representaba, así que un R muy negativo puede darse perfectamente sin haber roto tu regla de riesgo por trade), Pips, Drawdown (caída % desde el máximo de equity), Retorno % (P&L sobre el capital inicial, sí expresado como % real de cuenta) o Comisiones acumuladas. Usá el selector de cuenta para no mezclar cuentas de distinto tamaño en la misma curva." style="padding:1.2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:8px;">
           <div class="section-label">Curva de Equity — Journal</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            <button class="btn sm primary" id="eqModeBtn-money" onclick="setEqMode('money')">Dinero</button>
-            <button class="btn sm ghost" id="eqModeBtn-rr" onclick="setEqMode('rr')">R:R</button>
-            <button class="btn sm ghost" id="eqModeBtn-pips" onclick="setEqMode('pips')">Pips</button>
-            <button class="btn sm ghost" id="eqModeBtn-dd" onclick="setEqMode('dd')">Drawdown</button>
-            <button class="btn sm ghost" id="eqModeBtn-pct" onclick="setEqMode('pct')">Retorno %</button>
-            <button class="btn sm ghost" id="eqModeBtn-comm" onclick="setEqMode('comm')">Comisiones</button>
-          </div>
+          <select id="eqAccountFilter" onchange="renderDashboard()" style="font-size:10px;padding:5px 10px;height:28px;min-width:160px;">
+            <option value="all">Todas las cuentas</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1rem;">
+          <button class="btn sm primary" id="eqModeBtn-money" onclick="setEqMode('money')">Dinero</button>
+          <button class="btn sm ghost" id="eqModeBtn-rr" onclick="setEqMode('rr')">R:R</button>
+          <button class="btn sm ghost" id="eqModeBtn-pips" onclick="setEqMode('pips')">Pips</button>
+          <button class="btn sm ghost" id="eqModeBtn-dd" onclick="setEqMode('dd')">Drawdown</button>
+          <button class="btn sm ghost" id="eqModeBtn-pct" onclick="setEqMode('pct')">Retorno %</button>
+          <button class="btn sm ghost" id="eqModeBtn-comm" onclick="setEqMode('comm')">Comisiones</button>
         </div>
         <canvas id="equityChart" height="70"></canvas>
       </div>
@@ -6072,8 +6075,17 @@ function renderDashboard(){
     <div class="kpi-box" style="--accent:var(--green)"><div class="kpi-label">Avg WIN</div><div class="kpi-value" style="color:var(--green);font-size:16px;">${fmtUSD(avgW)}</div></div>
     <div class="kpi-box" style="--accent:var(--red)"><div class="kpi-label">Avg LOSS</div><div class="kpi-value" style="color:var(--red);font-size:16px;">${fmtUSD(avgL)}</div></div>
   `;
-  const sorted=[...trades].sort((a,b)=>a.date>b.date?1:-1);
-  const accSize=accounts.reduce((s,a)=>s+(a.size||0),0)||10000;
+  const eqAccSel=document.getElementById('eqAccountFilter');
+  if(eqAccSel){
+    const prevVal=eqAccSel.value||'all';
+    eqAccSel.innerHTML='<option value="all">Todas las cuentas</option>'+accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+    eqAccSel.value=accounts.some(a=>String(a.id)===prevVal)?prevVal:'all';
+  }
+  const eqAccId=eqAccSel?eqAccSel.value:'all';
+  const eqTrades=eqAccId==='all'?trades:trades.filter(t=>String(t.accountId)===eqAccId);
+  const eqAcc=eqAccId==='all'?null:accounts.find(a=>String(a.id)===eqAccId);
+  const sorted=[...eqTrades].sort((a,b)=>a.date>b.date?1:-1);
+  const accSize=eqAcc?(eqAcc.initialBalance||eqAcc.size||10000):(accounts.reduce((s,a)=>s+(a.size||0),0)||10000);
   let eq=accSize, eqR=0, eqPips=0, eqComm=0, peak=accSize;
   const eqData=[accSize], eqRData=[0], eqPipsData=[0], eqDDData=[0], eqPctData=[0], eqCommData=[0], eqLabels=['Inicio'];
   sorted.forEach(t=>{
