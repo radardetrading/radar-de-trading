@@ -151,10 +151,6 @@
 [data-theme="light"] .kpi-pill{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.1);}
 [data-theme="light"] .logo-mark{background:linear-gradient(135deg,#0284c7,#0369a1);}
 [data-theme="light"] .mood-btn{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.1);color:#5a6478;}
-[data-theme="light"] .sidebar-logo img,
-[data-theme="light"] .login-logo-wrap img,
-[data-theme="light"] .lp-brand-mark,
-[data-theme="light"] .lp-mock-logo{mix-blend-mode:multiply;}
 
 /* ── SLATE THEME (pastel: lavanda suave) ─────────────────────── */
 [data-theme="slate"]{
@@ -827,6 +823,13 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   filter:drop-shadow(0 0 12px rgba(251,191,36,.3));
 }
 .radar-sweep{position:relative;display:inline-block;line-height:0;}
+.radar-sweep img{position:relative;}
+.radar-sweep::before{
+  content:'';position:absolute;
+  left:28%;top:9.3%;width:40%;height:60%;
+  border-radius:50%;
+  background:#08112a;
+}
 .radar-sweep::after{
   content:'';position:absolute;pointer-events:none;
   left:28%;top:9.3%;width:40%;height:60%;
@@ -914,7 +917,23 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   box-shadow:0 1px 0 rgba(255,255,255,.04),0 8px 32px rgba(0,0,0,.3);
 }
 .lp-brand{display:flex;align-items:center;gap:.6rem;}
-.lp-brand-mark{width:64px;height:auto;mix-blend-mode:screen;filter:drop-shadow(0 0 8px rgba(251,191,36,.35));}
+.lp-brand-mark{
+  display:inline-block;position:relative;width:52px;height:52px;border-radius:50%;
+  background-color:#08112a;
+  filter:drop-shadow(0 0 8px rgba(251,191,36,.35));
+}
+.lp-brand-mark::before,.lp-mock-logo::before{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background-image:url(logo.png);background-repeat:no-repeat;
+  background-size:250% auto;background-position:46.7% 23.3%;
+  mix-blend-mode:screen;
+}
+.lp-brand-mark::after,.lp-mock-logo::after{
+  content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 0deg,rgba(255,221,140,0) 0deg,rgba(255,221,140,.9) 16deg,rgba(255,221,140,0) 46deg);
+  mix-blend-mode:screen;filter:blur(1px);
+  animation:radarSweepSpin 3.2s linear infinite;
+}
 .lp-brand-txt{font-weight:900;font-size:1.05rem;letter-spacing:1px;line-height:1;display:flex;flex-direction:column;}
 .lp-brand-sub{font-size:.52rem;letter-spacing:3px;color:var(--sub);font-weight:700;margin-top:2px;}
 .lp-menu{display:flex;gap:2rem;}
@@ -1138,7 +1157,10 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
 }
 .lp-mock-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;}
 .lp-mock-brand{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1.05rem;}
-.lp-mock-logo{width:44px;height:auto;mix-blend-mode:screen;}
+.lp-mock-logo{
+  display:inline-block;position:relative;width:36px;height:36px;border-radius:50%;
+  background-color:#08112a;
+}
 .lp-mock-date{font-size:.78rem;color:var(--sub);border:1px solid var(--border2);padding:.4rem .8rem;border-radius:8px;}
 .lp-mock-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:.8rem;margin-bottom:1rem;}
 .lp-kpi{background:rgba(16,36,80,.6);border:1px solid rgba(99,160,255,.14);border-radius:12px;padding:.9rem;display:flex;flex-direction:column;gap:.3rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.07);}
@@ -2106,7 +2128,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <!-- NAV -->
   <header class="lp-nav">
     <div class="lp-brand">
-      <span class="radar-sweep"><img class="lp-brand-mark" src="logo.png" alt="Radar De Trading"></span>
+      <span class="lp-brand-mark" role="img" aria-label="Radar De Trading"></span>
       <span class="lp-brand-txt">RADAR<span class="lp-brand-sub">DE TRADING</span></span>
     </div>
     <nav class="lp-menu">
@@ -2260,7 +2282,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div class="lp-mock">
       <div class="lp-mock-head">
         <div class="lp-mock-brand">
-          <span class="radar-sweep"><img class="lp-mock-logo" src="logo.png" alt=""></span>
+          <span class="lp-mock-logo" role="img" aria-label="Radar De Trading"></span>
           <span>Dashboard</span>
         </div>
         <div class="lp-mock-date">01 May 2024 – 31 May 2024 &#9662;</div>
