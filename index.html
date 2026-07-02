@@ -5763,6 +5763,29 @@ function volverALandingUI(){
   if(lp) lp.classList.remove('hide');
 }
 
+// ── SONIDO DE RADAR AL PASAR POR LOS BOTONES DE LA LANDING ─────
+let radarAudioCtx = null;
+function playRadarPing(){
+  try{
+    if(!radarAudioCtx) radarAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(radarAudioCtx.state==='suspended') radarAudioCtx.resume();
+    const ctx = radarAudioCtx, now = ctx.currentTime;
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1500, now);
+    osc.frequency.exponentialRampToValueAtTime(700, now+0.22);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.22, now+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now+0.4);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now+0.45);
+  }catch(e){}
+}
+document.querySelectorAll('#landing .lp-enter-btn, #landing .lp-cta-btn, #landing .lp-car-btn').forEach(btn=>{
+  btn.addEventListener('mouseenter', playRadarPing);
+});
+
 // Helpers de los botones del login
 async function handleLogin(){
   const email = document.getElementById('loginEmail').value.trim();
