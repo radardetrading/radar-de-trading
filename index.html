@@ -5791,13 +5791,25 @@ function playRadarPing(){
   try{
     if(!radarAudioCtx) radarAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
     if(radarAudioCtx.state==='suspended') radarAudioCtx.resume();
-    const ctx = radarAudioCtx, now = ctx.currentTime, dur = 1.6;
+    const ctx = radarAudioCtx, now = ctx.currentTime, dur = 1.2;
+
+    // Eco: linea de delay con feedback filtrado, simula el eco submarino del sonar
+    const delay = ctx.createDelay(2);
+    delay.delayTime.setValueAtTime(0.34, now);
+    const feedback = ctx.createGain();
+    feedback.gain.setValueAtTime(0.48, now);
+    const delayFilter = ctx.createBiquadFilter();
+    delayFilter.type = 'lowpass';
+    delayFilter.frequency.setValueAtTime(1600, now);
+    delay.connect(feedback).connect(delayFilter).connect(delay);
+    delay.connect(ctx.destination);
 
     const masterGain = ctx.createGain();
     masterGain.gain.setValueAtTime(0.0001, now);
     masterGain.gain.exponentialRampToValueAtTime(0.3, now+0.015);
     masterGain.gain.exponentialRampToValueAtTime(0.0001, now+dur);
     masterGain.connect(ctx.destination);
+    masterGain.connect(delay);
 
     const osc = ctx.createOscillator();
     osc.type = 'sine';
@@ -5813,6 +5825,7 @@ function playRadarPing(){
 
     osc.start(now); osc.stop(now+dur);
     harm.start(now); harm.stop(now+dur);
+    setTimeout(()=>{ try{ delay.disconnect(); feedback.disconnect(); delayFilter.disconnect(); masterGain.disconnect(); }catch(_){} }, 3500);
   }catch(e){}
 }
 document.querySelectorAll('#landing .lp-enter-btn, #landing .lp-cta-btn, #landing .lp-car-btn').forEach(btn=>{
