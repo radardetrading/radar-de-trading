@@ -2841,6 +2841,48 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div id="perf_setup_body"></div>
     </div>
 
+    <!-- CURVA DE EQUITY AVANZADA -->
+    <div class="card" data-help="Versión avanzada de la curva de equity del Dashboard: acá podés elegir el lapso temporal exacto (últimos N días, mes, año o un rango 'de tal día a tal otro' con el selector Personalizado) y filtrar por cuenta, además de los mismos modos (Dinero, R:R, Pips, Drawdown, Retorno %, Comisiones, % Riesgo). El punto de partida del gráfico y las estadísticas de abajo se recalculan para el período elegido, no para el historial completo." style="padding:1.2rem;margin-bottom:1.2rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:.8rem;">
+        <div class="section-label" style="margin:0;">📈 Curva de Equity Avanzada</div>
+        <select id="stEqAccountFilter" onchange="renderStEquity()" style="font-size:10px;padding:5px 10px;height:28px;min-width:160px;">
+          <option value="all">Todas las cuentas</option>
+        </select>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.7rem;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;">PERÍODO</span>
+        <div style="display:flex;gap:0;background:var(--glass2);border-radius:8px;padding:3px;flex-wrap:wrap;">
+          <button class="btn sm ghost" id="stEqPerBtn-7d" onclick="setStEqPeriod('7d')" style="font-size:10px;">7D</button>
+          <button class="btn sm ghost" id="stEqPerBtn-30d" onclick="setStEqPeriod('30d')" style="font-size:10px;">30D</button>
+          <button class="btn sm ghost" id="stEqPerBtn-90d" onclick="setStEqPeriod('90d')" style="font-size:10px;">90D</button>
+          <button class="btn sm ghost" id="stEqPerBtn-month" onclick="setStEqPeriod('month')" style="font-size:10px;">Este mes</button>
+          <button class="btn sm ghost" id="stEqPerBtn-year" onclick="setStEqPeriod('year')" style="font-size:10px;">Este año</button>
+          <button class="btn sm primary" id="stEqPerBtn-all" onclick="setStEqPeriod('all')" style="font-size:10px;">Todo</button>
+          <button class="btn sm ghost" id="stEqPerBtn-custom" onclick="setStEqPeriod('custom')" style="font-size:10px;">Personalizado</button>
+        </div>
+        <div id="stEqCustomRange" style="display:none;align-items:center;gap:6px;">
+          <input type="date" id="stEqDateFrom" onchange="renderStEquity()" style="font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--glass2);border:1px solid var(--border2);border-radius:8px;padding:4px 8px;color:var(--text);">
+          <span style="color:var(--dim);font-size:10px;">→</span>
+          <input type="date" id="stEqDateTo" onchange="renderStEquity()" style="font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--glass2);border:1px solid var(--border2);border-radius:8px;padding:4px 8px;color:var(--text);">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1rem;">
+        <button class="btn sm primary" id="stEqModeBtn-money" onclick="setStEqMode('money')">Dinero</button>
+        <button class="btn sm ghost" id="stEqModeBtn-rr" onclick="setStEqMode('rr')">R:R</button>
+        <button class="btn sm ghost" id="stEqModeBtn-pips" onclick="setStEqMode('pips')">Pips</button>
+        <button class="btn sm ghost" id="stEqModeBtn-dd" onclick="setStEqMode('dd')">Drawdown</button>
+        <button class="btn sm ghost" id="stEqModeBtn-pct" onclick="setStEqMode('pct')">Retorno %</button>
+        <button class="btn sm ghost" id="stEqModeBtn-comm" onclick="setStEqMode('comm')">Comisiones</button>
+        <button class="btn sm ghost" id="stEqModeBtn-riesgo" onclick="setStEqMode('riesgo')">% Riesgo</button>
+      </div>
+
+      <div style="position:relative;height:280px;"><canvas id="stEquityChart"></canvas></div>
+
+      <div class="kpi-grid" id="stEqStats" style="margin-top:1rem;"></div>
+    </div>
+
     <!-- CONSTRUCTOR LIBRE -->
     <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
       <div class="section-label" style="margin-bottom:.8rem;">🔧 Constructor de Análisis</div>
@@ -9979,7 +10021,128 @@ function stMiniTable(rows, cols, title){
   </div>`;
 }
 
+// ════════════════════════════════════════════════════════════
+// CURVA DE EQUITY AVANZADA (Estadísticas)
+// ════════════════════════════════════════════════════════════
+let stEqMode='money';
+let stEqPeriod='all';
+let stEqChart=null;
+const ST_EQ_MODES=['money','rr','pips','dd','pct','comm','riesgo'];
+const ST_EQ_PERIODS=['7d','30d','90d','month','year','all','custom'];
+
+function setStEqMode(mode){
+  stEqMode=mode;
+  ST_EQ_MODES.forEach(m=>{
+    const btn=document.getElementById('stEqModeBtn-'+m);
+    if(btn) btn.className='btn sm '+(m===mode?'primary':'ghost');
+  });
+  renderStEquity();
+}
+
+function setStEqPeriod(p){
+  stEqPeriod=p;
+  ST_EQ_PERIODS.forEach(k=>{
+    const btn=document.getElementById('stEqPerBtn-'+k);
+    if(btn) btn.className='btn sm '+(k===p?'primary':'ghost');
+  });
+  const customEl=document.getElementById('stEqCustomRange');
+  if(customEl) customEl.style.display = p==='custom' ? 'flex' : 'none';
+  renderStEquity();
+}
+
+// Devuelve {from,to} como strings 'YYYY-MM-DD' (o null = sin límite), comparables directo contra t.date.
+function stEqRange(){
+  const today=todayStr();
+  if(stEqPeriod==='7d'){ const d=new Date(today+'T12:00:00'); d.setDate(d.getDate()-7); return {from:d.toISOString().slice(0,10), to:null}; }
+  if(stEqPeriod==='30d'){ const d=new Date(today+'T12:00:00'); d.setDate(d.getDate()-30); return {from:d.toISOString().slice(0,10), to:null}; }
+  if(stEqPeriod==='90d'){ const d=new Date(today+'T12:00:00'); d.setDate(d.getDate()-90); return {from:d.toISOString().slice(0,10), to:null}; }
+  if(stEqPeriod==='month'){ return {from:today.slice(0,7)+'-01', to:null}; }
+  if(stEqPeriod==='year'){ return {from:today.slice(0,4)+'-01-01', to:null}; }
+  if(stEqPeriod==='custom'){
+    return {from:document.getElementById('stEqDateFrom')?.value||null, to:document.getElementById('stEqDateTo')?.value||null};
+  }
+  return {from:null, to:null};
+}
+
+function renderStEquity(){
+  const accSel=document.getElementById('stEqAccountFilter');
+  if(accSel){
+    const prevVal=accSel.value||'all';
+    accSel.innerHTML='<option value="all">Todas las cuentas</option>'+accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+    accSel.value=accounts.some(a=>String(a.id)===prevVal)?prevVal:'all';
+  }
+  const accId=accSel?accSel.value:'all';
+  const accTrades=accId==='all'?trades:trades.filter(t=>String(t.accountId)===accId);
+  const acc=accId==='all'?null:accounts.find(a=>String(a.id)===accId);
+  const accSize=acc?(acc.initialBalance||acc.size||10000):(accounts.reduce((s,a)=>s+(a.size||0),0)||10000);
+  const sortedAll=[...accTrades].filter(t=>t.date).sort((a,b)=>a.date>b.date?1:-1);
+
+  const {from,to}=stEqRange();
+  const before=sortedAll.filter(t=>from && t.date<from);
+  const windowTrades=sortedAll.filter(t=>(!from||t.date>=from)&&(!to||t.date<=to));
+  // El punto de partida (y por lo tanto el drawdown/retorno %) se recalcula al capital que tenía
+  // la cuenta justo antes del período elegido, no al capital inicial histórico.
+  const startEq=accSize+before.reduce((s,t)=>s+(t.pnl||0),0);
+
+  let eq=startEq, eqR=0, eqPips=0, eqComm=0, peak=startEq;
+  const eqData=[startEq], eqRData=[0], eqPipsData=[0], eqDDData=[0], eqPctData=[0], eqCommData=[0], eqRiskData=[null], eqLabels=['Inicio'];
+  windowTrades.forEach(t=>{
+    eq+=t.pnl||0; eqData.push(+eq.toFixed(2));
+    eqR+=(typeof t.rr==='number'?t.rr:0); eqRData.push(+eqR.toFixed(2));
+    eqPips+=(t.pips||0); eqPipsData.push(+eqPips.toFixed(1));
+    eqComm+=(t.commission||0); eqCommData.push(+eqComm.toFixed(2));
+    peak=Math.max(peak,eq);
+    eqDDData.push(+((eq-peak)/peak*100).toFixed(2));
+    eqPctData.push(+(startEq?((eq-startEq)/startEq*100):0).toFixed(2));
+    eqRiskData.push(+tradeRiskPct(t).toFixed(2));
+    eqLabels.push(t.date?.slice(5)||'');
+  });
+
+  const canvas=document.getElementById('stEquityChart');
+  if(!canvas) return;
+  if(stEqChart) stEqChart.destroy();
+  const ctx=canvas.getContext('2d');
+  const EQ_CFG={
+    money:{data:eqData, color:'#10b981', fmt:v=>'$'+v.toFixed(0)},
+    rr:{data:eqRData, color:'#fbbf24', fmt:v=>v.toFixed(1)+'R'},
+    pips:{data:eqPipsData, color:'#38bdf8', fmt:v=>v.toFixed(0)+'p'},
+    dd:{data:eqDDData, color:'#f87171', fmt:v=>v.toFixed(1)+'%'},
+    pct:{data:eqPctData, color:'#a78bfa', fmt:v=>v.toFixed(1)+'%'},
+    comm:{data:eqCommData, color:'#fb923c', fmt:v=>'$'+v.toFixed(0)},
+    riesgo:{data:eqRiskData, color:'#22d3ee', fmt:v=>v.toFixed(1)+'%'}
+  };
+  const cfg=EQ_CFG[stEqMode]||EQ_CFG.money;
+  const gr=ctx.createLinearGradient(0,0,0,260);
+  gr.addColorStop(0,cfg.color+'33');
+  gr.addColorStop(1,cfg.color+'00');
+  stEqChart=new Chart(ctx,{type:'line',data:{labels:eqLabels,datasets:[{data:cfg.data,borderColor:cfg.color,backgroundColor:gr,borderWidth:2,pointRadius:cfg.data.length>30?0:3,tension:.35,fill:true}]},options:chartOpts(cfg.fmt)});
+
+  // stats del período
+  const statsEl=document.getElementById('stEqStats');
+  if(statsEl){
+    const n=windowTrades.length;
+    const wins=windowTrades.filter(t=>t.result==='WIN').length;
+    const wr=n?wins/n*100:0;
+    const pnlPeriodo=windowTrades.reduce((s,t)=>s+(t.pnl||0),0);
+    const retornoPct=startEq?((eq-startEq)/startEq*100):0;
+    const maxDD=eqDDData.length?Math.min(...eqDDData):0;
+    const pnls=windowTrades.map(t=>t.pnl||0);
+    const mejor=pnls.length?Math.max(...pnls):0;
+    const peor=pnls.length?Math.min(...pnls):0;
+    const kpi=(label,value,color)=>`<div class="kpi-box" style="--accent:${color}"><div class="kpi-label">${label}</div><div class="kpi-value" style="color:${color};font-size:15px;">${value}</div></div>`;
+    statsEl.innerHTML = n===0
+      ? `<div style="grid-column:1/-1;color:var(--dim);font-size:12px;padding:.4rem 0;">Sin trades en el período elegido.</div>`
+      : kpi('P&L Período', fmtUSD(pnlPeriodo), pnlPeriodo>=0?'var(--green)':'var(--red)')
+      + kpi('Retorno %', (retornoPct>=0?'+':'')+retornoPct.toFixed(2)+'%', retornoPct>=0?'var(--green)':'var(--red)')
+      + kpi('Máx. Drawdown', maxDD.toFixed(2)+'%', 'var(--red)')
+      + kpi('Win Rate', wr.toFixed(1)+'%', wr>=50?'var(--green)':'var(--red)')
+      + kpi('Trades', n, 'var(--text)')
+      + kpi('Mejor / Peor Trade', fmtUSD(mejor)+' / '+fmtUSD(peor), 'var(--sub)');
+  }
+}
+
 function renderEstadisticas(){
+  renderStEquity();
   const eje     = document.getElementById('st_eje')?.value     || 'zona';
   const metrica = document.getElementById('st_metrica')?.value || 'pnl';
   const t = stFilterTrades();
@@ -15586,6 +15749,10 @@ document.addEventListener('mouseout', e=>{
 // ── DESCRIPCIONES DE KPI-BOX (modo ayuda) ──────────────────────
 const KPI_HELP = {
   'Trades':'Cantidad total de operaciones registradas en este período o cuenta.',
+  'P&L Período':'Ganancia o pérdida en dólares generada solo por los trades dentro del período elegido (no del historial completo).',
+  'Retorno %':'Variación porcentual del capital durante el período elegido, tomando como base el capital que tenías justo antes de que empiece ese período (no el capital inicial histórico).',
+  'Máx. Drawdown':'Mayor caída porcentual desde un máximo de equity hasta un mínimo posterior, dentro del período elegido.',
+  'Mejor / Peor Trade':'El trade con mayor ganancia y el trade con mayor pérdida (en dólares) dentro del período elegido.',
   'Trades con estado':'Trades que tienen un estado emocional cargado en el Diario Mental.',
   'Win Rate':'Porcentaje de trades ganadores sobre el total de trades cerrados.',
   'Profit Factor':'Ganancia bruta dividida por pérdida bruta. Mayor a 1 significa que el sistema es rentable; por debajo de 1, pierde plata.',
