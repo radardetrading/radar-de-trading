@@ -2878,6 +2878,15 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <button class="btn sm ghost" id="stEqModeBtn-riesgo" onclick="setStEqMode('riesgo')">% Riesgo</button>
       </div>
 
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.8rem;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;">TIPO DE GRÁFICO</span>
+        <div style="display:flex;gap:0;background:var(--glass2);border-radius:8px;padding:3px;">
+          <button class="btn sm primary" id="stEqTypeBtn-line" onclick="setStEqChartType('line')" style="font-size:10px;">Línea</button>
+          <button class="btn sm ghost" id="stEqTypeBtn-stepped" onclick="setStEqChartType('stepped')" style="font-size:10px;">Escalones</button>
+          <button class="btn sm ghost" id="stEqTypeBtn-bar" onclick="setStEqChartType('bar')" style="font-size:10px;">Barras</button>
+        </div>
+      </div>
+
       <div style="position:relative;height:280px;"><canvas id="stEquityChart"></canvas></div>
 
       <div class="kpi-grid" id="stEqStats" style="margin-top:1rem;"></div>
@@ -10026,9 +10035,20 @@ function stMiniTable(rows, cols, title){
 // ════════════════════════════════════════════════════════════
 let stEqMode='money';
 let stEqPeriod='all';
+let stEqChartType='line';
 let stEqChart=null;
 const ST_EQ_MODES=['money','rr','pips','dd','pct','comm','riesgo'];
 const ST_EQ_PERIODS=['7d','30d','90d','month','year','all','custom'];
+const ST_EQ_CHART_TYPES=['line','stepped','bar'];
+
+function setStEqChartType(type){
+  stEqChartType=type;
+  ST_EQ_CHART_TYPES.forEach(t=>{
+    const btn=document.getElementById('stEqTypeBtn-'+t);
+    if(btn) btn.className='btn sm '+(t===type?'primary':'ghost');
+  });
+  renderStEquity();
+}
 
 function setStEqMode(mode){
   stEqMode=mode;
@@ -10115,7 +10135,11 @@ function renderStEquity(){
   const gr=ctx.createLinearGradient(0,0,0,260);
   gr.addColorStop(0,cfg.color+'33');
   gr.addColorStop(1,cfg.color+'00');
-  stEqChart=new Chart(ctx,{type:'line',data:{labels:eqLabels,datasets:[{data:cfg.data,borderColor:cfg.color,backgroundColor:gr,borderWidth:2,pointRadius:cfg.data.length>30?0:3,tension:.35,fill:true}]},options:chartOpts(cfg.fmt)});
+  const isBar=stEqChartType==='bar';
+  const dataset=isBar
+    ? {data:cfg.data,backgroundColor:cfg.color+'99',borderColor:cfg.color,borderWidth:1,borderRadius:2,maxBarThickness:26}
+    : {data:cfg.data,borderColor:cfg.color,backgroundColor:gr,borderWidth:2,pointRadius:cfg.data.length>30?0:3,tension:stEqChartType==='stepped'?0:.35,stepped:stEqChartType==='stepped',fill:true};
+  stEqChart=new Chart(ctx,{type:isBar?'bar':'line',data:{labels:eqLabels,datasets:[dataset]},options:{...chartOpts(cfg.fmt),maintainAspectRatio:false}});
 
   // stats del período
   const statsEl=document.getElementById('stEqStats');
