@@ -2903,6 +2903,8 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             <option value="setup">Setup / Estrategia</option>
             <option value="session">Sesión</option>
             <option value="dow">Día de semana</option>
+            <option value="hora">Hora de entrada</option>
+            <option value="duracion">Duración del trade</option>
             <option value="pair">Par</option>
             <option value="type">Tipo (LONG/SHORT)</option>
             <option value="result">Resultado</option>
@@ -2960,6 +2962,17 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div class="card" style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">📅 Día de semana × Win Rate</div>
         <div id="st_dow_wr" data-help="Win rate por dia de la semana. Ves si hay dias donde consistentemente operas mejor o peor."></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.2rem;">
+      <div class="card" style="padding:1.2rem;">
+        <div class="section-label" style="margin-bottom:.8rem;">🕐 Hora de Entrada × P&L</div>
+        <div id="st_hora_pnl" data-help="P&L y win rate segun la hora de entrada del trade (campo Hora Entrada del Journal). Te ayuda a identificar en que horario del dia operas mejor, mas alla de la sesion (Londres/NY/Asia)."></div>
+      </div>
+      <div class="card" style="padding:1.2rem;">
+        <div class="section-label" style="margin-bottom:.8rem;">⏱️ Duración del Trade × Resultado</div>
+        <div id="st_duracion_pnl" data-help="Rendimiento segun cuanto duro el trade abierto (de Hora Entrada a Hora Salida). Detecta si te va mejor con trades rapidos o dejando correr la operacion."></div>
       </div>
     </div>
 
@@ -9961,6 +9974,25 @@ function stFilterTrades(){
   });
 }
 
+function stDuracionMin(hEnt,hSal){
+  if(!hEnt||!hSal) return null;
+  const [h1,m1]=hEnt.split(':').map(Number), [h2,m2]=hSal.split(':').map(Number);
+  let min=(h2*60+m2)-(h1*60+m1);
+  if(min<0) min+=24*60;
+  return min;
+}
+function stDuracionBucket(hEnt,hSal){
+  const min=stDuracionMin(hEnt,hSal);
+  if(min==null) return '(sin datos)';
+  if(min<15) return '<15 min';
+  if(min<30) return '15-30 min';
+  if(min<60) return '30-60 min';
+  if(min<120) return '1-2 h';
+  if(min<240) return '2-4 h';
+  return '>4 h';
+}
+const ST_DURACION_ORDER=['<15 min','15-30 min','30-60 min','1-2 h','2-4 h','>4 h','(sin datos)'];
+
 function stGroupBy(arr, key){
   const map={};
   arr.forEach(t=>{
@@ -9968,6 +10000,8 @@ function stGroupBy(arr, key){
              :key==='setup'?(t.setup?.trim()||'(sin setup)')
              :key==='session'?(t.session||'(sin sesión)')
              :key==='dow'?['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][new Date(t.date+'T12:00:00').getDay()]
+             :key==='hora'?(t.hEnt?t.hEnt.split(':')[0]+':00':'(sin hora)')
+             :key==='duracion'?stDuracionBucket(t.hEnt,t.hSal)
              :key==='pair'?(t.pair||'—')
              :key==='type'?(t.type||'—')
              :key==='result'?(t.result||'—')
@@ -9989,6 +10023,8 @@ function stBarTable(rows, metrica, sortBy){
   const maxVal = Math.max(...rows.map(r=>Math.abs(r[metrica])),1);
   const DOW_ORDER = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   if(rows[0]?.k && DOW_ORDER.includes(rows[0].k)) rows.sort((a,b)=>DOW_ORDER.indexOf(a.k)-DOW_ORDER.indexOf(b.k));
+  if(rows.every(r=>/^\d{2}:00$/.test(r.k)||r.k==='(sin hora)')) rows.sort((a,b)=>(a.k==='(sin hora)'?99:parseInt(a.k))-(b.k==='(sin hora)'?99:parseInt(b.k)));
+  if(rows[0]?.k && ST_DURACION_ORDER.includes(rows[0].k)) rows.sort((a,b)=>ST_DURACION_ORDER.indexOf(a.k)-ST_DURACION_ORDER.indexOf(b.k));
   return rows.map(r=>{
     const val = r[metrica];
     const pct = (Math.abs(val)/maxVal*100).toFixed(1);
@@ -10205,6 +10241,14 @@ function renderEstadisticas(){
   // ── Día de semana × Win Rate ───────────────────────────────
   const dowRows = stGroupBy(t,'dow');
   document.getElementById('st_dow_wr').innerHTML = stBarTable(dowRows,'wr');
+
+  // ── Hora de entrada × P&L ──────────────────────────────────
+  const horaRows = stGroupBy(t,'hora');
+  document.getElementById('st_hora_pnl').innerHTML = stBarTable(horaRows,'pnl');
+
+  // ── Duración del trade × Resultado ─────────────────────────
+  const durRows = stGroupBy(t,'duracion');
+  document.getElementById('st_duracion_pnl').innerHTML = stBarTable(durRows,'wr');
 
   // ── Zona + Setup cruzada ───────────────────────────────────
   const cruceEl = document.getElementById('st_cruce_zona_setup');
