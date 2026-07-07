@@ -2981,6 +2981,11 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div id="st_cruce_zona_setup"></div>
     </div>
 
+    <div class="card" data-help="Cruza el dia de la semana con la franja horaria de entrada (bloques de 3hs), para detectar combinaciones especificas (ej. martes a la manana) que por separado no se notan." style="padding:1.2rem;margin-bottom:1.2rem;">
+      <div class="section-label" style="margin-bottom:.8rem;">🗓️ Día + Hora — Heatmap</div>
+      <div id="st_cruce_dia_hora"></div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.2rem;">
       <div class="card" data-help="Relación riesgo:beneficio promedio que obtenés con cada setup, para ver cuáles te rinden más por unidad de riesgo." style="padding:1.2rem;">
         <div class="section-label" style="margin-bottom:.8rem;">📐 R:R promedio por Setup</div>
@@ -6735,6 +6740,21 @@ function saveTrade(){
   renderCuentas();
   updateHeader();
   checkReglasAlert();
+  checkHorarioAlerta(commonFields.hEnt);
+}
+
+function checkHorarioAlerta(hEnt){
+  if(!hEnt) return;
+  const bucket = hEnt.split(':')[0]+':00';
+  const conRes = trades.filter(x=>x.result==='WIN'||x.result==='LOSS');
+  const hist   = conRes.filter(x=>x.hEnt && (x.hEnt.split(':')[0]+':00')===bucket);
+  if(hist.length<5 || conRes.length<10) return;
+  const wrBucket  = hist.filter(x=>x.result==='WIN').length/hist.length*100;
+  const wrGeneral = conRes.filter(x=>x.result==='WIN').length/conRes.length*100;
+  if(wrBucket <= wrGeneral-20){
+    // delay para no pisar el toast "Trade guardado" / "Regla rota" que ya dispararon arriba
+    setTimeout(()=>toast(`⚠ A las ${bucket} tu WR histórico es ${wrBucket.toFixed(0)}% (prom. general ${wrGeneral.toFixed(0)}%, ${hist.length} trades)`,'err'), 3600);
+  }
 }
 
 function renderJournal(){
@@ -10244,7 +10264,16 @@ function renderEstadisticas(){
 
   // ── Hora de entrada × P&L ──────────────────────────────────
   const horaRows = stGroupBy(t,'hora');
-  document.getElementById('st_hora_pnl').innerHTML = stBarTable(horaRows,'pnl');
+  let horaHtml = stBarTable(horaRows,'pnl');
+  const horaConDatos = horaRows.filter(r=>r.k!=='(sin hora)');
+  if(horaConDatos.length>=3){
+    const avgN = horaConDatos.reduce((s,r)=>s+r.n,0)/horaConDatos.length;
+    const overtrading = horaConDatos.filter(r=>r.n>=5 && r.n>=avgN*1.8).sort((a,b)=>b.n-a.n);
+    if(overtrading.length){
+      horaHtml += `<div style="margin-top:8px;font-size:10px;color:var(--orange);">⚠ Posible overtrading en ${overtrading.map(r=>r.k).join(', ')}: bastante mas trades que en el resto de las franjas.</div>`;
+    }
+  }
+  document.getElementById('st_hora_pnl').innerHTML = horaHtml;
 
   // ── Duración del trade × Resultado ─────────────────────────
   const durRows = stGroupBy(t,'duracion');
@@ -10277,6 +10306,39 @@ function renderEstadisticas(){
     });
     html+='</div></div>';
     cruceEl.innerHTML=html;
+  }
+
+  // ── Día + Hora — Heatmap ────────────────────────────────────
+  const diaHoraEl = document.getElementById('st_cruce_dia_hora');
+  const DOW_FULL = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const DOW_FIXED = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const franjas = ['00-03','03-06','06-09','09-12','12-15','15-18','18-21','21-24'];
+  const franjaOf = hEnt => hEnt ? franjas[Math.floor(parseInt(hEnt.split(':')[0],10)/3)] : null;
+  const conHora = t.filter(x=>x.hEnt);
+  if(conHora.length<5){
+    diaHoraEl.innerHTML='<div style="color:var(--dim);font-size:12px;">Necesitás al menos 5 trades con hora de entrada cargada.</div>';
+  } else {
+    const franjasConDatos = franjas.filter(f=>conHora.some(x=>franjaOf(x.hEnt)===f));
+    const gridCols = `48px ${franjasConDatos.map(()=>'1fr').join(' ')}`;
+    let html=`<div style="overflow-x:auto;"><div style="display:grid;grid-template-columns:${gridCols};gap:4px;min-width:${100+franjasConDatos.length*70}px;">`;
+    html+=`<div></div>${franjasConDatos.map(f=>`<div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);text-align:center;padding:3px;">${f}</div>`).join('')}`;
+    DOW_FIXED.forEach((d,di)=>{
+      const bg=di%2===1?'background:rgba(255,255,255,.02);':'';
+      html+=`<div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--gold);padding:4px 2px;${bg}">${d}</div>`;
+      franjasConDatos.forEach(f=>{
+        const cell=conHora.filter(x=>DOW_FULL[new Date(x.date+'T12:00:00').getDay()]===d && franjaOf(x.hEnt)===f);
+        if(!cell.length){ html+=`<div style="text-align:center;padding:4px;color:var(--dim);font-size:10px;${bg}">—</div>`; return; }
+        const wr=cell.filter(x=>x.result==='WIN').length/cell.length*100;
+        const pnl=cell.reduce((a,x)=>a+(x.pnl||0),0);
+        const c=pnl>=0?'var(--green)':'var(--red)';
+        html+=`<div style="text-align:center;padding:4px;${bg}">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:${c};">${fmtUSD(pnl)}</div>
+          <div style="font-size:9px;color:var(--sub);">${wr.toFixed(0)}% · ${cell.length}t</div>
+        </div>`;
+      });
+    });
+    html+='</div></div>';
+    diaHoraEl.innerHTML=html;
   }
 
   // ── R:R promedio por Setup ─────────────────────────────────
