@@ -5791,12 +5791,6 @@ async function load(){
 }
 
 // AUTH
-async function registrarse(email, password){
-  const { data, error } = await sb.auth.signUp({ email, password });
-  if(error){ toast('Error al registrarse: '+error.message,'err'); return false; }
-  CURRENT_USER = data.user;
-  return true;
-}
 async function entrar(email, password){
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   if(error){ toast('Email o contraseña incorrectos','err'); return false; }
@@ -6033,16 +6027,6 @@ async function handleLogin(){
   const ok = await entrar(email, pass);
   if(ok){ await iniciarApp(); } else { msg.textContent='Email o contraseña incorrectos'; }
 }
-async function handleRegister(){
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPass').value;
-  const msg   = document.getElementById('loginMsg');
-  if(!email || pass.length < 6){ msg.textContent='Email válido y contraseña de 6+ caracteres'; return; }
-  msg.textContent='Creando cuenta...';
-  const ok = await registrarse(email, pass);
-  if(ok){ await iniciarApp(); } else { msg.textContent='No se pudo crear la cuenta'; }
-}
-
 // ════════════════════════════════════════════════════════════
 // UTILS
 // ════════════════════════════════════════════════════════════
