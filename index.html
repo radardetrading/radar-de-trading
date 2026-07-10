@@ -2547,6 +2547,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div class="nav-item" onclick="nav('backtest')" data-help="Backtest Challenge: practica tu estrategia sin riesgo real. Registra setups, zonas y resultados."><span class="nav-icon">🔬</span>Backtest Challenge</div>
     <div class="nav-item" onclick="nav('historico')" data-help="Backtest Historico: carga trades pasados desde Excel para analizar tu performance antes de Radar."><span class="nav-icon">📚</span>Backtest Histórico</div>
     <div class="nav-item" onclick="nav('reporte')" data-help="Reporte de Backtest: combina Historico + Backtest en equity curve con expectancy y max DD."><span class="nav-icon">📈</span>Reporte de Backtest</div>
+    <div class="nav-item" onclick="nav('challenges')" data-help="Historial de Challenges: cada vez que reseteas el Backtest Challenge, ese intento queda archivado aca con todos sus trades y su analisis completo."><span class="nav-icon">📜</span>Historial de Challenges</div>
 
     <div class="nav-section">Análisis</div>
     <div class="nav-item" onclick="nav('reglas')" data-help="Mis Reglas: define tu plan de trading. Cada vez que rompes una regla podes registrarlo y ver el impacto."><span class="nav-icon">📐</span>Mis Reglas</div>
@@ -3853,6 +3854,25 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
   </div>
 
+  <!-- ════════════════ HISTORIAL DE CHALLENGES ════════════════ -->
+  <div id="page-challenges" class="page">
+    <div class="card" style="padding:1.4rem 1.6rem;margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(56,189,248,.05));border:1px solid rgba(167,139,250,.2);">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);margin-bottom:6px;">📜 Historial de Challenges</div>
+      <div style="font-size:14px;color:var(--sub);max-width:680px;line-height:1.45;">
+        Cada vez que reseteás una cuenta del <b style="color:var(--purple);">Backtest Challenge</b> (guardando en Histórico o descartando), ese intento queda archivado acá tal cual quedó: todos sus trades, la cuenta y reglas que usaste, y si llegaste a pasar Fase 1, Fase 2, fondearte o reventar.
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="chKpis" style="margin-bottom:1.5rem;"></div>
+
+    <div class="table-wrap" data-help="Un renglón por cada vez que reseteaste el Backtest Challenge. 'Guardado' indica si esos trades además se copiaron al Backtest Histórico. Hacé clic en Ver detalle para el análisis completo con curva de equity y todos los trades del intento.">
+      <table>
+        <thead><tr><th>#</th><th>Cuenta</th><th>Período</th><th>Resultado</th><th>Trades</th><th>Win Rate</th><th>PF</th><th>Guardado</th><th></th></tr></thead>
+        <tbody id="chBody"></tbody>
+      </table>
+      <div id="chEmpty" class="empty" style="display:none"><div class="empty-icon">📜</div>Todavía no reseteaste ningún Backtest Challenge. Cuando lo hagas (💾 Guardar en Histórico o 🗑 Descartar), el intento completo queda archivado acá.</div>
+    </div>
+  </div>
 
   <!-- RUTINA GANADORA -->
   <div id="page-rutina" class="page">
@@ -5408,13 +5428,46 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
   </div>
 </div>
 
+<!-- DETALLE DE CHALLENGE ARCHIVADO -->
+<div class="overlay" id="chDetailModal">
+  <div class="modal" style="width:min(960px,96vw);">
+    <button class="modal-close" onclick="closeModal('chDetailModal')">✕</button>
+    <div class="modal-title">📜 <span id="chDetailTitle">Detalle del Challenge</span></div>
+    <div id="chDetailBody"></div>
+  </div>
+</div>
+
+<!-- EDITAR TRADE DE UN CHALLENGE ARCHIVADO -->
+<div class="overlay" id="chTradeEditModal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closeModal('chTradeEditModal')">✕</button>
+    <div class="modal-title">✎ <span>Editar Trade del Challenge</span></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Fecha</label><input type="date" id="cte_date"></div>
+      <div class="form-group"><label>Hora</label><input type="time" id="cte_hora"></div>
+      <div class="form-group"><label>Tipo</label>
+        <select id="cte_type"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
+      </div>
+      <div class="form-group"><label>Sesión</label><input type="text" id="cte_session"></div>
+      <div class="form-group"><label>Zona</label><input type="text" id="cte_zona"></div>
+      <div class="form-group"><label>Riesgo ($)</label><input type="number" step="0.01" id="cte_risk"></div>
+      <div class="form-group"><label>P&L ($)</label><input type="number" step="0.01" id="cte_pnl"></div>
+      <div class="form-group full"><label>Notas</label><textarea id="cte_notes" rows="2"></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('chTradeEditModal')">Cancelar</button>
+      <button class="btn primary" onclick="guardarTradeChallengeEditado()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 // ════════════════════════════════════════════════════════════
 // DATA
 // ════════════════════════════════════════════════════════════
-let trades=[], btTrades=[], accounts=[], pagos=[], pares=[], paresHist=[], events=[], histTrades=[];
+let trades=[], btTrades=[], accounts=[], pagos=[], pares=[], paresHist=[], events=[], histTrades=[], btChallenges=[];
 
 const FUT_INSTR_DEFAULT = [
   { id:'ES',  nombre:'E-mini S&P 500',    tickSize:0.25, tickValue:12.50, pointValue:50    },
@@ -5510,6 +5563,7 @@ function armarEstado(){
     trades, btTrades, accounts, pagos, pares, paresHist, events,
     reglas, reglasLog, pilares,
     histTrades,
+    btChallenges,
     metas,
     futInstruments,
     btCfg: NEOMAA,
@@ -5539,6 +5593,7 @@ function aplicarEstado(d){
   if(d.reglasLog)  reglasLog  = d.reglasLog;
   if(d.pilares)    pilares    = d.pilares;
   if(d.histTrades)      histTrades      = d.histTrades.map(t=>({...t, session: normalizeSession(t.session)}));
+  if(d.btChallenges)    btChallenges    = d.btChallenges;
   if(d.metas)           metas           = d.metas;
   if(d.futInstruments)  futInstruments  = d.futInstruments;
   if(d.btCfg)           NEOMAA          = d.btCfg;
@@ -5996,9 +6051,9 @@ function escHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
 // ════════════════════════════════════════════════════════════
-const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Pares',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Historial de Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas'};
-const ctaLabels={dashboard:'+ Nuevo Trade',journal:'+ Nuevo Trade',estadisticas:null,backtest:'+ Trade BT',historico:null,pares:'+ Registrar Día',calculadora:null,riesgo:null,semanal:null,reglas:'+ Nueva Regla',cuentas:'+ Nueva Cuenta',pagos:'+ Registrar Pago',diario:null,rutina:null,reportes:null,metas:'+ Nueva Meta'};
-const ctaActions={dashboard:'openTradeModal()',journal:'openTradeModal()',estadisticas:null,backtest:"openBtModal()",historico:null,pares:'openUsoModal()',calculadora:null,riesgo:null,semanal:null,reglas:'openReglaModal()',cuentas:'openAccModal()',pagos:'openPagoModal()',diario:null,rutina:null,reportes:null,metas:"openMetaModal('trading')"};
+const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Pares',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Historial de Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas',challenges:'Historial de Challenges'};
+const ctaLabels={dashboard:'+ Nuevo Trade',journal:'+ Nuevo Trade',estadisticas:null,backtest:'+ Trade BT',historico:null,pares:'+ Registrar Día',calculadora:null,riesgo:null,semanal:null,reglas:'+ Nueva Regla',cuentas:'+ Nueva Cuenta',pagos:'+ Registrar Pago',diario:null,rutina:null,reportes:null,metas:'+ Nueva Meta',challenges:null};
+const ctaActions={dashboard:'openTradeModal()',journal:'openTradeModal()',estadisticas:null,backtest:"openBtModal()",historico:null,pares:'openUsoModal()',calculadora:null,riesgo:null,semanal:null,reglas:'openReglaModal()',cuentas:'openAccModal()',pagos:'openPagoModal()',diario:null,rutina:null,reportes:null,metas:"openMetaModal('trading')",challenges:null};
 let currentPage='dashboard';
 
 function nav(name, fromPopState=false){
@@ -6015,7 +6070,7 @@ function nav(name, fromPopState=false){
   currentPage=name;
   updateSectionHelp(name);
   updateHeader();
-  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas};
+  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas,challenges:renderChallengeHistory};
   if(renders[name]) renders[name]();
   if(!fromPopState) history.pushState({page:name}, '', location.href);
 }
@@ -7356,6 +7411,7 @@ function resetBtSave(){
     const dia = parts.length>=3 ? parseInt(parts[2]) : '';
     return { id:Date.now()+Math.random(), date:d, mesAno, dia, par:'', session:t.session||'', zona:t.zona||'', type:t.type||'', result:t.result||getResult(t.pnl_direct||0), pctArr, pctGan, conf:'', tv:t.tv||'', notes:t.notes||'' };
   });
+  archivarChallenge(cuenta, true);
   histTrades = histTrades.concat(converted);
   btTrades = btTrades.filter(t=>t.account!==btAccount);
   markDirty();save();calcBacktest();
@@ -7364,6 +7420,8 @@ function resetBtSave(){
 }
 
 function resetBtOnly(){
+  const cuenta = btTrades.filter(t=>t.account===btAccount);
+  archivarChallenge(cuenta, false);
   btTrades = btTrades.filter(t=>t.account!==btAccount);
   markDirty();save();calcBacktest();
   closeModal('btResetModal');
@@ -7768,6 +7826,381 @@ function simulatePhases(tradesList, cfg){
     currentPhasePnlPct: phasePnl/size*100,  // progreso en la fase donde quedó
     equity
   };
+}
+
+// ════════════════════════════════════════════════════════════
+// HISTORIAL DE CHALLENGES — archivo de intentos cerrados
+// Corre la misma matemática que calcBacktest sobre una lista de
+// trades ya cerrada, para poder reconstruir la curva de equity y
+// las métricas de un challenge que ya fue reseteado/archivado.
+// ════════════════════════════════════════════════════════════
+function simulateChallengeRun(tradesList, cfg){
+  const size = cfg.size;
+  const sorted = [...tradesList].sort((a,b)=>{
+    const da=(a.date||''), db=(b.date||'');
+    if(da!==db) return da<db?-1:1;
+    const ha=(a.hora||''), hb=(b.hora||'');
+    if(ha!==hb) return ha<hb?-1:1;
+    return (a.id||0)-(b.id||0);
+  });
+
+  let equity=size, maxEq=size, maxDD=0;
+  let wins=0, losses=0, totalPnl=0;
+  let phase='fase1';
+  let fase1Pnl=0, fase2Pnl=0, fundedPnl=0;
+  const milestones=[];
+  const eqHist=[size], eqLabels=['Inicio'];
+  let eqSegments=[{phase, points:[{x:0,y:size}]}];
+
+  const enriched = sorted.map((t,i)=>{
+    const pnl = (t.pnl_direct!==undefined) ? t.pnl_direct : (t.pips||0);
+    const rr  = t.rr!==undefined ? t.rr : (t.pnl_direct!==undefined && t.riskUSD ? t.pnl_direct/t.riskUSD : 0);
+    const prevPhase=phase;
+    equity += pnl; totalPnl += pnl;
+    if(equity>maxEq) maxEq=equity;
+    const dd=maxEq-equity; if(dd>maxDD) maxDD=dd;
+    if(pnl>0) wins++; else if(pnl<0) losses++;
+    const xIdx=i+1;
+    eqHist.push(+equity.toFixed(2));
+    eqLabels.push(t.date?.slice(5)||`#${i+1}`);
+    eqSegments[eqSegments.length-1].points.push({x:xIdx, y:+equity.toFixed(2)});
+
+    if(phase==='fase1')  fase1Pnl+=pnl;
+    if(phase==='fase2')  fase2Pnl+=pnl;
+    if(phase==='funded') fundedPnl+=pnl;
+
+    const ddPct=dd/size*100;
+    if(phase!=='blown'){
+      const rules=cfg[phase]||cfg.fase1;
+      if(ddPct>=rules.maxDD){
+        phase='blown';
+        milestones.push({idx:i,from:prevPhase,to:'blown'});
+      } else {
+        const phasePnl=phase==='fase1'?fase1Pnl:phase==='fase2'?fase2Pnl:fundedPnl;
+        const phaseTarget=phase==='fase1'?cfg.fase1.target:phase==='fase2'?cfg.fase2.target:null;
+        if(phaseTarget && phasePnl/size*100 >= phaseTarget){
+          const next=(phase==='fase1' && (cfg.numFases||2)>1)?'fase2':'funded';
+          phase=next;
+          milestones.push({idx:i,from:prevPhase,to:next});
+          equity=size; maxEq=size; maxDD=0;
+          eqSegments.push({phase:next, points:[{x:xIdx, y:size}]});
+        }
+      }
+    }
+    return {...t, pnl, equity, phase:prevPhase, phaseAfter:phase, rr};
+  });
+
+  const n=sorted.length;
+  const wr=n?wins/n:0;
+  const winTotal=enriched.filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0);
+  const lossTotal=Math.abs(enriched.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
+  const pf=lossTotal>0?winTotal/lossTotal:(winTotal>0?999:0);
+  const tpCount=enriched.filter(t=>t.pnl>0).length;
+  const slCount=enriched.filter(t=>t.pnl<0).length;
+  const beCount=enriched.filter(t=>t.pnl===0).length;
+
+  return { sorted, enriched, finalPhase:phase, milestones, eqHist, eqLabels, eqSegments,
+    n, wins, losses, wr, pf, tpCount, slCount, beCount, maxDD, totalPnl, equity };
+}
+
+// Cierra un intento de challenge y lo guarda en btChallenges con todos sus trades intactos.
+function archivarChallenge(cuenta, guardadoEnHistorico){
+  if(!cuenta || !cuenta.length) return;
+  const cfg = NEOMAA[btAccount];
+  if(!cfg) return;
+  const run = simulateChallengeRun(cuenta, cfg);
+  btChallenges.push({
+    id: Date.now()+Math.random(),
+    account: btAccount,
+    accountLabel: cfg.nombre || btAccount,
+    size: cfg.size,
+    cfgSnapshot: JSON.parse(JSON.stringify(cfg)),
+    startDate: run.sorted[0]?.date || '',
+    endDate: run.sorted[run.sorted.length-1]?.date || '',
+    closedAt: new Date().toISOString(),
+    resultado: run.finalPhase, // fase1 | fase2 | funded | blown
+    guardadoEnHistorico: !!guardadoEnHistorico,
+    trades: run.sorted,
+    nota: ''
+  });
+}
+
+// Recalcula fechas y resultado de un challenge archivado después de editar/borrar alguno de sus trades.
+function refreshChallengeRecord(c){
+  const run = simulateChallengeRun(c.trades, c.cfgSnapshot);
+  c.trades = run.sorted;
+  c.startDate = run.sorted[0]?.date || '';
+  c.endDate = run.sorted[run.sorted.length-1]?.date || '';
+  c.resultado = run.finalPhase;
+}
+
+function chResultLabel(r){ return {fase1:'Fase 1', fase2:'Fase 2', funded:'Funded', blown:'Blown'}[r] || r; }
+function chResultBadgeClass(r){ return {fase1:'b-challenge', fase2:'b-verification', funded:'b-funded', blown:'b-blown'}[r] || 'b-be'; }
+function chAccountLabel(acc){
+  const cfg = NEOMAA[acc];
+  return cfg ? `${cfg.nombre||acc} ${fmtUSD(cfg.size).replace('.00','')}` : acc;
+}
+
+function renderChallengeHistory(){
+  const kpisEl  = document.getElementById('chKpis');
+  const bodyEl  = document.getElementById('chBody');
+  const emptyEl = document.getElementById('chEmpty');
+  const tableEl = document.querySelector('#page-challenges .table-wrap table');
+  if(!bodyEl) return;
+
+  const list = [...btChallenges].sort((a,b)=> new Date(b.closedAt) - new Date(a.closedAt));
+
+  if(!list.length){
+    if(kpisEl) kpisEl.innerHTML='';
+    bodyEl.innerHTML='';
+    if(emptyEl) emptyEl.style.display='block';
+    if(tableEl) tableEl.style.display='none';
+    return;
+  }
+  if(emptyEl) emptyEl.style.display='none';
+  if(tableEl) tableEl.style.display='';
+
+  const totalTrades = list.reduce((s,c)=>s+(c.trades?.length||0),0);
+  const funded  = list.filter(c=>c.resultado==='funded').length;
+  const blown   = list.filter(c=>c.resultado==='blown').length;
+  const enCurso = list.length - funded - blown;
+  const tasaExito = list.length ? (funded/list.length*100) : 0;
+
+  if(kpisEl){
+    kpisEl.innerHTML = `
+      <div class="kpi-box" style="--accent:var(--purple)"><div class="kpi-label">Challenges Archivados</div><div class="kpi-value">${list.length}</div></div>
+      <div class="kpi-box" style="--accent:var(--green)"><div class="kpi-label">Fondeados</div><div class="kpi-value" style="color:var(--green)">${funded}</div></div>
+      <div class="kpi-box" style="--accent:var(--red)"><div class="kpi-label">Blown</div><div class="kpi-value" style="color:var(--red)">${blown}</div></div>
+      <div class="kpi-box" style="--accent:var(--cyan)"><div class="kpi-label">Reiniciados a Mitad</div><div class="kpi-value" style="color:var(--cyan)">${enCurso}</div></div>
+      <div class="kpi-box" style="--accent:${tasaExito>=50?'var(--green)':'var(--red)'}"><div class="kpi-label">Tasa de Éxito</div><div class="kpi-value" style="color:${tasaExito>=50?'var(--green)':'var(--red)'}">${tasaExito.toFixed(1)}%</div></div>
+      <div class="kpi-box" style="--accent:var(--gold)"><div class="kpi-label">Trades Totales</div><div class="kpi-value">${totalTrades}</div></div>
+    `;
+  }
+
+  bodyEl.innerHTML = list.map((c,i)=>{
+    const run = simulateChallengeRun(c.trades, c.cfgSnapshot);
+    const periodo = (c.startDate||'?') + ' → ' + (c.endDate||'?');
+    return `<tr>
+      <td>${list.length-i}</td>
+      <td>${chAccountLabel(c.account)}</td>
+      <td style="font-size:11px;">${periodo}</td>
+      <td><span class="badge ${chResultBadgeClass(c.resultado)}">${chResultLabel(c.resultado)}</span></td>
+      <td>${run.n}</td>
+      <td style="color:${run.wr>=.5?'var(--green)':'var(--red)'}">${(run.wr*100).toFixed(1)}%</td>
+      <td style="color:${run.pf>=1?'var(--green)':'var(--red)'}">${run.pf.toFixed(2)}</td>
+      <td>${c.guardadoEnHistorico ? '✅' : '—'}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn sm ghost" onclick="verChallengeDetalle('${c.id}')" data-help="Abre el análisis completo de este intento: curva de equity por fase, KPIs, desglose por sesión/zona y todos sus trades." style="font-size:10px;">Ver detalle</button>
+        <button class="btn sm danger" onclick="eliminarChallengeArchivado('${c.id}')" data-help="Elimina este registro archivado. No afecta los trades que ya se guardaron en Backtest Histórico." style="font-size:10px;">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+let chDetailChart = null;
+function verChallengeDetalle(id){
+  const c = btChallenges.find(x=>x.id===Number(id));
+  if(!c) return;
+  const cfg = c.cfgSnapshot;
+  const run = simulateChallengeRun(c.trades, cfg);
+
+  document.getElementById('chDetailTitle').textContent = `${chAccountLabel(c.account)} — ${(c.startDate||'?')} a ${(c.endDate||'?')}`;
+
+  const avgWin  = run.tpCount ? (run.enriched.filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0) / run.tpCount) : 0;
+  const avgLoss = run.slCount ? (Math.abs(run.enriched.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0)) / run.slCount) : 0;
+  const expectancyUsd = run.n ? run.totalPnl/run.n : 0;
+  const expectancyR   = run.enriched.length ? run.enriched.reduce((s,t)=>s+(t.rr||0),0)/run.enriched.length : 0;
+
+  const bySession = {}, byZona = {};
+  run.enriched.forEach(t=>{
+    const ks = t.session || '—';
+    if(!bySession[ks]) bySession[ks]={n:0,pnl:0,wins:0};
+    bySession[ks].n++; bySession[ks].pnl+=t.pnl; if(t.pnl>0) bySession[ks].wins++;
+    const kz = t.zona || '(sin zona)';
+    if(!byZona[kz]) byZona[kz]={n:0,pnl:0,wins:0};
+    byZona[kz].n++; byZona[kz].pnl+=t.pnl; if(t.pnl>0) byZona[kz].wins++;
+  });
+  const breakdownRow = (k,v) => `<tr><td>${k}</td><td>${v.n}</td><td style="color:${(v.wins/v.n)>=.5?'var(--green)':'var(--red)'}">${(v.wins/v.n*100).toFixed(0)}%</td><td style="color:${v.pnl>=0?'var(--green)':'var(--red)'}">${fmtUSD(v.pnl)}</td></tr>`;
+
+  document.getElementById('chDetailBody').innerHTML = `
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:1rem;flex-wrap:wrap;">
+      <span class="badge ${chResultBadgeClass(c.resultado)}" style="font-size:11px;">${chResultLabel(c.resultado)}</span>
+      <span style="font-size:11px;color:var(--sub);">Cerrado el ${new Date(c.closedAt).toLocaleString('es-AR')}</span>
+      <span style="font-size:11px;color:var(--sub);">· ${c.guardadoEnHistorico?'Guardado en Backtest Histórico':'Descartado (no está en el Histórico)'}</span>
+    </div>
+    <div class="card" data-help="Nota libre sobre este intento: qué hiciste distinto, qué aprendiste, por qué reventó o cómo lo pasaste. Es independiente de las notas de cada trade." style="padding:1rem 1.1rem;margin-bottom:1.2rem;">
+      <div class="section-label" style="margin-bottom:.6rem;">📝 Nota del Intento</div>
+      <textarea id="chNotaIntento" rows="2" placeholder="Escribí algo sobre este challenge (opcional)..." style="width:100%;resize:vertical;">${c.nota||''}</textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:.5rem;">
+        <button class="btn sm primary" onclick="guardarNotaChallenge('${c.id}')">💾 Guardar nota</button>
+      </div>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:1.2rem;">
+      <div class="kpi-box" style="--accent:var(--gold)"><div class="kpi-label">Trades</div><div class="kpi-value">${run.n}</div><div class="kpi-sub">${run.wins}W · ${run.losses}L</div></div>
+      <div class="kpi-box" style="--accent:${run.wr>=.5?'var(--green)':'var(--red)'}"><div class="kpi-label">Win Rate</div><div class="kpi-value" style="color:${run.wr>=.5?'var(--green)':'var(--red)'}">${(run.wr*100).toFixed(1)}%</div></div>
+      <div class="kpi-box" style="--accent:${run.pf>=1?'var(--green)':'var(--red)'}"><div class="kpi-label">Profit Factor</div><div class="kpi-value" style="color:${run.pf>=1?'var(--green)':'var(--red)'}">${run.pf.toFixed(2)}</div></div>
+      <div class="kpi-box" style="--accent:${run.totalPnl>=0?'var(--green)':'var(--red)'}"><div class="kpi-label">P&L Total</div><div class="kpi-value" style="color:${run.totalPnl>=0?'var(--green)':'var(--red)'}">${fmtUSD(run.totalPnl)}</div></div>
+      <div class="kpi-box" style="--accent:var(--red)"><div class="kpi-label">Max Drawdown</div><div class="kpi-value">${fmtUSD(run.maxDD)}</div><div class="kpi-sub">${(cfg.size?run.maxDD/cfg.size*100:0).toFixed(2)}%</div></div>
+      <div class="kpi-box" style="--accent:var(--cyan)"><div class="kpi-label">Expectancy</div><div class="kpi-value" style="color:var(--cyan)">${fmtUSD(expectancyUsd)}</div><div class="kpi-sub">${expectancyR.toFixed(2)}R prom.</div></div>
+      <div class="kpi-box" style="--accent:var(--green)"><div class="kpi-label">Avg Win</div><div class="kpi-value" style="color:var(--green)">${fmtUSD(avgWin)}</div></div>
+      <div class="kpi-box" style="--accent:var(--red)"><div class="kpi-label">Avg Loss</div><div class="kpi-value" style="color:var(--red)">${fmtUSD(avgLoss)}</div></div>
+    </div>
+    <div class="card" data-help="Evolución del capital durante este intento, coloreada por fase (Fase 1, Fase 2, Funded). Si terminó en Blown, el último tramo se pinta en rojo." style="padding:1.2rem;margin-bottom:1.2rem;">
+      <div class="section-label" style="margin-bottom:.8rem;">📈 Curva de Equity</div>
+      <canvas id="chDetailChart" height="90"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.2rem;">
+      <div class="card" data-help="Cantidad de trades, win rate y P&L de este intento agrupados por sesión, para ver en qué horario rendiste mejor dentro de este challenge puntual." style="padding:1.1rem;">
+        <div class="section-label" style="margin-bottom:.7rem;">Por Sesión</div>
+        <table><thead><tr><th>Sesión</th><th>N</th><th>WR</th><th>P&L</th></tr></thead>
+        <tbody>${Object.entries(bySession).map(([k,v])=>breakdownRow(k,v)).join('')}</tbody></table>
+      </div>
+      <div class="card" data-help="Cantidad de trades, win rate y P&L de este intento agrupados por zona de reacción, para ver qué zonas te funcionaron mejor dentro de este challenge puntual." style="padding:1.1rem;">
+        <div class="section-label" style="margin-bottom:.7rem;">Por Zona</div>
+        <table><thead><tr><th>Zona</th><th>N</th><th>WR</th><th>P&L</th></tr></thead>
+        <tbody>${Object.entries(byZona).map(([k,v])=>breakdownRow(k,v)).join('')}</tbody></table>
+      </div>
+    </div>
+    <div class="table-wrap" data-help="Todos los trades que formaron parte de este intento, en el mismo orden en que se cargaron durante la simulación. Podés editar o borrar un trade puntual si lo cargaste mal — el resultado del challenge se recalcula solo.">
+      <div class="section-label" style="margin:0 0 .7rem;">Trades del Intento</div>
+      <table><thead><tr><th>Fecha</th><th>Hora</th><th>Sesión</th><th>Zona</th><th>Tipo</th><th>Riesgo</th><th>P&L</th><th>R</th><th>Notas</th><th></th></tr></thead>
+      <tbody>${run.enriched.map(t=>`<tr>
+        <td>${t.date||''}</td><td>${t.hora||''}</td><td>${t.session||''}</td><td>${t.zona||''}</td>
+        <td>${t.type||''}</td><td>${fmtUSD(t.riskUSD||0)}</td>
+        <td style="color:${t.pnl>=0?'var(--green)':'var(--red)'}">${fmtUSD(t.pnl)}</td>
+        <td>${(t.rr||0).toFixed(2)}R</td><td style="font-size:11px;color:var(--sub);">${t.notes||''}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn sm ghost" onclick="abrirEditarTradeChallenge('${c.id}','${t.id}')" style="font-size:10px;padding:3px 7px;">✎</button>
+          <button class="btn sm danger" onclick="eliminarTradeDeChallenge('${c.id}','${t.id}')" style="font-size:10px;padding:3px 7px;">🗑</button>
+        </td>
+      </tr>`).join('')}</tbody></table>
+    </div>
+  `;
+
+  openModal('chDetailModal');
+
+  if(chDetailChart){ chDetailChart.destroy(); chDetailChart=null; }
+  const ctx = document.getElementById('chDetailChart').getContext('2d');
+  const PHASE_COLOR={fase1:'#a78bfa', fase2:'#38bdf8', funded:'#34d399', blown:'#f87171'};
+  const PHASE_NAME ={fase1:'Fase 1', fase2:'Fase 2', funded:'Funded', blown:'Blown'};
+  const nPts = run.eqHist.length;
+  const phaseDatasets = run.eqSegments.map((seg,si)=>{
+    const isLast = si===run.eqSegments.length-1;
+    const col = (isLast && run.finalPhase==='blown') ? PHASE_COLOR.blown : PHASE_COLOR[seg.phase];
+    const grad = ctx.createLinearGradient(0,0,0,200);
+    grad.addColorStop(0, col+'33');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    return {
+      label: PHASE_NAME[seg.phase] + ((isLast && run.finalPhase==='blown')?' 💥':''),
+      data: seg.points, borderColor: col, backgroundColor: grad, borderWidth:2.5,
+      pointRadius: nPts>30?0:3, pointBackgroundColor: col, tension:.35, fill:true
+    };
+  });
+  chDetailChart = new Chart(ctx, {
+    type:'line',
+    data:{ datasets: phaseDatasets },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{labels:{color:'#7a8fab',font:{family:'JetBrains Mono',size:9},boxWidth:20}},
+        tooltip:{ callbacks:{ title:(items)=>{ const x=items[0].parsed.x; return x===0?'Inicio':(run.eqLabels[x]||`#${x}`); } } }
+      },
+      scales:{
+        x:{ type:'linear', min:0, max:nPts-1,
+          ticks:{ color:'#7a8fab', font:{family:'JetBrains Mono',size:9}, stepSize:1,
+            callback:(v)=> (Number.isInteger(v) && run.eqLabels[v]!==undefined) ? (v===0?'Inicio':run.eqLabels[v]) : '' },
+          grid:{color:'rgba(255,255,255,.04)'} },
+        y:{ ticks:{ color:'#7a8fab', font:{family:'JetBrains Mono',size:9}, callback:v=>'$'+v.toFixed(0) }, grid:{color:'rgba(255,255,255,.04)'} }
+      }
+    }
+  });
+}
+
+function eliminarChallengeArchivado(id){
+  const c = btChallenges.find(x=>x.id===Number(id));
+  if(!c) return;
+  if(!confirm(`¿Eliminar este registro archivado (${c.trades.length} trades)? Esta acción no se puede deshacer. Si esos trades ya están guardados en Backtest Histórico, no se ven afectados.`)) return;
+  btChallenges = btChallenges.filter(x=>x.id!==Number(id));
+  markDirty();save();renderChallengeHistory();
+  toast('Registro eliminado del historial de challenges','ok');
+}
+
+function guardarNotaChallenge(id){
+  const c = btChallenges.find(x=>x.id===Number(id));
+  if(!c) return;
+  c.nota = document.getElementById('chNotaIntento')?.value || '';
+  markDirty();save();
+  toast('Nota guardada','ok');
+}
+
+let chEditCtx = null; // {challengeId, tradeId} del trade que se está editando
+function abrirEditarTradeChallenge(challengeId, tradeId){
+  const c = btChallenges.find(x=>x.id===Number(challengeId));
+  if(!c) return;
+  const t = c.trades.find(x=>x.id===Number(tradeId));
+  if(!t) return;
+  chEditCtx = { challengeId: c.id, tradeId: t.id };
+  document.getElementById('cte_date').value    = t.date||'';
+  document.getElementById('cte_hora').value    = t.hora||'';
+  document.getElementById('cte_type').value    = t.type||'LONG';
+  document.getElementById('cte_session').value = t.session||'';
+  document.getElementById('cte_zona').value    = t.zona||'';
+  document.getElementById('cte_risk').value    = t.riskUSD||0;
+  document.getElementById('cte_pnl').value     = t.pnl_direct!==undefined ? t.pnl_direct : (t.pips||0);
+  document.getElementById('cte_notes').value   = t.notes||'';
+  openModal('chTradeEditModal');
+}
+
+function guardarTradeChallengeEditado(){
+  if(!chEditCtx) return;
+  const c = btChallenges.find(x=>x.id===chEditCtx.challengeId);
+  if(!c){ closeModal('chTradeEditModal'); chEditCtx=null; return; }
+  const t = c.trades.find(x=>x.id===chEditCtx.tradeId);
+  if(!t){ closeModal('chTradeEditModal'); chEditCtx=null; return; }
+
+  const riskUSD   = parseFloat(document.getElementById('cte_risk').value) || 0;
+  const pnlDirect = parseFloat(document.getElementById('cte_pnl').value);
+  if(isNaN(pnlDirect)){ toast('Completá el P&L en $','err'); return; }
+
+  t.date      = document.getElementById('cte_date').value;
+  t.hora      = document.getElementById('cte_hora').value;
+  t.type      = document.getElementById('cte_type').value;
+  t.session   = document.getElementById('cte_session').value;
+  t.zona      = document.getElementById('cte_zona').value;
+  t.riskUSD   = riskUSD;
+  t.pnl_direct= pnlDirect;
+  t.pips      = pnlDirect;
+  t.rr        = riskUSD>0 ? pnlDirect/riskUSD : 0;
+  t.notes     = document.getElementById('cte_notes').value;
+
+  refreshChallengeRecord(c);
+  markDirty();save();
+  closeModal('chTradeEditModal');
+  const challengeId = c.id;
+  chEditCtx = null;
+  toast('Trade actualizado','ok');
+  verChallengeDetalle(String(challengeId));
+  renderChallengeHistory();
+}
+
+function eliminarTradeDeChallenge(challengeId, tradeId){
+  const c = btChallenges.find(x=>x.id===Number(challengeId));
+  if(!c) return;
+  if(!confirm('¿Eliminar este trade del challenge archivado?')) return;
+  c.trades = c.trades.filter(x=>x.id!==Number(tradeId));
+  if(!c.trades.length){
+    btChallenges = btChallenges.filter(x=>x.id!==c.id);
+    markDirty();save();
+    closeModal('chDetailModal');
+    renderChallengeHistory();
+    toast('Challenge eliminado (no quedaban trades)','ok');
+    return;
+  }
+  refreshChallengeRecord(c);
+  markDirty();save();
+  verChallengeDetalle(String(c.id));
+  renderChallengeHistory();
+  toast('Trade eliminado','ok');
 }
 
 function renderSessionAnalysis(){
@@ -9009,6 +9442,7 @@ function exportData(){
     trades, btTrades, accounts, pagos, pares, paresHist, events,
     reglas, reglasLog, pilares,
     histTrades,                                  // Backtest Histórico
+    btChallenges,                                // Historial de Challenges archivados
     btCfg: NEOMAA,                               // Config Neomaa del backtest
     btRules: btQuickRules,                       // Reglas rápidas del backtest
     btZonas,                                     // Zonas del backtest
@@ -9054,7 +9488,7 @@ function importData(e){
     // ── Backup de seguridad de lo que había ANTES de importar ──
     try{
       const prev={trades,btTrades,accounts,pagos,pares,paresHist,events,reglas,reglasLog,pilares,
-        histTrades,btCfg:NEOMAA,btRules:btQuickRules,btZonas,fondCfg:loadFondeoCfg(),
+        histTrades,btChallenges,btCfg:NEOMAA,btRules:btQuickRules,btZonas,fondCfg:loadFondeoCfg(),
         rutHabitos,rutDays,theme:(localStorage.getItem('rdm_theme')||'dark'),
         savedAt:new Date().toISOString()};
       localStorage.setItem('hq_preimport_backup', JSON.stringify(prev));
@@ -9069,6 +9503,7 @@ function importData(e){
       if(d.reglasLog){ reglasLog=d.reglasLog; saveReglasLog(); }
       if(d.pilares){ pilares=d.pilares; savePilares(); }
       if(d.histTrades) histTrades=d.histTrades.map(t=>({...t, session: normalizeSession(t.session)}));       // Backtest Histórico
+      if(d.btChallenges) btChallenges=d.btChallenges;                                                        // Historial de Challenges
       if(d.btCfg){ NEOMAA=d.btCfg; saveBtCfgToStorage(); }
       if(d.btRules){ btQuickRules=d.btRules; saveBtRules(); }
       if(d.btZonas){ btZonas=d.btZonas; saveBtZonas(); }
@@ -9180,6 +9615,7 @@ function undoImportConfirmar(){
     if(prev.reglasLog){ reglasLog=prev.reglasLog; saveReglasLog(); }
     if(prev.pilares){ pilares=prev.pilares; savePilares(); }
     if(prev.histTrades) histTrades=prev.histTrades.map(t=>({...t, session: normalizeSession(t.session)}));
+    if(prev.btChallenges) btChallenges=prev.btChallenges;
     if(prev.btCfg){ NEOMAA=prev.btCfg; saveBtCfgToStorage(); }
     if(prev.btRules){ btQuickRules=prev.btRules; saveBtRules(); }
     if(prev.btZonas){ btZonas=prev.btZonas; saveBtZonas(); }
@@ -15795,6 +16231,10 @@ const SECTION_HELP = {
     t:'📈 Reporte de Backtest',
     b:'Combiná <b>Backtest Histórico + Backtest Challenge</b> en un análisis unificado. Muestra la <b>equity curve</b> completa, expectancy, profit factor, max drawdown, win rate y rachas máximas.<br><br>Filtrá por período, sesión o setup para ver qué condiciones funcionan mejor en tu historial.<br><br>Usá este reporte para decidir si un setup tiene <b>edge estadístico real</b> antes de llevarlo al journal con dinero real.'
   },
+  challenges:{
+    t:'📜 Historial de Challenges',
+    b:'Cada vez que reseteás una cuenta del <b>Backtest Challenge</b> —guardando en Histórico o descartando— ese intento queda <b>archivado acá tal cual quedó</b>: todos sus trades originales, la cuenta y reglas que usaste, y si llegaste a pasar Fase 1, Fase 2, fondearte o reventar.<br><br>Los trades convertidos siguen yendo al <b>Backtest Histórico</b> como siempre (no se pierden), pero acá tenés el intento completo para analizarlo aparte: curva de equity por fase, win rate, profit factor, expectancy, drawdown y el desglose por sesión y zona.<br><br>Usalo para ver <b>cuántos challenges pasaste realmente</b> y entender qué diferenció a los que fondeaste de los que reventaste.'
+  },
   reglas:{
     t:'📐 Mis Reglas',
     b:'Definí tu <b>plan de trading</b> en reglas concretas (ej: "No opero contra la tendencia mayor", "Máximo 2 trades por día"). Cada vez que rompés una regla podés registrarlo desde el journal.<br><br>La sección muestra cuántas veces violaste cada regla y el <b>impacto en P&L</b> de esas violaciones, ayudándote a ver qué errores te cuestan más dinero.<br><br>Revisala regularmente para detectar patrones de comportamiento y trabajar en la disciplina.'
@@ -15941,6 +16381,13 @@ const KPI_HELP = {
   '✅ Logradas':'Metas que ya alcanzaste.',
   '🔄 En Progreso':'Metas que estás persiguiendo actualmente.',
   '⏳ Pendientes':'Metas que todavía no empezaste a trabajar.',
+  'Challenges Archivados':'Cantidad total de intentos de Backtest Challenge que reseteaste y quedaron guardados en el Historial de Challenges.',
+  'Fondeados':'Intentos de Backtest Challenge donde llegaste a completar todas las fases y te fondeaste.',
+  'Reiniciados a Mitad':'Intentos que reseteaste sin llegar a fondearte ni a reventar (quedaron en Fase 1 o Fase 2 en el momento del reset).',
+  'Tasa de Éxito':'Porcentaje de challenges archivados que terminaron fondeados sobre el total de intentos.',
+  'Trades Totales':'Suma de todos los trades cargados en todos los challenges archivados.',
+  'Avg Win':'Ganancia promedio de los trades cerrados en positivo.',
+  'Avg Loss':'Pérdida promedio de los trades cerrados en negativo.',
 };
 function applyKpiHelp(root){
   (root||document).querySelectorAll('.kpi-box:not([data-help])').forEach(box=>{
