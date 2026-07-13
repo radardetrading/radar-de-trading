@@ -2567,9 +2567,6 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div class="nav-item" onclick="nav('estadisticas')" data-help="Estadisticas: analiza tu rendimiento por zona, setup, sesion, instrumento y dia de semana."><span class="nav-icon">📊</span>Estadísticas</div>
     <div class="nav-item" onclick="nav('semanal')" data-help="Resumen Semanal: vista consolidada de la semana con trades, P&L, win rate y evolucion del capital."><span class="nav-icon">📅</span>Resumen Semanal</div>
     <div class="nav-item" onclick="nav('reportes')" data-help="Reportes: exporta todo tu historial a PDF estilizado o Excel multi-hoja con un solo clic."><span class="nav-icon">📑</span>Reportes PDF</div>
-
-    <div class="nav-section">Cuenta</div>
-    <div class="nav-item" onclick="nav('perfil')" data-help="Mi Perfil: tus datos personales y de trading (nombre, foto, broker, prop firm, capital inicial)."><span class="nav-icon">👤</span>Mi Perfil</div>
   </nav>
   <div class="sidebar-bottom">
     <div style="margin-bottom:.7rem;">
@@ -2648,6 +2645,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <button onclick="setIdleLimit(0)"  class="idle-opt" data-idle="0"  style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;border-radius:var(--r);text-align:left;transition:background .15s;"><span style="flex:1;">Nunca (desactivado)</span><span id="idleCheck-0"  style="color:var(--cyan);font-weight:700;"></span></button>
         </div>
       </div>
+      <button id="perfilBtn" onclick="nav('perfil')" data-help="Mi Perfil: tus datos personales y de trading (nombre, foto, broker, prop firm, capital inicial)." title="Mi Perfil" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;">👤</button>
       <button id="helpBtn" onclick="toggleHelpMode()" title="Modo ayuda" style="font-size:14px;font-weight:800;padding:5px 11px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;font-family:'JetBrains Mono',monospace;color:var(--sub);">?</button>
       <button id="logoutBtn" onclick="confirmarSalir()" data-help="Cerrar sesion y volver a la pantalla de login." title="Cerrar sesión" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.08);color:var(--red);cursor:pointer;transition:all .2s;">⏻</button>
       <button class="btn primary" id="topbarCta" onclick="openMainCta()" data-help="Abri el formulario para registrar un nuevo trade real en el journal.">+ Nuevo Trade</button>
