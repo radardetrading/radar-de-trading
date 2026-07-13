@@ -2567,6 +2567,9 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div class="nav-item" onclick="nav('estadisticas')" data-help="Estadisticas: analiza tu rendimiento por zona, setup, sesion, instrumento y dia de semana."><span class="nav-icon">📊</span>Estadísticas</div>
     <div class="nav-item" onclick="nav('semanal')" data-help="Resumen Semanal: vista consolidada de la semana con trades, P&L, win rate y evolucion del capital."><span class="nav-icon">📅</span>Resumen Semanal</div>
     <div class="nav-item" onclick="nav('reportes')" data-help="Reportes: exporta todo tu historial a PDF estilizado o Excel multi-hoja con un solo clic."><span class="nav-icon">📑</span>Reportes PDF</div>
+
+    <div class="nav-section">Cuenta</div>
+    <div class="nav-item" onclick="nav('perfil')" data-help="Mi Perfil: tus datos personales y de trading (nombre, foto, broker, prop firm, capital inicial)."><span class="nav-icon">👤</span>Mi Perfil</div>
   </nav>
   <div class="sidebar-bottom">
     <div style="margin-bottom:.7rem;">
@@ -4357,6 +4360,59 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
   </div>
 </div><!-- end page-metas -->
 
+<div id="page-perfil" class="page">
+  <div style="max-width:600px;margin:0 auto;">
+    <div class="card" style="padding:1.5rem;margin-bottom:1.2rem;">
+      <div class="section-label" style="margin-bottom:1.2rem;">👤 Datos de la Cuenta</div>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <img id="perfilAvatarView" src="" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid var(--border2);display:none;">
+        <div id="perfilAvatarPlaceholder" style="width:64px;height:64px;border-radius:50%;background:var(--glass);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--sub);">👤</div>
+        <div>
+          <div style="font-size:13px;color:var(--text);"><b>Email:</b> <span id="perfilEmailView">—</span></div>
+          <div style="font-size:12px;color:var(--sub);margin-top:.3rem;"><b>Alta:</b> <span id="perfilFechaView">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:1.5rem;">
+      <div class="section-label" style="margin-bottom:1.2rem;">✏️ Editar Perfil</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="perfil_nombre" placeholder="Tu nombre">
+        </div>
+        <div class="form-group">
+          <label>Apodo</label>
+          <input type="text" id="perfil_apodo" placeholder="Cómo te gusta que te digan">
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="tel" id="perfil_telefono" placeholder="+54 9 ...">
+        </div>
+        <div class="form-group">
+          <label>Foto de perfil</label>
+          <input type="file" id="perfil_avatar_file" accept="image/*" onchange="onAvatarSelected(event)">
+        </div>
+        <div class="form-group">
+          <label>Broker</label>
+          <input type="text" id="perfil_broker" placeholder="Ej: IC Markets">
+        </div>
+        <div class="form-group">
+          <label>Prop Firm</label>
+          <input type="text" id="perfil_propfirm" placeholder="Ej: FTMO">
+        </div>
+        <div class="form-group">
+          <label>Capital Inicial ($)</label>
+          <input type="number" id="perfil_capital" step="0.01" min="0" placeholder="10000">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" onclick="guardarPerfil()">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div><!-- end page-perfil -->
+
 </div><!-- end .main -->
 
 <!-- ═══ MODALS ═══════════════════════════════════════════ -->
@@ -5553,6 +5609,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_xOA5GbuyB4sjLFQwdPfeyA_Pxs9WOyH';  // 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let CURRENT_USER = null;   // se setea al loguear
+let perfil = {};           // datos editables del perfil (nombre, apodo, telefono, avatar, broker, propFirm, capitalInicial)
+let perfilAvatarPendiente = null; // data-URL de la foto recién elegida, hasta que se guarde
 const tabId = Math.random().toString(36).slice(2); // ID único de esta pestaña
 let lastSavedAt = null;      // savedAt del último estado que guardamos nosotros
 let lastAppliedSavedAt = null; // savedAt del estado actualmente en memoria (para rechazar estados más viejos)
@@ -5574,6 +5632,7 @@ function armarEstado(){
     rutDays,
     moodQuestions,
     theme: (localStorage.getItem('rdm_theme')||'dark'),
+    perfil,
     savedAt: new Date().toISOString()
   };
 }
@@ -5604,6 +5663,62 @@ function aplicarEstado(d){
   if(d.rutDays)        rutDays        = d.rutDays;
   if(d.moodQuestions)  moodQuestions  = d.moodQuestions;
   if(d.theme){ try{ if(typeof setTheme==='function') setTheme(d.theme); else localStorage.setItem('rdm_theme', d.theme); }catch(_){} }
+  if(d.perfil)     perfil     = d.perfil;
+}
+
+// ── PERFIL DE USUARIO ───────────────────────────────────────────────────────
+function renderPerfil(){
+  document.getElementById('perfil_nombre').value = perfil.nombre || '';
+  document.getElementById('perfil_apodo').value = perfil.apodo || '';
+  document.getElementById('perfil_telefono').value = perfil.telefono || '';
+  document.getElementById('perfil_broker').value = perfil.broker || '';
+  document.getElementById('perfil_propfirm').value = perfil.propFirm || '';
+  document.getElementById('perfil_capital').value = (perfil.capitalInicial!=null) ? perfil.capitalInicial : '';
+  perfilAvatarPendiente = null;
+  const img = document.getElementById('perfilAvatarView');
+  const ph = document.getElementById('perfilAvatarPlaceholder');
+  if(perfil.avatar){ img.src = perfil.avatar; img.style.display=''; ph.style.display='none'; }
+  else { img.style.display='none'; ph.style.display='flex'; }
+  document.getElementById('perfilEmailView').textContent = (CURRENT_USER && CURRENT_USER.email) || '—';
+  document.getElementById('perfilFechaView').textContent = (CURRENT_USER && CURRENT_USER.created_at) ? new Date(CURRENT_USER.created_at).toLocaleDateString('es-AR') : '—';
+}
+
+// Redimensiona la foto elegida a 200x200 (recorte cuadrado centrado) y la deja lista como data-URL, pendiente de guardar.
+function onAvatarSelected(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const imgTmp = new Image();
+    imgTmp.onload = function(){
+      const size = 200;
+      const canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const s = Math.min(imgTmp.width, imgTmp.height);
+      const sx = (imgTmp.width - s)/2, sy = (imgTmp.height - s)/2;
+      ctx.drawImage(imgTmp, sx, sy, s, s, 0, 0, size, size);
+      perfilAvatarPendiente = canvas.toDataURL('image/jpeg', 0.75);
+      const img = document.getElementById('perfilAvatarView');
+      const ph = document.getElementById('perfilAvatarPlaceholder');
+      img.src = perfilAvatarPendiente; img.style.display=''; ph.style.display='none';
+    };
+    imgTmp.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function guardarPerfil(){
+  perfil.nombre = document.getElementById('perfil_nombre').value.trim();
+  perfil.apodo = document.getElementById('perfil_apodo').value.trim();
+  perfil.telefono = document.getElementById('perfil_telefono').value.trim();
+  perfil.broker = document.getElementById('perfil_broker').value.trim();
+  perfil.propFirm = document.getElementById('perfil_propfirm').value.trim();
+  const cap = document.getElementById('perfil_capital').value;
+  perfil.capitalInicial = (cap!=='') ? parseFloat(cap) : null;
+  if(perfilAvatarPendiente) perfil.avatar = perfilAvatarPendiente;
+  save();
+  toast('Perfil actualizado','ok');
 }
 
 // Backup local diario (red de seguridad extra, además de la nube)
@@ -6035,9 +6150,9 @@ function escHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
 // ════════════════════════════════════════════════════════════
-const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Pares',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Historial de Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas',challenges:'Historial de Challenges'};
-const ctaLabels={dashboard:'+ Nuevo Trade',journal:'+ Nuevo Trade',estadisticas:null,backtest:'+ Trade BT',historico:null,pares:'+ Registrar Día',calculadora:null,riesgo:null,semanal:null,reglas:'+ Nueva Regla',cuentas:'+ Nueva Cuenta',pagos:'+ Registrar Pago',diario:null,rutina:null,reportes:null,metas:'+ Nueva Meta',challenges:null};
-const ctaActions={dashboard:'openTradeModal()',journal:'openTradeModal()',estadisticas:null,backtest:"openBtModal()",historico:null,pares:'openUsoModal()',calculadora:null,riesgo:null,semanal:null,reglas:'openReglaModal()',cuentas:'openAccModal()',pagos:'openPagoModal()',diario:null,rutina:null,reportes:null,metas:"openMetaModal('trading')",challenges:null};
+const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Pares',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Historial de Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas',challenges:'Historial de Challenges',perfil:'Mi Perfil'};
+const ctaLabels={dashboard:'+ Nuevo Trade',journal:'+ Nuevo Trade',estadisticas:null,backtest:'+ Trade BT',historico:null,pares:'+ Registrar Día',calculadora:null,riesgo:null,semanal:null,reglas:'+ Nueva Regla',cuentas:'+ Nueva Cuenta',pagos:'+ Registrar Pago',diario:null,rutina:null,reportes:null,metas:'+ Nueva Meta',challenges:null,perfil:null};
+const ctaActions={dashboard:'openTradeModal()',journal:'openTradeModal()',estadisticas:null,backtest:"openBtModal()",historico:null,pares:'openUsoModal()',calculadora:null,riesgo:null,semanal:null,reglas:'openReglaModal()',cuentas:'openAccModal()',pagos:'openPagoModal()',diario:null,rutina:null,reportes:null,metas:"openMetaModal('trading')",challenges:null,perfil:null};
 let currentPage='dashboard';
 
 function nav(name, fromPopState=false){
@@ -6054,7 +6169,7 @@ function nav(name, fromPopState=false){
   currentPage=name;
   updateSectionHelp(name);
   updateHeader();
-  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas,challenges:renderChallengeHistory};
+  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas,challenges:renderChallengeHistory,perfil:renderPerfil};
   if(renders[name]) renders[name]();
   if(!fromPopState) history.pushState({page:name}, '', location.href);
 }
