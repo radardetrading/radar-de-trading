@@ -2645,7 +2645,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <button onclick="setIdleLimit(0)"  class="idle-opt" data-idle="0"  style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;border-radius:var(--r);text-align:left;transition:background .15s;"><span style="flex:1;">Nunca (desactivado)</span><span id="idleCheck-0"  style="color:var(--cyan);font-weight:700;"></span></button>
         </div>
       </div>
-      <button id="perfilBtn" onclick="nav('perfil')" data-help="Mi Perfil: tus datos personales y de trading (nombre, foto, broker, prop firm, capital inicial)." title="Mi Perfil" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;">👤</button>
+      <button id="perfilBtn" onclick="nav('perfil')" data-help="Mi Perfil: tus datos personales (nombre, apodo, telefono, foto) y el contacto para consultas." title="Mi Perfil" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;">👤</button>
       <button id="helpBtn" onclick="toggleHelpMode()" title="Modo ayuda" style="font-size:14px;font-weight:800;padding:5px 11px;border-radius:var(--r);border:1px solid var(--border2);background:var(--glass);cursor:pointer;transition:all .2s;font-family:'JetBrains Mono',monospace;color:var(--sub);">?</button>
       <button id="logoutBtn" onclick="confirmarSalir()" data-help="Cerrar sesion y volver a la pantalla de login." title="Cerrar sesión" style="font-size:15px;padding:5px 10px;border-radius:var(--r);border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.08);color:var(--red);cursor:pointer;transition:all .2s;">⏻</button>
       <button class="btn primary" id="topbarCta" onclick="openMainCta()" data-help="Abri el formulario para registrar un nuevo trade real en el journal.">+ Nuevo Trade</button>
@@ -4368,6 +4368,7 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
         <div>
           <div style="font-size:13px;color:var(--text);"><b>Email:</b> <span id="perfilEmailView">—</span></div>
           <div style="font-size:12px;color:var(--sub);margin-top:.3rem;"><b>Alta:</b> <span id="perfilFechaView">—</span></div>
+          <div style="font-size:12px;color:var(--sub);margin-top:.3rem;"><b>Contacto:</b> <a href="mailto:radardetradingforexyfuturos@gmail.com" style="color:var(--cyan);">radardetradingforexyfuturos@gmail.com</a></div>
         </div>
       </div>
     </div>
@@ -4390,18 +4391,6 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
         <div class="form-group">
           <label>Foto de perfil</label>
           <input type="file" id="perfil_avatar_file" accept="image/*" onchange="onAvatarSelected(event)">
-        </div>
-        <div class="form-group">
-          <label>Broker</label>
-          <input type="text" id="perfil_broker" placeholder="Ej: IC Markets">
-        </div>
-        <div class="form-group">
-          <label>Prop Firm</label>
-          <input type="text" id="perfil_propfirm" placeholder="Ej: FTMO">
-        </div>
-        <div class="form-group">
-          <label>Capital Inicial ($)</label>
-          <input type="number" id="perfil_capital" step="0.01" min="0" placeholder="10000">
         </div>
       </div>
       <div class="form-actions">
@@ -5669,9 +5658,6 @@ function renderPerfil(){
   document.getElementById('perfil_nombre').value = perfil.nombre || '';
   document.getElementById('perfil_apodo').value = perfil.apodo || '';
   document.getElementById('perfil_telefono').value = perfil.telefono || '';
-  document.getElementById('perfil_broker').value = perfil.broker || '';
-  document.getElementById('perfil_propfirm').value = perfil.propFirm || '';
-  document.getElementById('perfil_capital').value = (perfil.capitalInicial!=null) ? perfil.capitalInicial : '';
   perfilAvatarPendiente = null;
   const img = document.getElementById('perfilAvatarView');
   const ph = document.getElementById('perfilAvatarPlaceholder');
@@ -5710,10 +5696,6 @@ function guardarPerfil(){
   perfil.nombre = document.getElementById('perfil_nombre').value.trim();
   perfil.apodo = document.getElementById('perfil_apodo').value.trim();
   perfil.telefono = document.getElementById('perfil_telefono').value.trim();
-  perfil.broker = document.getElementById('perfil_broker').value.trim();
-  perfil.propFirm = document.getElementById('perfil_propfirm').value.trim();
-  const cap = document.getElementById('perfil_capital').value;
-  perfil.capitalInicial = (cap!=='') ? parseFloat(cap) : null;
   if(perfilAvatarPendiente) perfil.avatar = perfilAvatarPendiente;
   save();
   toast('Perfil actualizado','ok');
