@@ -3307,6 +3307,10 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             📤 Importar
             <input type="file" id="histFileInput" accept=".csv,.xlsx,.xls" style="display:none;" onchange="importHistorico(event)">
           </label>
+          <label class="btn sm" style="font-size:11px;cursor:pointer;margin:0;border-color:rgba(56,189,248,.35);color:var(--cyan);" title="Subí directo el Excel que exporta MetaTrader 5 (Historial de cuenta → Informe), sin adaptarlo vos.">
+            📈 Importar MT5
+            <input type="file" id="mt5FileInput" accept=".xlsx" style="display:none;" onchange="importMT5(event)">
+          </label>
           <button class="btn sm danger" onclick="clearHistorico()" style="font-size:11px;">🗑️ Limpiar todo</button>
         </div>
       </div>
@@ -13932,6 +13936,172 @@ function confirmHistImport(mode){
       : `Se agregaron a tu histórico. Total ahora: ${histTrades.length} trades.`;
   }
   openModal('histImportModal');
+}
+
+// ── Importar directo desde el Informe de MT5 (Historial de cuenta → Exportar) ──
+function mt5ParseDateTime(s){
+  const m = String(s||'').match(/^(\d{4})\.(\d{2})\.(\d{2})\s+(\d{2}):(\d{2})/);
+  if(!m) return null;
+  const [, y, mo, d, h] = m;
+  return { iso:`${y}-${mo}-${d}`, hour:parseInt(h,10), dia:parseInt(d,10), mesAno:parseInt(mo,10)+y };
+}
+
+function mt5SessionFromHour(h){
+  // Aproximado (hora del servidor del broker, no siempre coincide con GMT). Revisable a mano después.
+  if(h>=0 && h<7)  return 'Asia';
+  if(h>=7 && h<12) return 'London';
+  if(h>=12 && h<13) return 'Pre-NY';
+  if(h>=13 && h<16) return 'Overlap';
+  if(h>=16 && h<21) return 'New York';
+  return 'Asia';
+}
+
+function mt5SymbolToPar(sym){
+  sym = String(sym||'').trim().toUpperCase();
+  return /^[A-Z]{6}$/.test(sym) ? sym.slice(0,3)+'/'+sym.slice(3) : sym;
+}
+
+async function importMT5(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  event.target.value = '';
+
+  try {
+    if(typeof XLSX === 'undefined'){ toast('Librería Excel no cargada','err'); return; }
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data, {type:'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+
+    const posStart = rows.findIndex(r => String(r[0]||'').trim() === 'Posiciones');
+    const ordStart = rows.findIndex(r => String(r[0]||'').trim() === 'Órdenes');
+    const traStart = rows.findIndex(r => String(r[0]||'').trim() === 'Transacciones');
+
+    if(posStart < 0 || traStart < 0){
+      toast('No reconozco este archivo como Informe de MT5. Exportalo desde Historial de cuenta → Informe (Excel).','err');
+      return;
+    }
+
+    // Mapa Orden → balance ANTES de abrir esa posición (fila "in" de Transacciones)
+    const traDataStart = traStart + 2;
+    let traDataEnd = rows.length;
+    for(let j=traDataStart; j<rows.length; j++){
+      if((rows[j][0]==='' || rows[j][0]==null) && (rows[j][1]==='' || rows[j][1]==null)){ traDataEnd = j; break; }
+    }
+    const balanceAntes = {};
+    for(let j=traDataStart; j<traDataEnd; j++){
+      const r = rows[j];
+      if(String(r[4]||'').trim() === 'in' && r[7] !== ''){
+        balanceAntes[r[7]] = parseFloat(r[12]);
+      }
+    }
+
+    // Posiciones cerradas
+    const posDataStart = posStart + 2;
+    const posDataEnd = ordStart > 0 ? ordStart : rows.length;
+
+    const imported = [];
+    const warnings = [];
+    let sinBalance = 0;
+
+    for(let j=posDataStart; j<posDataEnd; j++){
+      const r = rows[j];
+      const posId = r[1];
+      if(posId === '' || posId == null || isNaN(posId)) continue; // fila no válida
+
+      const dt = mt5ParseDateTime(r[0]);
+      if(!dt) continue;
+
+      const sym = r[2];
+      const tipo = String(r[3]||'').trim().toLowerCase();
+      const volumen = parseFloat(r[4]);
+      const entry = parseFloat(r[5]);
+      const sl = parseFloat(r[6]);
+      const comision = parseFloat(r[10]) || 0;
+      const swap = parseFloat(r[11]) || 0;
+      const beneficio = parseFloat(r[12]) || 0;
+
+      let balanceBefore = balanceAntes[posId];
+      if(balanceBefore == null || isNaN(balanceBefore)){
+        balanceBefore = getHistBalance();
+        sinBalance++;
+      }
+
+      const pnlNeto = beneficio + comision + swap;
+      const pctGan = balanceBefore > 0 ? (pnlNeto / balanceBefore * 100) : 0;
+
+      let pctArr = null;
+      if(!isNaN(sl) && !isNaN(entry) && sl > 0){
+        const symOk = /^[A-Z]{6}$/.test(String(sym).toUpperCase()) && String(sym).toUpperCase().endsWith('USD');
+        const riskUSD = Math.abs(entry - sl) * volumen * 100000;
+        pctArr = balanceBefore > 0 ? (riskUSD / balanceBefore * 100) : 0;
+        if(!symOk){
+          warnings.push(`Ticket ${posId} (${mt5SymbolToPar(sym)}): % arriesgado estimado puede ser impreciso (símbolo no estándar EUR/USD-like) — revisalo a mano.`);
+        }
+      } else {
+        pctArr = 0;
+        warnings.push(`Ticket ${posId} (${mt5SymbolToPar(sym)}, ${dt.iso}): sin Stop Loss definido, no se pudo calcular % arriesgado — completalo a mano.`);
+      }
+
+      imported.push({
+        id: Date.now() + j,
+        date: dt.iso,
+        dia: dt.dia,
+        mesAno: dt.mesAno,
+        par: mt5SymbolToPar(sym),
+        session: mt5SessionFromHour(dt.hour),
+        type: tipo === 'buy' ? 'LONG' : 'SHORT',
+        pctArr: +pctArr.toFixed(2),
+        pctGan: +pctGan.toFixed(2),
+        zona: '',
+        conf: '',
+        tv: '',
+        notes: `MT5 #${posId}`
+      });
+    }
+
+    if(!imported.length){
+      toast('No se encontraron posiciones cerradas en el archivo.','err');
+      return;
+    }
+
+    let resultHtml = `<div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.25);border-radius:8px;padding:1rem;margin-bottom:.8rem;">
+      <div style="color:var(--green);font-weight:700;margin-bottom:.3rem;">✅ ${imported.length} trades importados desde MT5</div>
+      <div style="font-size:11px;color:var(--sub);" id="histImportResultSub"></div>
+    </div>`;
+    resultHtml += `<div style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;font-size:11px;color:var(--sub);line-height:1.5;">
+      ℹ️ <b>Sesión</b> se asignó según la hora del servidor del broker (aproximado, revisala si te importa). <b>% arriesgado</b> se calculó a partir de la distancia al Stop Loss × volumen. <b>% ganado</b> se calculó sobre el balance real de la cuenta en el momento de cada trade.
+    </div>`;
+    if(sinBalance){
+      resultHtml += `<div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;font-size:11px;color:var(--gold);">⚠️ ${sinBalance} trade(s) no tenían balance de referencia en el archivo; se usó el balance base configurado.</div>`;
+    }
+    if(warnings.length){
+      resultHtml += `<div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:1rem;margin-bottom:.8rem;max-height:200px;overflow-y:auto;">
+        <div style="color:var(--gold);font-weight:700;margin-bottom:.5rem;">⚠️ ${warnings.length} advertencia(s):</div>
+        <div style="font-size:11px;color:var(--sub);line-height:1.6;">${warnings.slice(0,20).map(w=>`<div>• ${w}</div>`).join('')}${warnings.length>20 ? `<div style="margin-top:.3rem;font-style:italic;">...y ${warnings.length-20} más</div>` : ''}</div>
+      </div>`;
+    }
+
+    if(histTrades.length > 0){
+      window._histPendingImport = { imported, resultHtml };
+      document.getElementById('histChoiceExisting').textContent = histTrades.length;
+      document.getElementById('histChoiceNew').textContent = imported.length;
+      openModal('histImportChoiceModal');
+      return;
+    }
+
+    histTrades = imported;
+    histTablePage = 1;
+    markDirty(); save();
+    renderHistorico();
+    document.getElementById('histImportResult').innerHTML = resultHtml;
+    const sub = document.getElementById('histImportResultSub');
+    if(sub) sub.textContent = `Total ahora: ${histTrades.length} trades.`;
+    openModal('histImportModal');
+  } catch(err){
+    console.error(err);
+    toast('Error al leer el archivo: ' + err.message, 'err');
+  }
 }
 
 function parseCSV(text){
