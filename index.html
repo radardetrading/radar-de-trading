@@ -2802,6 +2802,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <option value="asc">Más viejo primero</option>
         </select>
       </div>
+      <button class="btn" style="border-color:rgba(56,189,248,.35);color:var(--cyan);" onclick="openMt5JournalModal()" data-help="Importa trades reales desde el Excel de MT5 y los carga al Journal, asignados a la cuenta que elijas (no al Backtest Historico).">📥 Importar MT5</button>
       <button class="btn primary" onclick="openTradeModal()">+ Nuevo Trade</button>
     </div>
     <div class="table-wrap">
@@ -4664,6 +4665,33 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     <div id="histImportResult"></div>
     <div class="form-actions">
       <button class="btn primary" onclick="closeModal('histImportModal')">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MT5 -> JOURNAL IMPORT MODAL -->
+<div class="overlay" id="mt5JournalModal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closeModal('mt5JournalModal')">✕</button>
+    <div class="modal-title">📥 Importar MT5 al Journal</div>
+    <div id="mt5jForm">
+      <div style="font-size:12px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
+        Subí el Excel que exporta MetaTrader 5 (Historial de cuenta → Informe). Cada posición cerrada se va a cargar como trade real del <b>Journal</b> con sus precios reales, asignado a la cuenta que elijas acá — no al Backtest Histórico.
+      </div>
+      <div class="form-group full" style="margin-bottom:1rem;">
+        <label>Cuenta destino</label>
+        <select id="mt5j_account"></select>
+      </div>
+      <label class="btn primary" style="cursor:pointer;justify-content:center;width:100%;margin:0;">
+        📈 Elegir archivo Excel de MT5
+        <input type="file" id="mt5jFileInput" accept=".xlsx" style="display:none;" onchange="importMT5ToJournal(event)">
+      </label>
+    </div>
+    <div id="mt5jResult" style="display:none;">
+      <div id="mt5jResultBody"></div>
+      <div class="form-actions">
+        <button class="btn primary" onclick="closeModal('mt5JournalModal')">Listo</button>
+      </div>
     </div>
   </div>
 </div>
@@ -14098,6 +14126,163 @@ async function importMT5(event){
     const sub = document.getElementById('histImportResultSub');
     if(sub) sub.textContent = `Total ahora: ${histTrades.length} trades.`;
     openModal('histImportModal');
+  } catch(err){
+    console.error(err);
+    toast('Error al leer el archivo: ' + err.message, 'err');
+  }
+}
+
+// ── Importar directo desde el Informe de MT5 al Journal (trades reales, atados a una cuenta) ──
+function mt5jParseDateTime(s){
+  const m = String(s||'').match(/^(\d{4})\.(\d{2})\.(\d{2})\s+(\d{2}):(\d{2})/);
+  if(!m) return null;
+  const [, y, mo, d, h, mi] = m;
+  return { iso:`${y}-${mo}-${d}`, hour:parseInt(h,10), hm:`${h}:${mi}` };
+}
+
+function mt5jSessionFromHour(h){
+  if(h>=0 && h<7)   return 'Asia';
+  if(h>=7 && h<9)   return 'Frankfurt';
+  if(h>=9 && h<16)  return 'Londres';
+  if(h>=16 && h<21) return 'NY';
+  return 'Asia';
+}
+
+function openMt5JournalModal(){
+  const sel = document.getElementById('mt5j_account');
+  sel.innerHTML = accounts.length
+    ? accounts.map(a=>`<option value="${a.id}">${escHtml(a.name)} (${escHtml(a.firm||'')})</option>`).join('')
+    : '<option value="">— No tenés cuentas creadas —</option>';
+  document.getElementById('mt5jForm').style.display='';
+  document.getElementById('mt5jResult').style.display='none';
+  openModal('mt5JournalModal');
+}
+
+async function importMT5ToJournal(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  event.target.value = '';
+
+  const accId = parseInt(document.getElementById('mt5j_account').value)||null;
+  if(!accId){ toast('Elegí primero la cuenta destino','err'); return; }
+  const acc = accObj(accId);
+
+  try {
+    if(typeof XLSX === 'undefined'){ toast('Librería Excel no cargada','err'); return; }
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data, {type:'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+
+    const posStart = rows.findIndex(r => String(r[0]||'').trim() === 'Posiciones');
+    const ordStart = rows.findIndex(r => String(r[0]||'').trim() === 'Órdenes');
+
+    if(posStart < 0){
+      toast('No reconozco este archivo como Informe de MT5. Exportalo desde Historial de cuenta → Informe (Excel).','err');
+      return;
+    }
+
+    const posDataStart = posStart + 2;
+    const posDataEnd = ordStart > 0 ? ordStart : rows.length;
+
+    const existingTickets = new Set(
+      trades.filter(t=>t.accountId===accId && /^MT5 #/.test(t.notes||'')).map(t=>t.notes)
+    );
+
+    const imported = [];
+    const warnings = [];
+    let duplicados = 0;
+
+    for(let j=posDataStart; j<posDataEnd; j++){
+      const r = rows[j];
+      const posId = r[1];
+      if(posId === '' || posId == null || isNaN(posId)) continue;
+
+      const openDt = mt5jParseDateTime(r[0]);
+      if(!openDt) continue;
+
+      const notesTag = `MT5 #${posId}`;
+      if(existingTickets.has(notesTag)){ duplicados++; continue; }
+
+      const closeDt = mt5jParseDateTime(r[8]);
+      const sym = r[2];
+      const tipo = String(r[3]||'').trim().toLowerCase();
+      const volumen = parseFloat(r[4]);
+      const entry = parseFloat(r[5]);
+      const sl = parseFloat(r[6]) || 0;
+      const tp = parseFloat(r[7]) || 0;
+      const close = parseFloat(r[9]);
+      const comision = parseFloat(r[10]) || 0;
+      const swap = parseFloat(r[11]) || 0;
+      const beneficio = parseFloat(r[12]) || 0;
+
+      if(isNaN(volumen) || isNaN(entry) || isNaN(close)){
+        warnings.push(`Ticket ${posId}: fila incompleta, se salteó.`);
+        continue;
+      }
+
+      const type = tipo === 'buy' ? 'LONG' : 'SHORT';
+      const pnl = +(beneficio + comision + swap).toFixed(2);
+      const commission = +(-(comision + swap)).toFixed(2);
+
+      let risk = 0;
+      if(sl > 0){
+        const riskUSD = Math.abs(entry - sl) * volumen * 100000;
+        risk = acc?.size > 0 ? riskUSD / acc.size : 0;
+      } else {
+        warnings.push(`Ticket ${posId} (${mt5SymbolToPar(sym)}): sin Stop Loss, quedó riesgo/R:R en 0 — completalo a mano si te importa.`);
+      }
+      const rr = sl > 0 ? calcRR(type, entry, sl, close) : 0;
+
+      imported.push({
+        id: Date.now() + j,
+        updatedAt: Date.now(),
+        accountId: accId,
+        tipo: 'forex',
+        date: openDt.iso,
+        hEnt: openDt.hm,
+        hSal: closeDt ? closeDt.hm : '',
+        type,
+        session: mt5jSessionFromHour(openDt.hour),
+        pair: mt5SymbolToPar(sym),
+        par: mt5SymbolToPar(sym),
+        lots: volumen,
+        entry, sl, tp, close,
+        pips: +calcPips(type, entry, close).toFixed(1),
+        pnlGross: +beneficio.toFixed(2),
+        commission, pnl,
+        rr: +rr.toFixed(2),
+        risk,
+        result: getResult(pnl),
+        zona:'', moodBefore:'', moodNoteB:'', moodAfter:'', moodNoteA:'', moodAnswers:{}, rutinaDelDia:0,
+        tv:'', setup:'', notes: notesTag
+      });
+    }
+
+    if(!imported.length){
+      toast(duplicados ? `Los ${duplicados} trades de este archivo ya estaban importados en esta cuenta.` : 'No se encontraron posiciones cerradas en el archivo.','err');
+      return;
+    }
+
+    trades.push(...imported);
+    markDirty(); save();
+    renderJournal(); renderDashboard(); renderCuentas(); updateHeader();
+
+    let html = `<div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.25);border-radius:8px;padding:1rem;margin-bottom:.8rem;">
+      <div style="color:var(--green);font-weight:700;">✅ ${imported.length} trades importados al Journal en "${escHtml(acc?.name||'')}"</div>
+    </div>`;
+    if(duplicados){
+      html += `<div style="font-size:11px;color:var(--sub);margin-bottom:.8rem;">ℹ️ ${duplicados} trade(s) del archivo ya estaban cargados (mismo ticket MT5 en esta cuenta) y se saltearon.</div>`;
+    }
+    if(warnings.length){
+      html += `<div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:.8rem 1rem;max-height:200px;overflow-y:auto;">
+        <div style="color:var(--gold);font-weight:700;margin-bottom:.4rem;">⚠️ ${warnings.length} advertencia(s):</div>
+        <div style="font-size:11px;color:var(--sub);line-height:1.6;">${warnings.slice(0,20).map(w=>`<div>• ${w}</div>`).join('')}${warnings.length>20 ? `<div style="margin-top:.3rem;font-style:italic;">...y ${warnings.length-20} más</div>` : ''}</div>
+      </div>`;
+    }
+    document.getElementById('mt5jResultBody').innerHTML = html;
+    document.getElementById('mt5jForm').style.display='none';
+    document.getElementById('mt5jResult').style.display='';
   } catch(err){
     console.error(err);
     toast('Error al leer el archivo: ' + err.message, 'err');
