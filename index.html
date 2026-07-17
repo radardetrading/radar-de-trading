@@ -4145,7 +4145,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             <label>R:R objetivo</label>
             <input type="number" id="fond_rr" value="2" step="0.1" min="0.5" oninput="calcFondeo()">
           </div>
-          <div class="form-group">
+          <div class="form-group" data-help="Riesgo del primer trade de la cascada. Si más abajo cargaste una 'Pérdida Máxima Acumulada', este campo se calcula solo (queda bloqueado) para que la suma de los N trades dé exactamente ese %. Vaciá ese campo para volver a editarlo a mano.">
             <label>Riesgo inicial (%)</label>
             <input type="number" id="fond_risk" value="0.7" step="0.1" min="0.1" max="5" oninput="initFondeo()">
           </div>
@@ -9995,11 +9995,31 @@ function sumaCascada(nTrades, mult){
   return sum;
 }
 
+// Bloquea/desbloquea visualmente "Riesgo inicial (%)" según si hay una Pérdida Máxima cargada
+// (en ese caso el campo se calcula solo y no tiene sentido escribirle encima).
+function syncRiskInicialLock(){
+  const maxLoss   = parseFloat(document.getElementById('fond_maxloss')?.value);
+  const riskInput = document.getElementById('fond_risk');
+  if(!riskInput) return;
+  if(maxLoss>0){
+    riskInput.readOnly = true;
+    riskInput.style.opacity = '.55';
+    riskInput.style.cursor = 'not-allowed';
+    riskInput.title = 'Se calcula automáticamente a partir de "Pérdida Máxima Acumulada". Vaciá ese campo para editarlo a mano.';
+  }else{
+    riskInput.readOnly = false;
+    riskInput.style.opacity = '';
+    riskInput.style.cursor = '';
+    riskInput.title = '';
+  }
+}
+
 // Riesgo base de la cascada: si hay Pérdida Máxima cargada, se calcula para que los N trades
 // sumen exactamente ese %; si no, se usa el Riesgo Inicial manual de siempre.
 function computeRiskBase(nTrades, mult){
   const maxLoss = parseFloat(document.getElementById('fond_maxloss')?.value);
   const riskInput = document.getElementById('fond_risk');
+  syncRiskInicialLock();
   if(maxLoss>0){
     const riskBase = (maxLoss/100) / sumaCascada(nTrades, mult);
     if(riskInput) riskInput.value = +(riskBase*100).toFixed(4);
@@ -10023,6 +10043,7 @@ function initFondeo(){
       setVal('fond_trades',   saved.trades);
       setVal('fond_objetivo', saved.objetivo);
       setVal('fond_maxloss',  saved.maxloss);
+      syncRiskInicialLock();
       if(Array.isArray(saved.risks) && saved.risks.length){
         fondRisks = saved.risks.map(Number);
       }
