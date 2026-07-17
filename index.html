@@ -10041,7 +10041,7 @@ function initFondeo(){
     fondRisks.push(parseFloat(cur.toFixed(5)));
     cur = cur * mult;
   }
-  calcFondeo();
+  calcFondeo(true);
 }
 
 // Regenera la cascada con el multiplicador, descartando los riesgos editados
@@ -10052,12 +10052,15 @@ function resetFondeo(){
   fondRisks = [];
   let cur = riskBase;
   for(let i=0;i<nTrades;i++){ fondRisks.push(parseFloat(cur.toFixed(5))); cur*=mult; }
-  calcFondeo();
+  calcFondeo(true);
   if(typeof toast==='function') toast('Cascada regenerada con el multiplicador','ok');
 }
 
 // Recalcula y rerenderiza la tabla usando fondRisks (editables)
-function calcFondeo(){
+// skipRowRead=true cuando se acaba de regenerar la cascada desde cero (initFondeo/resetFondeo):
+// evita que se lean los valores viejos que todavía están dibujados en los inputs de la tabla
+// y pisen los recién calculados antes de volver a renderizar.
+function calcFondeo(skipRowRead){
   const balance  = parseFloat(document.getElementById('fond_balance')?.value)||25000;
   const rr       = parseFloat(document.getElementById('fond_rr')?.value)||2;
   const nTrades  = Math.min(20, Math.max(1, parseInt(document.getElementById('fond_trades')?.value)||9));
@@ -10085,8 +10088,8 @@ function calcFondeo(){
     for(let i=0;i<nTrades;i++){ fondRisks.push(parseFloat(cur.toFixed(5))); cur*=mult; }
   }
 
-  // Leer valores actuales de los inputs si ya existen
-  for(let i=0;i<nTrades;i++){
+  // Leer valores actuales de los inputs si ya existen (salvo que la cascada se haya regenerado ahora mismo)
+  for(let i=0;i<nTrades && !skipRowRead;i++){
     const inp = document.getElementById('fond_r_'+i);
     if(inp){
       const v = parseFloat(inp.value);
@@ -10193,6 +10196,12 @@ function calcFondeo(){
   const tradesQueAlcanzan = rows.filter(r=>r.falta<=0).length;
   const primeroPasa = rows.find(r=>r.falta<=0);
 
+  // Trades ganadores CONSECUTIVOS necesarios para el objetivo, con riesgo FIJO
+  // (el del primer trade de la tabla, sin el multiplicador de la cascada de pérdidas)
+  const riesgoFijoPct = rows[0]?.rPct || 0;
+  const gananciaPorGanador = +(riesgoFijoPct * rr).toFixed(4); // % que suma cada trade ganado
+  const ganadoresNecesarios = gananciaPorGanador>0 ? Math.ceil(objetivo/gananciaPorGanador) : 0;
+
   if(summary) summary.innerHTML = `
   <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:1rem;">
     <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:.5rem .9rem;">
@@ -10217,6 +10226,10 @@ function calcFondeo(){
     ${maxLoss>0 ? `<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:.5rem .9rem;">
       <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;font-family:'JetBrains Mono',monospace;">🔥 Riesgo ajustado a Pérdida Máxima</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--gold);">${totalAccLoss}% en ${nTrades} trades (objetivo: ${maxLoss}%)</div>
+    </div>` : ''}
+    ${ganadoresNecesarios>0 ? `<div style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);border-radius:8px;padding:.5rem .9rem;">
+      <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;font-family:'JetBrains Mono',monospace;">🏆 Ganadores seguidos p/ objetivo (riesgo fijo ${riesgoFijoPct}%)</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--cyan);">${ganadoresNecesarios} trades</div>
     </div>` : ''}
   </div>
   ${lotHtml}`;
