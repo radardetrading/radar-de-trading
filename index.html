@@ -4161,9 +4161,9 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             <label>🎯 Objetivo de la prueba (%)</label>
             <input type="number" id="fond_objetivo" value="8" step="0.1" min="0.1" max="30" oninput="calcFondeo()">
           </div>
-          <div class="form-group" data-help="Pérdida acumulada máxima que te permite la prueba de fondeo (el límite de drawdown total de tu prop firm). La tabla deja de calcular trades apenas la pérdida acumulada llega a este %, así ves en qué trade se quema la cuenta con la cascada actual.">
+          <div class="form-group" data-help="Pérdida acumulada máxima que te permite la prueba de fondeo (el límite de drawdown total de tu prop firm). Si lo completás, el riesgo inicial se recalcula automáticamente (respetando el Multiplicador) para que la suma de los N trades configurados dé exactamente este %. Dejalo vacío para usar el Riesgo inicial manual de siempre.">
             <label>🔥 Pérdida Máxima Acumulada (%)</label>
-            <input type="number" id="fond_maxloss" value="" placeholder="Sin límite" step="0.1" min="0.1" max="50" oninput="calcFondeo()">
+            <input type="number" id="fond_maxloss" value="" placeholder="Sin límite" step="0.1" min="0.1" max="50" oninput="initFondeo()">
           </div>
         </div>
 
@@ -9988,6 +9988,26 @@ function loadFondeoCfg(){
   catch(e){ return null; }
 }
 
+// Suma de la serie geométrica 1 + mult + mult^2 + ... (nTrades términos)
+function sumaCascada(nTrades, mult){
+  let sum=0, cur=1;
+  for(let i=0;i<nTrades;i++){ sum+=cur; cur*=mult; }
+  return sum;
+}
+
+// Riesgo base de la cascada: si hay Pérdida Máxima cargada, se calcula para que los N trades
+// sumen exactamente ese %; si no, se usa el Riesgo Inicial manual de siempre.
+function computeRiskBase(nTrades, mult){
+  const maxLoss = parseFloat(document.getElementById('fond_maxloss')?.value);
+  const riskInput = document.getElementById('fond_risk');
+  if(maxLoss>0){
+    const riskBase = (maxLoss/100) / sumaCascada(nTrades, mult);
+    if(riskInput) riskInput.value = +(riskBase*100).toFixed(4);
+    return riskBase;
+  }
+  return (parseFloat(riskInput?.value)||0.7)/100;
+}
+
 // Inicializa/reinicia la tabla con los valores del multiplicador
 function initFondeo(){
   // Primera carga: si hay config guardada, restaurarla tal cual (sin regenerar cascada)
@@ -10011,9 +10031,9 @@ function initFondeo(){
     }
   }
 
-  const riskBase = (parseFloat(document.getElementById('fond_risk')?.value)||0.7)/100;
   const mult     = parseFloat(document.getElementById('fond_mult')?.value)||1.35;
   const nTrades  = Math.min(20, Math.max(1, parseInt(document.getElementById('fond_trades')?.value)||9));
+  const riskBase = computeRiskBase(nTrades, mult);
 
   fondRisks = [];
   let cur = riskBase;
@@ -10026,9 +10046,9 @@ function initFondeo(){
 
 // Regenera la cascada con el multiplicador, descartando los riesgos editados
 function resetFondeo(){
-  const riskBase = (parseFloat(document.getElementById('fond_risk')?.value)||0.7)/100;
   const mult     = parseFloat(document.getElementById('fond_mult')?.value)||1.35;
   const nTrades  = Math.min(20, Math.max(1, parseInt(document.getElementById('fond_trades')?.value)||9));
+  const riskBase = computeRiskBase(nTrades, mult);
   fondRisks = [];
   let cur = riskBase;
   for(let i=0;i<nTrades;i++){ fondRisks.push(parseFloat(cur.toFixed(5))); cur*=mult; }
@@ -10058,8 +10078,8 @@ function calcFondeo(){
 
   // Asegurar que fondRisks tenga la longitud correcta
   if(fondRisks.length !== nTrades){
-    const riskBase = (parseFloat(document.getElementById('fond_risk')?.value)||0.7)/100;
     const mult     = parseFloat(document.getElementById('fond_mult')?.value)||1.35;
+    const riskBase = computeRiskBase(nTrades, mult);
     fondRisks = [];
     let cur = riskBase;
     for(let i=0;i<nTrades;i++){ fondRisks.push(parseFloat(cur.toFixed(5))); cur*=mult; }
@@ -10077,12 +10097,8 @@ function calcFondeo(){
   // Calcular filas en cascada
   const rows = [];
   let accLoss = 0;
-  let cortadoPorMaxLoss = false;
   for(let i=0;i<nTrades;i++){
     const r = fondRisks[i];
-    // Si este trade haría superar la pérdida máxima acumulada permitida, se corta acá: no se calculan más trades
-    // (el primer trade siempre se muestra, aunque su riesgo solo ya supere el límite configurado)
-    if(i>0 && maxLoss>0 && (accLoss+r)*100 > maxLoss+1e-9){ cortadoPorMaxLoss = true; break; }
     const riskUSD = +(balance * r).toFixed(2);
     const tpUSD   = +(riskUSD * rr).toFixed(2);
     const objPct  = +(r * rr * 100).toFixed(3);
@@ -10198,13 +10214,10 @@ function calcFondeo(){
       <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;font-family:'JetBrains Mono',monospace;">🎯 Objetivo ${objetivo}%</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--red);">No alcanza en ${rows.length} trades</div>
     </div>`}
-    ${maxLoss>0 ? (cortadoPorMaxLoss ? `<div style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);border-radius:8px;padding:.5rem .9rem;">
-      <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;font-family:'JetBrains Mono',monospace;">🔥 Cuenta quemada (${maxLoss}%)</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--red);">Ya en el Trade #${rows.length+1} de ${nTrades}</div>
-    </div>` : `<div style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:.5rem .9rem;">
-      <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;font-family:'JetBrains Mono',monospace;">🔥 Margen hasta ${maxLoss}%</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--green);">${(maxLoss-totalAccLoss).toFixed(2)}% libre en ${nTrades} trades</div>
-    </div>`) : ''}
+    ${maxLoss>0 ? `<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:.5rem .9rem;">
+      <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;font-family:'JetBrains Mono',monospace;">🔥 Riesgo ajustado a Pérdida Máxima</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--gold);">${totalAccLoss}% en ${nTrades} trades (objetivo: ${maxLoss}%)</div>
+    </div>` : ''}
   </div>
   ${lotHtml}`;
 
