@@ -9980,6 +9980,7 @@ function saveFondeo(){
       risks:    fondRisks
     };
     localStorage.setItem(FOND_KEY, JSON.stringify(cfg));
+    if(typeof markDirty==='function') markDirty();
   }catch(e){}
 }
 
