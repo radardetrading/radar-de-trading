@@ -10047,6 +10047,15 @@ function calcFondeo(){
   const summary  = document.getElementById('fondSummary');
   if(!body) return;
 
+  // Si el usuario está escribiendo en una celda de Riesgo %, guardamos foco/selección/valor tal cual
+  // para restaurarlos después del re-render (si no, la tabla completa se reconstruye y el campo
+  // "salta" al valor viejo apenas borrás para escribir uno nuevo).
+  const active = document.activeElement;
+  let focusInfo = null;
+  if(active && active.id && active.id.startsWith('fond_r_')){
+    focusInfo = { id: active.id, start: active.selectionStart, end: active.selectionEnd, raw: active.value };
+  }
+
   // Asegurar que fondRisks tenga la longitud correcta
   if(fondRisks.length !== nTrades){
     const riskBase = (parseFloat(document.getElementById('fond_risk')?.value)||0.7)/100;
@@ -10086,7 +10095,7 @@ function calcFondeo(){
     const lots    = slPips>0 ? +(riskUSD/(slPips*10)).toFixed(2) : 0;
     const mini    = +(lots*10).toFixed(1);
     const micro   = +(lots*100).toFixed(0);
-    rows.push({ i, rPct:+(r*100).toFixed(3), accLossPct:+(accLoss*100).toFixed(3), objPct, totalF, falta, riskUSD, tpUSD, lots, mini, micro });
+    rows.push({ i, rPct:+(r*100).toFixed(2), accLossPct:+(accLoss*100).toFixed(3), objPct, totalF, falta, riskUSD, tpUSD, lots, mini, micro });
     accLoss += r;
   }
 
@@ -10105,9 +10114,10 @@ function calcFondeo(){
     return `<tr style="background:${bg};border-top:1px solid var(--border);text-align:center;${passed?'box-shadow:inset 0 0 0 1px rgba(52,211,153,.2);':''}">
       <td style="padding:.45rem .5rem;font-family:'JetBrains Mono',monospace;color:var(--sub);font-size:11px;">${r.i+1}</td>
       <td style="padding:.3rem .4rem;">
-        <input id="fond_r_${r.i}" type="number" step="0.001" min="0.001" max="10"
+        <input id="fond_r_${r.i}" type="number" step="0.01" min="0.001" max="10"
           value="${r.rPct}"
           style="${inputStyle}"
+          onfocus="this.select()"
           oninput="calcFondeo()">
       </td>
       <td style="padding:.45rem .5rem;font-family:'JetBrains Mono',monospace;font-size:11px;color:${alC};">${r.accLossPct>0?'-'+r.accLossPct+'%':'0%'}</td>
@@ -10118,6 +10128,16 @@ function calcFondeo(){
       <td style="padding:.45rem .5rem;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);">${fmtUSD(r.tpUSD)}</td>
     </tr>`;
   }).join('');
+
+  // Restaurar foco/selección/valor tal como lo estaba escribiendo el usuario
+  if(focusInfo){
+    const el = document.getElementById(focusInfo.id);
+    if(el){
+      el.value = focusInfo.raw;
+      el.focus();
+      try{ el.setSelectionRange(focusInfo.start, focusInfo.end); }catch(e){}
+    }
+  }
 
   // Tabla de lotaje rápido
   const lotHtml = `
