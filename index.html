@@ -10092,7 +10092,7 @@ function calcFondeo(skipRowRead){
   for(let i=0;i<nTrades && !skipRowRead;i++){
     const inp = document.getElementById('fond_r_'+i);
     if(inp){
-      const v = parseFloat(inp.value);
+      const v = parseFloat(String(inp.value).replace(',','.'));
       if(!isNaN(v) && v>0) fondRisks[i] = v/100;
     }
   }
@@ -10133,7 +10133,7 @@ function calcFondeo(skipRowRead){
     return `<tr style="background:${bg};border-top:1px solid var(--border);text-align:center;${passed?'box-shadow:inset 0 0 0 1px rgba(52,211,153,.2);':''}">
       <td style="padding:.45rem .5rem;font-family:'JetBrains Mono',monospace;color:var(--sub);font-size:11px;">${r.i+1}</td>
       <td style="padding:.3rem .4rem;">
-        <input id="fond_r_${r.i}" type="number" step="0.01" min="0.001" max="10"
+        <input id="fond_r_${r.i}" type="text" inputmode="decimal"
           value="${r.rPct}"
           style="${inputStyle}"
           onfocus="this.select()"
