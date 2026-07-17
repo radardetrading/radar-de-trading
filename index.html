@@ -4163,6 +4163,16 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           </div>
         </div>
 
+        <!-- Modo: distribuir por pérdida máxima -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:.8rem;">
+          <input type="checkbox" id="fond_maxloss_mode" onchange="toggleMaxLossMode()" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer;">
+          <label for="fond_maxloss_mode" style="margin:0;cursor:pointer;font-size:12px;">🛑 Distribuir por Pérdida Máxima (calcula el riesgo inicial automáticamente)</label>
+        </div>
+        <div class="form-group" id="fond_maxloss_wrap" style="display:none;margin-bottom:1.2rem;" data-help="Ingresá el % de pérdida máxima total que te permite tu prop firm (o que vos definas). La calculadora reparte ese % entre los N trades usando el multiplicador, de forma que si perdés los N trades seguidos, la pérdida acumulada sea exactamente este %.">
+          <label>🛑 Pérdida Máxima Total permitida (%)</label>
+          <input type="number" id="fond_maxloss" value="10" step="0.1" min="0.1" max="50" oninput="initFondeo()">
+        </div>
+
         <!-- Tabla editable -->
         <div style="overflow-x:auto;border-radius:var(--r);border:1px solid var(--border);margin-bottom:1rem;">
           <table style="width:100%;border-collapse:collapse;font-size:11px;" id="fondTable">
@@ -9966,13 +9976,15 @@ let fondLoaded = false; // evita regenerar la cascada en la primera carga
 function saveFondeo(){
   try{
     const cfg = {
-      balance:  document.getElementById('fond_balance')?.value,
-      rr:       document.getElementById('fond_rr')?.value,
-      risk:     document.getElementById('fond_risk')?.value,
-      mult:     document.getElementById('fond_mult')?.value,
-      trades:   document.getElementById('fond_trades')?.value,
-      objetivo: document.getElementById('fond_objetivo')?.value,
-      risks:    fondRisks
+      balance:      document.getElementById('fond_balance')?.value,
+      rr:           document.getElementById('fond_rr')?.value,
+      risk:         document.getElementById('fond_risk')?.value,
+      mult:         document.getElementById('fond_mult')?.value,
+      trades:       document.getElementById('fond_trades')?.value,
+      objetivo:     document.getElementById('fond_objetivo')?.value,
+      maxlossMode:  document.getElementById('fond_maxloss_mode')?.checked,
+      maxloss:      document.getElementById('fond_maxloss')?.value,
+      risks:        fondRisks
     };
     localStorage.setItem(FOND_KEY, JSON.stringify(cfg));
   }catch(e){}
@@ -9981,6 +9993,37 @@ function saveFondeo(){
 function loadFondeoCfg(){
   try{ return JSON.parse(localStorage.getItem(FOND_KEY)||'null'); }
   catch(e){ return null; }
+}
+
+// Suma de la serie geométrica 1 + mult + mult^2 + ... (nTrades términos)
+function sumaCascada(nTrades, mult){
+  let sum=0, cur=1;
+  for(let i=0;i<nTrades;i++){ sum+=cur; cur*=mult; }
+  return sum;
+}
+
+// Calcula el riesgo base: manual, o derivado de la pérdida máxima total repartida en cascada
+function computeRiskBase(nTrades, mult){
+  const modo = document.getElementById('fond_maxloss_mode')?.checked;
+  const riskInput = document.getElementById('fond_risk');
+  if(modo){
+    const maxLoss = parseFloat(document.getElementById('fond_maxloss')?.value)||10;
+    const riskBase = (maxLoss/100) / sumaCascada(nTrades, mult);
+    if(riskInput){ riskInput.value = +(riskBase*100).toFixed(4); riskInput.disabled = true; }
+    return riskBase;
+  }
+  if(riskInput) riskInput.disabled = false;
+  return (parseFloat(riskInput?.value)||0.7)/100;
+}
+
+// Muestra/oculta el campo de pérdida máxima y recalcula
+function toggleMaxLossMode(){
+  const wrap = document.getElementById('fond_maxloss_wrap');
+  const on = document.getElementById('fond_maxloss_mode')?.checked;
+  if(wrap) wrap.style.display = on ? 'block' : 'none';
+  const riskInput = document.getElementById('fond_risk');
+  if(riskInput) riskInput.disabled = !!on;
+  resetFondeo();
 }
 
 // Inicializa/reinicia la tabla con los valores del multiplicador
@@ -9997,6 +10040,13 @@ function initFondeo(){
       setVal('fond_mult',     saved.mult);
       setVal('fond_trades',   saved.trades);
       setVal('fond_objetivo', saved.objetivo);
+      setVal('fond_maxloss',  saved.maxloss);
+      const cb = document.getElementById('fond_maxloss_mode');
+      if(cb) cb.checked = !!saved.maxlossMode;
+      const wrap = document.getElementById('fond_maxloss_wrap');
+      if(wrap) wrap.style.display = cb?.checked ? 'block' : 'none';
+      const riskInput = document.getElementById('fond_risk');
+      if(riskInput) riskInput.disabled = !!cb?.checked;
       if(Array.isArray(saved.risks) && saved.risks.length){
         fondRisks = saved.risks.map(Number);
       }
@@ -10005,9 +10055,9 @@ function initFondeo(){
     }
   }
 
-  const riskBase = (parseFloat(document.getElementById('fond_risk')?.value)||0.7)/100;
   const mult     = parseFloat(document.getElementById('fond_mult')?.value)||1.35;
   const nTrades  = Math.min(20, Math.max(1, parseInt(document.getElementById('fond_trades')?.value)||9));
+  const riskBase = computeRiskBase(nTrades, mult);
 
   fondRisks = [];
   let cur = riskBase;
@@ -10020,9 +10070,9 @@ function initFondeo(){
 
 // Regenera la cascada con el multiplicador, descartando los riesgos editados
 function resetFondeo(){
-  const riskBase = (parseFloat(document.getElementById('fond_risk')?.value)||0.7)/100;
   const mult     = parseFloat(document.getElementById('fond_mult')?.value)||1.35;
   const nTrades  = Math.min(20, Math.max(1, parseInt(document.getElementById('fond_trades')?.value)||9));
+  const riskBase = computeRiskBase(nTrades, mult);
   fondRisks = [];
   let cur = riskBase;
   for(let i=0;i<nTrades;i++){ fondRisks.push(parseFloat(cur.toFixed(5))); cur*=mult; }
@@ -10042,14 +10092,16 @@ function calcFondeo(){
 
   // Asegurar que fondRisks tenga la longitud correcta
   if(fondRisks.length !== nTrades){
-    const riskBase = (parseFloat(document.getElementById('fond_risk')?.value)||0.7)/100;
     const mult     = parseFloat(document.getElementById('fond_mult')?.value)||1.35;
+    const riskBase = computeRiskBase(nTrades, mult);
     fondRisks = [];
     let cur = riskBase;
     for(let i=0;i<nTrades;i++){ fondRisks.push(parseFloat(cur.toFixed(5))); cur*=mult; }
   }
 
-  // Leer valores actuales de los inputs si ya existen
+  // Leer valores actuales de los inputs si ya existen (no aplica en modo pérdida máxima:
+  // el riesgo inicial y la cascada son calculados, no editables fila por fila desde ahí,
+  // pero cada fila individual sigue siendo editable manualmente si el usuario la toca)
   for(let i=0;i<nTrades;i++){
     const inp = document.getElementById('fond_r_'+i);
     if(inp){
