@@ -3871,7 +3871,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <div class="kpi-grid" id="chKpis" style="margin-bottom:1.5rem;"></div>
 
-    <div class="table-wrap" data-help="Un renglón por cada vez que reseteaste el Backtest Challenge. 'Guardado' indica si esos trades además se copiaron al Backtest Histórico. Hacé clic en Ver detalle para el análisis completo con curva de equity y todos los trades del intento.">
+    <div class="table-wrap" data-help="Un renglón por cada vez que reseteaste el Backtest Challenge. Hacé clic en la fila para desplegar acá mismo los trades de ese intento. 'Guardado' indica si esos trades además se copiaron al Backtest Histórico — si no, podés agregarlos con el botón ➕. 'Ver detalle' abre el análisis completo con curva de equity.">
       <table>
         <thead><tr><th>#</th><th>Cuenta</th><th>Período</th><th>Resultado</th><th>Trades</th><th>Win Rate</th><th>PF</th><th>Guardado</th><th></th></tr></thead>
         <tbody id="chBody"></tbody>
@@ -7513,11 +7513,9 @@ function resetBt(){
   openModal('btResetModal');
 }
 
-function resetBtSave(){
-  const cfg = NEOMAA[btAccount];
-  const size = cfg ? cfg.size : 5000;
-  const cuenta = btTrades.filter(t=>t.account===btAccount);
-  const converted = cuenta.map(t=>{
+// Convierte trades de Backtest/Challenge al formato que usa Backtest Histórico.
+function btTradesToHistFormat(list, size){
+  return list.map(t=>{
     const pctArr = size>0 ? Math.abs(t.riskUSD||0)/size*100 : 0;
     const pctGan = size>0 ? (t.pnl_direct||0)/size*100 : 0;
     const d = t.date||'';
@@ -7526,6 +7524,13 @@ function resetBtSave(){
     const dia = parts.length>=3 ? parseInt(parts[2]) : '';
     return { id:Date.now()+Math.random(), date:d, mesAno, dia, par:'', session:t.session||'', zona:t.zona||'', type:t.type||'', result:t.result||getResult(t.pnl_direct||0), pctArr, pctGan, conf:'', tv:t.tv||'', notes:t.notes||'' };
   });
+}
+
+function resetBtSave(){
+  const cfg = NEOMAA[btAccount];
+  const size = cfg ? cfg.size : 5000;
+  const cuenta = btTrades.filter(t=>t.account===btAccount);
+  const converted = btTradesToHistFormat(cuenta, size);
   archivarChallenge(cuenta, true);
   histTrades = histTrades.concat(converted);
   btTrades = btTrades.filter(t=>t.account!==btAccount);
@@ -8049,6 +8054,19 @@ function refreshChallengeRecord(c){
   c.resultado = run.finalPhase;
 }
 
+// Copia a Backtest Histórico los trades de un challenge archivado que se había descartado.
+function agregarChallengeAHistorico(id){
+  const c = btChallenges.find(x=>x.id===Number(id));
+  if(!c || c.guardadoEnHistorico) return;
+  const size = c.cfgSnapshot ? c.cfgSnapshot.size : 5000;
+  const converted = btTradesToHistFormat(c.trades, size);
+  histTrades = histTrades.concat(converted);
+  c.guardadoEnHistorico = true;
+  markDirty();save();
+  renderChallengeHistory();
+  toast(`${converted.length} trade${converted.length===1?'':'s'} agregado${converted.length===1?'':'s'} a Backtest Histórico`,'ok');
+}
+
 function chResultLabel(r){ return {fase1:'Fase 1', fase2:'Fase 2', funded:'Funded', blown:'Blown'}[r] || r; }
 function chResultBadgeClass(r){ return {fase1:'b-challenge', fase2:'b-verification', funded:'b-funded', blown:'b-blown'}[r] || 'b-be'; }
 function chAccountLabel(acc){
@@ -8095,21 +8113,46 @@ function renderChallengeHistory(){
   bodyEl.innerHTML = list.map((c,i)=>{
     const run = simulateChallengeRun(c.trades, c.cfgSnapshot);
     const periodo = (c.startDate||'?') + ' → ' + (c.endDate||'?');
-    return `<tr>
-      <td>${list.length-i}</td>
+    const isOpen = expandedChallengeId===c.id;
+    const mainRow = `<tr class="ch-row" style="cursor:pointer;" onclick="toggleChallengeRow('${c.id}')" data-help="Hacé clic en la fila para ver acá mismo los trades de este intento.">
+      <td>${isOpen?'▾':'▸'} ${list.length-i}</td>
       <td>${chAccountLabel(c.account)}</td>
       <td style="font-size:11px;">${periodo}</td>
       <td><span class="badge ${chResultBadgeClass(c.resultado)}">${chResultLabel(c.resultado)}</span></td>
       <td>${run.n}</td>
       <td style="color:${run.wr>=.5?'var(--green)':'var(--red)'}">${(run.wr*100).toFixed(1)}%</td>
       <td style="color:${run.pf>=1?'var(--green)':'var(--red)'}">${run.pf.toFixed(2)}</td>
-      <td>${c.guardadoEnHistorico ? '✅' : '—'}</td>
+      <td>${c.guardadoEnHistorico ? '✅' : `<button class="btn sm ghost" onclick="event.stopPropagation();agregarChallengeAHistorico('${c.id}')" data-help="Copia los trades de este intento a Backtest Histórico, para que también aparezcan ahí." style="font-size:9px;padding:2px 7px;">➕ Agregar</button>`}</td>
       <td style="white-space:nowrap;">
-        <button class="btn sm ghost" onclick="verChallengeDetalle('${c.id}')" data-help="Abre el análisis completo de este intento: curva de equity por fase, KPIs, desglose por sesión/zona y todos sus trades." style="font-size:10px;">Ver detalle</button>
-        <button class="btn sm danger" onclick="eliminarChallengeArchivado('${c.id}')" data-help="Elimina este registro archivado. No afecta los trades que ya se guardaron en Backtest Histórico." style="font-size:10px;">🗑</button>
+        <button class="btn sm ghost" onclick="event.stopPropagation();verChallengeDetalle('${c.id}')" data-help="Abre el análisis completo de este intento: curva de equity por fase, KPIs, desglose por sesión/zona y todos sus trades." style="font-size:10px;">Ver detalle</button>
+        <button class="btn sm danger" onclick="event.stopPropagation();eliminarChallengeArchivado('${c.id}')" data-help="Elimina este registro archivado. No afecta los trades que ya se guardaron en Backtest Histórico." style="font-size:10px;">🗑</button>
       </td>
     </tr>`;
+    const expandRow = !isOpen ? '' : `<tr class="ch-row-expand"><td colspan="9" style="padding:0;background:rgba(255,255,255,.03);">
+      <div style="padding:.8rem 1.1rem;">
+        <table style="width:100%;"><thead><tr><th>Fecha</th><th>Hora</th><th>Sesión</th><th>Zona</th><th>Tipo</th><th>Riesgo</th><th>P&L</th><th>R</th><th>Gráfico</th><th>Notas</th></tr></thead>
+        <tbody>${run.enriched.map(t=>{
+          const isSnap = t.tv && /tradingview\.com\/x\//i.test(t.tv);
+          const imgId = `cht-img-${c.id}-${t.id}`;
+          const grafico = !t.tv ? '—'
+            : `<a class="tv-link" href="${escHtml(t.tv)}" target="_blank" rel="noopener">Ver ↗</a>${isSnap?`<img id="${imgId}" src="${escHtml(t.tv)}" alt="Chart" style="height:44px;border-radius:5px;border:1px solid rgba(56,189,248,.25);display:block;margin-top:3px;" onerror="document.getElementById('${imgId}').style.display='none'">`:''}`;
+          return `<tr>
+          <td>${t.date||''}</td><td>${t.hora||''}</td><td>${t.session||''}</td><td>${escHtml(t.zona||'')}</td>
+          <td>${t.type||''}</td><td>${fmtUSD(t.riskUSD||0)}</td>
+          <td style="color:${t.pnl>=0?'var(--green)':'var(--red)'}">${fmtUSD(t.pnl)}</td>
+          <td>${(t.rr||0).toFixed(2)}R</td><td>${grafico}</td><td style="font-size:11px;color:var(--sub);">${escHtml(t.notes||'')}</td>
+        </tr>`;}).join('')}</tbody></table>
+      </div>
+    </td></tr>`;
+    return mainRow + expandRow;
   }).join('');
+}
+
+let expandedChallengeId = null;
+function toggleChallengeRow(id){
+  id = Number(id);
+  expandedChallengeId = (expandedChallengeId===id) ? null : id;
+  renderChallengeHistory();
 }
 
 let chDetailChart = null;
