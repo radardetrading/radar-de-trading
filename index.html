@@ -795,7 +795,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
     radial-gradient(1100px 700px at 50% -15%, #0e1e45 0%, var(--bg) 58%);
 }
 .login-card{
-  position:relative; width:100%; max-width:360px;
+  position:relative; z-index:1; width:100%; max-width:360px;
   background:linear-gradient(160deg,rgba(12,28,70,.96),rgba(6,14,42,.98));
   border:1px solid rgba(99,160,255,.2); border-radius:20px;
   padding:2.4rem 2rem 1.8rem; text-align:center; overflow:hidden;
@@ -805,6 +805,48 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   animation:loginIn .5s cubic-bezier(.16,1,.3,1);
 }
 @keyframes loginIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+
+/* Centro de mando: fondo tipo sonar de submarino detrás de la tarjeta de login */
+.login-hud{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+.hud-grid{
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(56,189,248,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,.06) 1px, transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 65% at 50% 42%, #000 0%, transparent 78%);
+  mask-image:radial-gradient(ellipse 70% 65% at 50% 42%, #000 0%, transparent 78%);
+}
+.hud-sonar{
+  position:absolute; left:50%; top:44%; width:min(900px,140vw); height:min(900px,140vw);
+  transform:translate(-50%,-50%); border-radius:50%;
+  border:1px solid rgba(56,189,248,.14);
+  background:repeating-radial-gradient(circle, rgba(56,189,248,.1) 0 1px, transparent 1px 110px);
+}
+.hud-sonar::before{
+  content:''; position:absolute; inset:0; border-radius:50%;
+  background:
+    linear-gradient(rgba(56,189,248,.12),rgba(56,189,248,.12)) center/100% 1px no-repeat,
+    linear-gradient(90deg,rgba(56,189,248,.12),rgba(56,189,248,.12)) center/1px 100% no-repeat;
+}
+.hud-sonar::after{
+  content:''; position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(from 0deg, rgba(56,189,248,.28), transparent 38deg);
+  mix-blend-mode:screen;
+  animation:hudSweep 4.8s linear infinite;
+}
+@keyframes hudSweep{to{transform:rotate(360deg)}}
+.hud-corners .hc{position:absolute; width:34px; height:34px; border-color:rgba(56,189,248,.4);}
+.hud-corners .tl{top:24px; left:24px; border-top:2px solid; border-left:2px solid;}
+.hud-corners .tr{top:24px; right:24px; border-top:2px solid; border-right:2px solid;}
+.hud-corners .bl{bottom:24px; left:24px; border-bottom:2px solid; border-left:2px solid;}
+.hud-corners .br{bottom:24px; right:24px; border-bottom:2px solid; border-right:2px solid;}
+.hud-blip{position:absolute; width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 10px rgba(251,191,36,.8); animation:hudBlip 2.6s ease-in-out infinite;}
+.hud-blip.b1{top:30%; left:26%; animation-delay:.2s;}
+.hud-blip.b2{top:64%; left:70%; background:var(--cyan); box-shadow:0 0 10px rgba(56,189,248,.8); animation-delay:1.15s;}
+.hud-blip.b3{top:72%; left:20%; animation-delay:.7s;}
+@keyframes hudBlip{0%,100%{opacity:.25; transform:scale(.8)}50%{opacity:1; transform:scale(1.3)}}
+@media (prefers-reduced-motion: reduce){.hud-sonar::after,.hud-blip{animation:none;}}
 .login-glow{
   position:absolute; top:-120px; left:50%; transform:translateX(-50%);
   width:300px; height:300px; pointer-events:none;
@@ -2506,6 +2548,14 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
 
 <div id="loginOverlay">
+  <div class="login-hud" aria-hidden="true">
+    <div class="hud-grid"></div>
+    <div class="hud-sonar"></div>
+    <div class="hud-corners"><span class="hc tl"></span><span class="hc tr"></span><span class="hc bl"></span><span class="hc br"></span></div>
+    <div class="hud-blip b1"></div>
+    <div class="hud-blip b2"></div>
+    <div class="hud-blip b3"></div>
+  </div>
   <div class="login-card">
     <div class="login-glow"></div>
     <div class="login-logo-wrap"><span class="radar-sweep"><img src="logo.png" alt="Radar de Trading"></span></div>
