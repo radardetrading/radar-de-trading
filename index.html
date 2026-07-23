@@ -2711,7 +2711,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div id="dashPilaresList" style="display:flex;flex-direction:column;gap:7px;"></div>
       </div>
     </div>
-    <div class="card" data-help="Calendario de trading: cada día se pinta verde (ganador), rojo (perdedor) o gris (breakeven) según el P&L de ese día. El día de hoy tiene un borde celeste." style="padding:1.2rem;margin-bottom:1.5rem;">
+    <div class="card" data-help="Calendario de trading: cada día se pinta verde (ganador), rojo (perdedor) o gris (breakeven) según el P&L de ese día. El día de hoy tiene un borde celeste. Los días con borde dorado punteado y ⏰ marcan el vencimiento de inactividad (30 días) de alguna cuenta activa; si ese día cae sábado o domingo, se muestra el viernes anterior (último día hábil para operar forex/futuros)." style="padding:1.2rem;margin-bottom:1.5rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
         <div class="section-label" id="calMonthLabel">Calendario</div>
         <div style="display:flex;gap:4px;">
@@ -9456,6 +9456,26 @@ function renderCuentas(){
   renderInactividad();
 }
 
+// Fecha límite de inactividad: último trade (o alta de cuenta) + 30 días.
+// Si ese día 30 cae sábado o domingo, se adelanta al viernes (último día hábil para operar forex/futuros).
+function getFechaLimiteInactividad(a){
+  const last=trades.filter(t=>t.accountId===a.id&&t.date).sort((x,y)=>y.date.localeCompare(x.date))[0];
+  const lastDate=last?last.date:(a.startDate||null);
+  const hasReal=!!last;
+  if(!lastDate) return{lastDate:null,hasReal,fechaLimite:null,diasDesde:30,diasRest:0,zone:'ok'};
+  const today=new Date();today.setHours(0,0,0,0);
+  const base=new Date(lastDate+'T00:00:00');
+  const diasDesde=Math.max(0,Math.floor((today-base)/86400000));
+  const fechaLimite=new Date(base);
+  fechaLimite.setDate(fechaLimite.getDate()+30);
+  const dow=fechaLimite.getDay();
+  if(dow===6) fechaLimite.setDate(fechaLimite.getDate()-1); // sábado → viernes
+  else if(dow===0) fechaLimite.setDate(fechaLimite.getDate()-2); // domingo → viernes
+  const diasRest=Math.round((fechaLimite-today)/86400000);
+  const zone=diasRest<0?'dead':diasRest<7?'danger':diasRest<14?'warn':'ok';
+  return{lastDate,hasReal,fechaLimite,diasDesde,diasRest,zone};
+}
+
 let inactOpen=false;
 function toggleInact(){inactOpen=!inactOpen;renderInactividad();}
 
@@ -9465,19 +9485,9 @@ function renderInactividad(){
   const activeAccs=accounts.filter(a=>a.phase!=='blown'&&a.phase!=='passed');
   if(!activeAccs.length){panel.style.display='none';return;}
   panel.style.display='';
-  const today=new Date();today.setHours(0,0,0,0);
   const rows=activeAccs.map(a=>{
-    const last=trades.filter(t=>t.accountId===a.id&&t.date).sort((x,y)=>y.date.localeCompare(x.date))[0];
-    const lastDate=last?last.date:(a.startDate||null);
-    const hasReal=!!last;
-    let diasDesde=30,diasRest=0;
-    if(lastDate){
-      const d=new Date(lastDate+'T00:00:00');
-      diasDesde=Math.max(0,Math.floor((today-d)/86400000));
-      diasRest=30-diasDesde;
-    }
-    const zone=diasRest<0?'dead':diasRest<7?'danger':diasRest<14?'warn':'ok';
-    return{a,lastDate,hasReal,diasDesde,diasRest,zone};
+    const info=getFechaLimiteInactividad(a);
+    return{a,...info};
   }).sort((a,b)=>a.diasRest-b.diasRest);
   const cnt=z=>rows.filter(r=>r.zone===z).length;
   const [dead,danger,warn,ok]=['dead','danger','warn','ok'].map(cnt);
@@ -9510,16 +9520,12 @@ function renderInactividad(){
 function renderDashInact(){
   const panel=document.getElementById('dashInactPanel');
   if(!panel) return;
-  const today=new Date();today.setHours(0,0,0,0);
   const urgent=accounts
     .filter(a=>a.phase!=='blown'&&a.phase!=='passed')
     .map(a=>{
-      const last=trades.filter(t=>t.accountId===a.id&&t.date).sort((x,y)=>y.date.localeCompare(x.date))[0];
-      const lastDate=last?last.date:(a.startDate||null);
-      let diasRest=30;
-      if(lastDate){const d=new Date(lastDate+'T00:00:00');diasRest=30-Math.max(0,Math.floor((today-d)/86400000));}
-      const zone=diasRest<0?'dead':diasRest<7?'danger':'ok';
-      return{a,diasRest,zone};
+      const info=getFechaLimiteInactividad(a);
+      const zone=info.diasRest<0?'dead':info.diasRest<7?'danger':'ok';
+      return{a,diasRest:info.diasRest,zone};
     })
     .filter(r=>r.zone==='dead'||r.zone==='danger')
     .sort((a,b)=>a.diasRest-b.diasRest);
@@ -11596,6 +11602,19 @@ function renderCalendar(){
     }
   });
 
+  // Vencimientos de inactividad (30 días) que caen en este mes — ya ajustados a viernes si tocaban fin de semana
+  const vencMap={};
+  accounts.filter(a=>a.phase!=='blown'&&a.phase!=='passed').forEach(a=>{
+    const info=getFechaLimiteInactividad(a);
+    if(!info.fechaLimite) return;
+    const v=info.fechaLimite;
+    if(v.getFullYear()===year&&v.getMonth()===month){
+      const ds=year+'-'+String(month+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
+      if(!vencMap[ds]) vencMap[ds]=[];
+      vencMap[ds].push(a);
+    }
+  });
+
   const firstDay=new Date(year,month,1).getDay();
   // For 5-col (Mon-Fri) grid: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4
   // getDay(): 0=Sun,1=Mon,...,5=Fri,6=Sat
@@ -11674,6 +11693,18 @@ function renderCalendar(){
     }
     if(data){
       cell.onclick=()=>{document.getElementById('jSearch').value=dateStr;nav('journal');};
+    }
+    const vencs=vencMap[dateStr];
+    if(vencs&&vencs.length){
+      cell.style.border='2px dashed var(--gold)';
+      cell.style.boxShadow=(cell.style.boxShadow?cell.style.boxShadow+',':'')+'0 0 10px rgba(251,191,36,.35)';
+      const clock=document.createElement('div');
+      clock.style.cssText='position:absolute;top:4px;right:6px;font-size:10px;line-height:1;';
+      clock.textContent='⏰';
+      cell.appendChild(clock);
+      const vLines='⏰ Vence: '+vencs.map(x=>x.name).join(', ');
+      cell.title=cell.title?cell.title+'\n―――――――――\n'+vLines:vLines;
+      if(!data){cell.style.cursor='pointer';cell.onclick=()=>nav('cuentas');}
     }
     grid.appendChild(cell);
   }
