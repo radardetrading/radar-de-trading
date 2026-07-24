@@ -846,7 +846,22 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
 .hud-blip.b2{top:64%; left:70%; background:var(--cyan); box-shadow:0 0 10px rgba(56,189,248,.8); animation-delay:1.15s;}
 .hud-blip.b3{top:72%; left:20%; animation-delay:.7s;}
 @keyframes hudBlip{0%,100%{opacity:.25; transform:scale(.8)}50%{opacity:1; transform:scale(1.3)}}
-@media (prefers-reduced-motion: reduce){.hud-sonar::after,.hud-blip{animation:none;}}
+.hud-callsign{
+  position:absolute; left:50%; top:9%; transform:translateX(-50%);
+  font-family:'JetBrains Mono',monospace; font-weight:800;
+  font-size:clamp(26px,8.5vw,58px); letter-spacing:.3em;
+  white-space:nowrap; text-align:center; user-select:none;
+  color:transparent; background-clip:text; -webkit-background-clip:text;
+  background-image:linear-gradient(100deg,
+    rgba(56,189,248,.14) 0%, rgba(56,189,248,.14) 40%,
+    rgba(251,191,36,.55) 50%,
+    rgba(56,189,248,.14) 60%, rgba(56,189,248,.14) 100%);
+  background-size:250% 100%;
+  animation:hudCallsignSheen 5s linear infinite, hudCallsignFlicker 4.2s ease-in-out infinite;
+}
+@keyframes hudCallsignSheen{0%{background-position:200% 0}100%{background-position:-100% 0}}
+@keyframes hudCallsignFlicker{0%,100%{opacity:.5}45%{opacity:.5}50%{opacity:.85}55%{opacity:.5}78%{opacity:.5}80%{opacity:.22}82%{opacity:.5}}
+@media (prefers-reduced-motion: reduce){.hud-sonar::after,.hud-blip,.hud-callsign{animation:none;}}
 .login-glow{
   position:absolute; top:-120px; left:50%; transform:translateX(-50%);
   width:300px; height:300px; pointer-events:none;
@@ -2555,6 +2570,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div class="hud-blip b1"></div>
     <div class="hud-blip b2"></div>
     <div class="hud-blip b3"></div>
+    <div class="hud-callsign">RADAR&nbsp;DE&nbsp;TRADING</div>
   </div>
   <div class="login-card">
     <div class="login-glow"></div>
