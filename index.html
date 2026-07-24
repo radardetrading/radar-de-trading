@@ -851,19 +851,13 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   font-family:'JetBrains Mono',monospace; font-weight:800;
   font-size:clamp(26px,8.5vw,58px); letter-spacing:.3em;
   white-space:nowrap; text-align:center; user-select:none;
-  color:transparent; background-clip:text; -webkit-background-clip:text;
-  background-image:linear-gradient(100deg,
-    rgba(56,189,248,.14) 0%, rgba(56,189,248,.14) 40%,
-    rgba(251,191,36,.55) 50%,
-    rgba(56,189,248,.14) 60%, rgba(56,189,248,.14) 100%);
-  background-size:250% 100%;
-  animation:hudCallsignSheen 4.8s linear infinite, hudCallsignFlicker 4.8s linear infinite;
+  color:rgba(160,205,255,.28);
+  text-shadow:none;
+  animation:hudCallsignFlash 4.8s linear infinite;
 }
-@keyframes hudCallsignSheen{0%{background-position:200% 0}100%{background-position:-100% 0}}
-@keyframes hudCallsignFlicker{
-  0%,100%{opacity:.95; filter:drop-shadow(0 0 10px rgba(251,191,36,.6));}
-  6%{opacity:.35; filter:drop-shadow(0 0 0 rgba(251,191,36,0));}
-  92%{opacity:.35; filter:drop-shadow(0 0 0 rgba(251,191,36,0));}
+@keyframes hudCallsignFlash{
+  0%,100%{color:#fff8dc; text-shadow:0 0 10px rgba(251,191,36,.95),0 0 30px rgba(251,191,36,.55);}
+  10%,90%{color:rgba(160,205,255,.28); text-shadow:none;}
 }
 @media (prefers-reduced-motion: reduce){.hud-sonar::after,.hud-blip,.hud-callsign{animation:none;}}
 .login-glow{
