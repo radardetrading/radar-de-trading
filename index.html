@@ -5368,11 +5368,19 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
 <div class="overlay" id="backupsModal">
   <div class="modal" style="max-width:480px;">
     <button class="modal-close" onclick="closeModal('backupsModal')">✕</button>
-    <div class="modal-title">🛟 Recuperar backup local</div>
+    <div class="modal-title">🛟 Recuperar backup</div>
+
+    <div class="section-label" style="margin-bottom:.6rem;">🖥️ En este dispositivo</div>
     <p style="font-size:11px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
       Estas copias se guardan automáticamente en este dispositivo cada vez que guardás. Son independientes de la nube.
     </p>
-    <div id="backupsList"></div>
+    <div id="backupsListLocal" style="margin-bottom:1.4rem;"></div>
+
+    <div class="section-label" style="margin-bottom:.6rem;">☁️ En la nube (últimos 30 días)</div>
+    <p style="font-size:11px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
+      Copia diaria automática guardada en el servidor. Sirve si cambiás de dispositivo o se borra el navegador.
+    </p>
+    <div id="backupsListCloud"></div>
   </div>
 </div>
 
@@ -5943,7 +5951,7 @@ function localSnapshotKey(){
 function abrirModalBackups(){
   const prefix = 'hq_roll_'+(CURRENT_USER?.id||'anon')+'_';
   const keys = Object.keys(localStorage).filter(k=>k.startsWith(prefix)).sort().reverse();
-  const container = document.getElementById('backupsList');
+  const container = document.getElementById('backupsListLocal');
   if(!keys.length){
     container.innerHTML = '<div style="color:var(--sub);font-size:12px;text-align:center;padding:20px;">No hay backups disponibles todavía.<br>Se crean automáticamente al guardar.</div>';
   } else {
@@ -5965,6 +5973,55 @@ function abrirModalBackups(){
     }).join('');
   }
   openModal('backupsModal');
+  cargarBackupsCloud();
+}
+
+async function cargarBackupsCloud(){
+  const container = document.getElementById('backupsListCloud');
+  if(!container) return;
+  if(!CURRENT_USER){
+    container.innerHTML = '<div style="color:var(--sub);font-size:12px;text-align:center;padding:20px;">Iniciá sesión para ver los backups de la nube.</div>';
+    return;
+  }
+  container.innerHTML = '<div style="color:var(--sub);font-size:12px;text-align:center;padding:20px;">Cargando…</div>';
+  try{
+    const { data, error } = await sb.from('estado_backups')
+      .select('id,created_at').eq('user_id', CURRENT_USER.id)
+      .order('created_at', { ascending: false });
+    if(error) throw error;
+    if(!data || !data.length){
+      container.innerHTML = '<div style="color:var(--sub);font-size:12px;text-align:center;padding:20px;">Todavía no hay backups en la nube.<br>Se genera uno nuevo por día.</div>';
+      return;
+    }
+    container.innerHTML = data.map((b,i)=>{
+      const ts = new Date(b.created_at).toLocaleString('es-AR');
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;">
+        <div style="min-width:0;">
+          <div style="font-size:11px;font-weight:600;color:var(--text);">${i===0?'<span style="color:var(--cyan);">● Más reciente</span> &nbsp;':''}<span style="color:var(--sub);">${ts}</span></div>
+        </div>
+        <button class="btn sm primary" onclick="restaurarBackupCloud(${b.id})" style="white-space:nowrap;font-size:10px;flex-shrink:0;">Restaurar</button>
+      </div>`;
+    }).join('');
+  }catch(e){
+    container.innerHTML = '<div style="color:var(--sub);font-size:12px;text-align:center;padding:20px;">No se pudieron cargar los backups de la nube.</div>';
+  }
+}
+
+async function restaurarBackupCloud(id){
+  if(!confirm('¿Restaurar este backup de la nube?\n\nEl estado actual se guardará primero. Podés volver atrás usando otro backup de la lista.')) return;
+  try{
+    const { data, error } = await sb.from('estado_backups').select('data').eq('id', id).maybeSingle();
+    if(error || !data){ toast('No se pudo leer el backup de la nube','err'); return; }
+    save();
+    aplicarEstado(data.data);
+    if(CURRENT_USER) save();
+    closeModal('backupsModal');
+    try{ renderDashboard(); }catch(_){}
+    try{ calcBacktest(); }catch(_){}
+    toast('Backup de la nube restaurado correctamente','ok');
+  }catch(e){
+    toast('No se pudo restaurar el backup de la nube','err');
+  }
 }
 
 function restaurarBackup(key){

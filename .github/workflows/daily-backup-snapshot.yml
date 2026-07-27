@@ -1,0 +1,20 @@
+name: Daily Backup Snapshot
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # 10:00 UTC = 07:00 Argentina
+  workflow_dispatch:        # también se puede disparar a mano desde GitHub
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Guardar snapshot diario en la nube
+        run: node scripts/backup-snapshot.js
+        env:
+          SUPABASE_URL: https://mbcdwdpaxrcaplfnjsml.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

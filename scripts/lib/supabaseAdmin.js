@@ -26,3 +26,23 @@ export async function updateEstadoData(userId, data, mutatorFn){
   });
   if(!res.ok) throw new Error(`Supabase updateEstadoData(${userId}): ${res.status} ${await res.text()}`);
 }
+
+// Inserta una copia (snapshot) del estado de un usuario en estado_backups.
+export async function insertBackupSnapshot(userId, data){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/estado_backups`, {
+    method: 'POST',
+    headers: { ...headers(), Prefer: 'return=minimal' },
+    body: JSON.stringify({ user_id: userId, data })
+  });
+  if(!res.ok) throw new Error(`Supabase insertBackupSnapshot(${userId}): ${res.status} ${await res.text()}`);
+}
+
+// Borra snapshots de estado_backups con mas de maxAgeDays de antiguedad (de todos los usuarios).
+export async function pruneBackupsOlderThan(maxAgeDays){
+  const cutoff = new Date(Date.now() - maxAgeDays * 86400000).toISOString();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/estado_backups?created_at=lt.${cutoff}`, {
+    method: 'DELETE',
+    headers: { ...headers(), Prefer: 'return=minimal' }
+  });
+  if(!res.ok) throw new Error(`Supabase pruneBackupsOlderThan: ${res.status} ${await res.text()}`);
+}
