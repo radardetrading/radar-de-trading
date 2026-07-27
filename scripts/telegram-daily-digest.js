@@ -86,7 +86,10 @@ function calcularAlertas(data, hoy){
     const inactLines = [];
     for(const a of accounts.filter(a => a.phase !== 'blown' && a.phase !== 'passed')){
       const info = getFechaLimiteInactividad(a, trades, hoy);
-      if((info.zone === 'danger' || info.zone === 'dead') && debeAvisar(bucket[a.id], 7, hoy)){
+      // A diferencia de drawdown/metas, la inactividad avisa TODOS los dias mientras
+      // siga en zona roja (danger/dead) — deja de avisar solo cuando vuelve a warn/ok
+      // (ej. se cargo un trade nuevo) o la cuenta sale del chequeo (blown/passed).
+      if((info.zone === 'danger' || info.zone === 'dead') && debeAvisar(bucket[a.id], 1, hoy)){
         inactLines.push(info.zone === 'dead'
           ? `  • ${nombreCuenta(a)}: vencida hace ${-info.diasRest} día(s)`
           : `  • ${nombreCuenta(a)}: vence en ${info.diasRest} día(s)`);
