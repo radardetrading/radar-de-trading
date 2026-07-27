@@ -1,10 +1,13 @@
-// Corre cada ~10 min via GitHub Actions. Matchea codigos de vinculacion (RADAR-XXXX)
-// generados desde la web contra mensajes "/start RADAR-XXXX" recibidos por el bot,
-// y guarda el chat_id resultante en perfil.telegramChatId de ese usuario.
+// Corre cada ~10 min via GitHub Actions. Matchea codigos de vinculacion (RADARXXXX)
+// generados desde la web contra mensajes "/start RADARXXXX" recibidos por el bot
+// (a mano o via el deep-link/QR de Telegram, que manda el mismo mensaje), y guarda
+// el chat_id resultante en perfil.telegramChatId de ese usuario. Sin guion en el
+// codigo a proposito: el parametro "start=" de los deep-links de Telegram no admite
+// todos los caracteres, asi que se usa el mismo formato simple en los tres canales.
 import { fetchAllEstados, updateEstadoData } from './lib/supabaseAdmin.js';
 import { getUpdates, sendMessage } from './lib/telegram.js';
 
-const START_RE = /^\/start\s+(RADAR-[A-F0-9]{4})$/i;
+const START_RE = /^\/start\s+(RADAR[A-F0-9]{4})$/i;
 
 async function main(){
   const rows = await fetchAllEstados();

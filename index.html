@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="logo.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -5844,28 +5845,48 @@ function renderTelegramSection(){
         Vinculá tu Telegram para recibir por chat las mismas alertas de riesgo que ves en la web (inactividad, drawdown, rutina y metas), aunque no tengas la app abierta.
       </p>
       ${code ? `
-        <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;margin-bottom:1rem;">
-          <div style="font-size:11px;color:var(--sub);margin-bottom:.5rem;">1. Abrí Telegram y buscá <b>@${TELEGRAM_BOT_USERNAME}</b></div>
-          <div style="font-size:11px;color:var(--sub);margin-bottom:.5rem;">2. Mandale este mensaje:</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem;">
-            <code style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--cyan);background:var(--glass);padding:6px 10px;border-radius:6px;">/start ${code}</code>
-            <button class="btn sm ghost" onclick="copiarComandoTelegram('${code}')">Copiar</button>
-          </div>
-          <div style="font-size:11px;color:var(--sub);">3. Esperá un par de minutos y volvé a esta pantalla — se vincula automáticamente.</div>
+        <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:1rem;text-align:center;">
+          <div id="telegramQr" style="display:flex;justify-content:center;margin-bottom:.8rem;"></div>
+          <a class="btn primary" href="${telegramDeepLink(code)}" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;margin-bottom:.6rem;">Abrir el bot en Telegram</a>
+          <div style="font-size:11px;color:var(--sub);">Si estás desde el celular, tocá el botón. Si estás en la compu, escaneá el código con la cámara de Telegram.</div>
         </div>
+        <details style="margin-bottom:1rem;">
+          <summary style="font-size:11px;color:var(--sub);cursor:pointer;">¿No te funciona? Mandalo a mano</summary>
+          <div style="margin-top:.7rem;">
+            <div style="font-size:11px;color:var(--sub);margin-bottom:.5rem;">1. Abrí Telegram y buscá <b>@${TELEGRAM_BOT_USERNAME}</b></div>
+            <div style="font-size:11px;color:var(--sub);margin-bottom:.5rem;">2. Mandale este mensaje:</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <code style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--cyan);background:var(--glass);padding:6px 10px;border-radius:6px;">/start ${code}</code>
+              <button class="btn sm ghost" onclick="copiarComandoTelegram('${code}')">Copiar</button>
+            </div>
+          </div>
+        </details>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:1rem;">Después de vincularlo, esperá un par de minutos y volvé a esta pantalla.</div>
         <button class="btn sm ghost" onclick="generarTelegramLinkCode()">Generar otro código</button>
       ` : `
         <button class="btn primary" onclick="generarTelegramLinkCode()">Generar código de vinculación</button>
       `}
     `;
+    if(code) renderTelegramQr(code);
   }
+}
+
+function renderTelegramQr(code){
+  const el = document.getElementById('telegramQr');
+  if(!el || typeof QRCode === 'undefined') return;
+  el.innerHTML = '';
+  new QRCode(el, { text: telegramDeepLink(code), width: 150, height: 150 });
 }
 
 function generarTelegramLinkCode(){
   const hex = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase().slice(0,4);
-  perfil.telegramLinkCode = 'RADAR-' + hex;
+  perfil.telegramLinkCode = 'RADAR' + hex;
   save();
   renderTelegramSection();
+}
+
+function telegramDeepLink(code){
+  return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${code}`;
 }
 
 function copiarComandoTelegram(code){
