@@ -1,0 +1,21 @@
+name: Telegram Link Poller
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # cada 10 minutos
+  workflow_dispatch:          # también se puede disparar a mano desde GitHub
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Vincular codigos pendientes
+        run: node scripts/telegram-link-poller.js
+        env:
+          SUPABASE_URL: https://mbcdwdpaxrcaplfnjsml.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

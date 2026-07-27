@@ -4470,6 +4470,11 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
         <button class="btn primary" onclick="guardarPerfil()">Guardar Cambios</button>
       </div>
     </div>
+
+    <div class="card" style="padding:1.5rem;margin-top:1.2rem;" data-help="Avisos por Telegram: recibí en tu celular las mismas alertas de riesgo que ve la web (inactividad, drawdown, rutina y metas), aunque no tengas la app abierta.">
+      <div class="section-label" style="margin-bottom:1.2rem;">📲 Avisos por Telegram</div>
+      <div id="telegramSection"></div>
+    </div>
   </div>
 </div><!-- end page-perfil -->
 
@@ -5765,6 +5770,7 @@ function renderPerfil(){
   else { img.style.display='none'; ph.style.display='flex'; }
   document.getElementById('perfilEmailView').textContent = (CURRENT_USER && CURRENT_USER.email) || '—';
   document.getElementById('perfilFechaView').textContent = (CURRENT_USER && CURRENT_USER.created_at) ? new Date(CURRENT_USER.created_at).toLocaleDateString('es-AR') : '—';
+  renderTelegramSection();
 }
 
 // Redimensiona la foto elegida a 200x200 (recorte cuadrado centrado) y la deja lista como data-URL, pendiente de guardar.
@@ -5799,6 +5805,92 @@ function guardarPerfil(){
   if(perfilAvatarPendiente) perfil.avatar = perfilAvatarPendiente;
   save();
   toast('Perfil actualizado','ok');
+}
+
+// ── AVISOS POR TELEGRAM ──────────────────────────────────────────────────────
+// Username del bot de Radar en Telegram (actualizar acá cuando se cree con @BotFather).
+const TELEGRAM_BOT_USERNAME = 'radardetrading_bot';
+const TELEGRAM_PREF_LABELS = {
+  inactividad: '⏱ Cuenta en riesgo por inactividad',
+  drawdown:    '📉 Drawdown cerca del límite',
+  rutina:      '⚡ Rutina del día pendiente',
+  metas:       '🎯 Meta por vencer'
+};
+
+function renderTelegramSection(){
+  const box = document.getElementById('telegramSection');
+  if(!box) return;
+  if(perfil.telegramChatId){
+    const prefs = perfil.telegramPrefs || {inactividad:true, drawdown:true, rutina:true, metas:true};
+    const fecha = perfil.telegramLinkedAt ? new Date(perfil.telegramLinkedAt).toLocaleDateString('es-AR') : '';
+    box.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:1rem;">
+        <span class="badge b-funded">✅ Vinculado</span>
+        ${fecha?`<span style="font-size:11px;color:var(--sub);">desde ${fecha}</span>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:1.2rem;">
+        ${Object.keys(TELEGRAM_PREF_LABELS).map(k=>`
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:400;cursor:pointer;padding:4px 0;">
+            <input type="checkbox" id="tg_pref_${k}" ${prefs[k]!==false?'checked':''} onchange="guardarTelegramPrefs()" style="cursor:pointer;">
+            ${TELEGRAM_PREF_LABELS[k]}
+          </label>`).join('')}
+      </div>
+      <button class="btn sm ghost" style="color:var(--red);border-color:rgba(248,113,113,.3);" onclick="desvincularTelegram()">Desvincular Telegram</button>
+    `;
+  } else {
+    const code = perfil.telegramLinkCode;
+    box.innerHTML = `
+      <p style="font-size:12px;color:var(--sub);margin-bottom:1rem;">
+        Vinculá tu Telegram para recibir por chat las mismas alertas de riesgo que ves en la web (inactividad, drawdown, rutina y metas), aunque no tengas la app abierta.
+      </p>
+      ${code ? `
+        <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;margin-bottom:1rem;">
+          <div style="font-size:11px;color:var(--sub);margin-bottom:.5rem;">1. Abrí Telegram y buscá <b>@${TELEGRAM_BOT_USERNAME}</b></div>
+          <div style="font-size:11px;color:var(--sub);margin-bottom:.5rem;">2. Mandale este mensaje:</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem;">
+            <code style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--cyan);background:var(--glass);padding:6px 10px;border-radius:6px;">/start ${code}</code>
+            <button class="btn sm ghost" onclick="copiarComandoTelegram('${code}')">Copiar</button>
+          </div>
+          <div style="font-size:11px;color:var(--sub);">3. Esperá un par de minutos y volvé a esta pantalla — se vincula automáticamente.</div>
+        </div>
+        <button class="btn sm ghost" onclick="generarTelegramLinkCode()">Generar otro código</button>
+      ` : `
+        <button class="btn primary" onclick="generarTelegramLinkCode()">Generar código de vinculación</button>
+      `}
+    `;
+  }
+}
+
+function generarTelegramLinkCode(){
+  const hex = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase().slice(0,4);
+  perfil.telegramLinkCode = 'RADAR-' + hex;
+  save();
+  renderTelegramSection();
+}
+
+function copiarComandoTelegram(code){
+  navigator.clipboard.writeText('/start ' + code).then(()=>toast('Comando copiado','ok')).catch(()=>toast('No se pudo copiar','err'));
+}
+
+function guardarTelegramPrefs(){
+  const prefs = {};
+  Object.keys(TELEGRAM_PREF_LABELS).forEach(k=>{
+    const el = document.getElementById('tg_pref_'+k);
+    prefs[k] = el ? el.checked : true;
+  });
+  perfil.telegramPrefs = prefs;
+  save();
+  toast('Preferencias de aviso guardadas','ok');
+}
+
+function desvincularTelegram(){
+  if(!confirm('¿Desvincular tu Telegram? Vas a dejar de recibir avisos por chat.')) return;
+  delete perfil.telegramChatId;
+  delete perfil.telegramLinkCode;
+  delete perfil.telegramLinkedAt;
+  save();
+  renderTelegramSection();
+  toast('Telegram desvinculado','ok');
 }
 
 // Backup local diario (red de seguridad extra, además de la nube)
