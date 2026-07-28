@@ -9850,7 +9850,7 @@ function verCuentaDetalle(accId){
     accDetailChart = new Chart(ctx,{
       type:'line',
       data:{ labels:eqLabels, datasets:[{ data:eqData, borderColor:'#38bdf8', backgroundColor:grad, borderWidth:2, pointRadius:eqData.length>30?0:3, tension:.35, fill:true }] },
-      options:{ ...chartOpts(v=>'$'+v.toFixed(0)), maintainAspectRatio:false }
+      options: chartOpts(v=>'$'+v.toFixed(0))
     });
   }
 }
