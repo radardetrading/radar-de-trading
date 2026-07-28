@@ -5600,6 +5600,15 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
   </div>
 </div>
 
+<!-- DETALLE DE CUENTA -->
+<div class="overlay" id="accDetailModal">
+  <div class="modal" style="width:min(1100px,96vw);">
+    <button class="modal-close" onclick="closeModal('accDetailModal')">✕</button>
+    <div class="modal-title">🏦 <span id="accDetailTitle">Detalle de Cuenta</span></div>
+    <div id="accDetailBody"></div>
+  </div>
+</div>
+
 <!-- EDITAR TRADE DE UN CHALLENGE ARCHIVADO -->
 <div class="overlay" id="chTradeEditModal">
   <div class="modal" style="max-width:520px;">
@@ -9725,9 +9734,181 @@ function renderCuentas(){
       ${a.notes?`<div style="font-size:11px;color:var(--sub);padding:.5rem .7rem;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);margin-top:.5rem;">${a.notes}</div>`:''}
     </div>
     <div class="acc-card-footer"><button class="btn sm danger" onclick="deleteAcc(${a.id})">✕</button><button class="btn sm" onclick="openAccModal(${a.id})">✎ Editar</button><button class="btn sm primary" onclick="openUpdateModal(${a.id})">↻ Update</button></div>`;
+    card.style.cursor='pointer';
+    card.addEventListener('click', function(e){
+      if(e.target.closest('button')) return;
+      verCuentaDetalle(a.id);
+    });
     grid.appendChild(card);
   });
   renderInactividad();
+}
+
+// ════════════════════════════════════════════════════════════
+// DETALLE DE CUENTA — estadísticas + objetivos + trades (con imagen TV)
+// ════════════════════════════════════════════════════════════
+let accDetailChart=null;
+function verCuentaDetalle(accId){
+  const a = accounts.find(x=>x.id===accId);
+  if(!a) return;
+  const accTrades = trades.filter(t=>t.accountId===a.id)
+    .sort((x,y)=>(x.date||'').localeCompare(y.date||'')||x.id-y.id);
+
+  const effectiveBal = getEffectiveBalance(a);
+  const pnl = effectiveBal-(a.size||0), pnlPct = a.size>0?(pnl/a.size)*100:0;
+
+  const n = accTrades.length;
+  const wins = accTrades.filter(t=>t.result==='WIN').length;
+  const losses = accTrades.filter(t=>t.result==='LOSS').length;
+  const wr = n? wins/n*100 : 0;
+  const winSum = accTrades.filter(t=>(t.pnl||0)>0).reduce((s,t)=>s+t.pnl,0);
+  const lossSum = Math.abs(accTrades.filter(t=>(t.pnl||0)<0).reduce((s,t)=>s+t.pnl,0));
+  const pf = lossSum>0 ? winSum/lossSum : (winSum>0?Infinity:0);
+  const rrTrades = accTrades.filter(t=>typeof t.rr==='number');
+  const avgRR = rrTrades.length ? rrTrades.reduce((s,t)=>s+t.rr,0)/rrTrades.length : 0;
+  const pnls = accTrades.map(t=>t.pnl||0);
+  const mejor = pnls.length?Math.max(...pnls):0;
+  const peor  = pnls.length?Math.min(...pnls):0;
+  const tradingDays = new Set(accTrades.map(t=>t.date).filter(Boolean)).size;
+  const ageDays = a.startDate ? Math.max(0,Math.floor((new Date()-new Date(a.startDate+'T00:00:00'))/86400000)) : null;
+  const parCount = {};
+  accTrades.forEach(t=>{ const p=t.pair||t.par; if(!p) return; parCount[p]=(parCount[p]||0)+1; });
+  const topPar = Object.entries(parCount).sort((x,y)=>y[1]-x[1])[0];
+
+  // Objetivos — misma lógica que la card de Cuentas
+  const currentTarget = (a.numFases===2 && a.phase==='verification') ? (a.target2||5) : (a.target||10);
+  const targetProg = Math.min(100, currentTarget>0 ? Math.max(0,pnlPct/currentTarget*100) : 0);
+  const cDaily = getEffectiveDailyDD(a);
+  const cMax = getEffectiveDD(a);
+  const dailyDD = parseFloat(a.dailyDD)||5;
+  const maxDD = parseFloat(a.maxDD)||10;
+  const dailyPct = Math.min(100, dailyDD>0 ? cDaily/dailyDD*100 : 0);
+  const maxPct = Math.min(100, maxDD>0 ? cMax/maxDD*100 : 0);
+  const cat = a.categoria || 'challenge';
+  const showTarget = cat==='challenge' && a.phase!=='funded' && a.phase!=='blown';
+  const showDD = cat!=='propia';
+  const ddColor = pct=>pct>=80?'pf-red':pct>=50?'pf-gold':'pf-green';
+
+  document.getElementById('accDetailTitle').textContent = `${a.name} — ${a.firm||'Sin firma'}`;
+
+  const kpi=(label,value,color,sub)=>`<div class="kpi-box" style="--accent:${color}"><div class="kpi-label">${label}</div><div class="kpi-value" style="color:${color};font-size:15px;">${value}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;
+
+  document.getElementById('accDetailBody').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1.2rem;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${phaseBadge(a.phase)}
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sub);">$${(a.size||0).toLocaleString()} inicial</span>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:20px;font-weight:800;color:${pnl>=0?'var(--green)':'var(--red)'};">${fmtUSD(effectiveBal)}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${pnl>=0?'var(--green)':'var(--red)'};">${pnl>=0?'+':''}${fmtUSD(pnl)} (${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%)</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom:1.2rem;">
+      ${kpi('Win Rate', wr.toFixed(1)+'%', wr>=50?'var(--green)':'var(--red)', `${wins}W · ${losses}L`)}
+      ${kpi('Profit Factor', pf===Infinity?'∞':pf.toFixed(2), pf>=1?'var(--green)':'var(--red)')}
+      ${kpi('R:R Promedio', avgRR.toFixed(2)+'x', avgRR>=1?'var(--green)':'var(--sub)')}
+      ${kpi('Trades', n, 'var(--text)')}
+      ${kpi('Días Operados', tradingDays, 'var(--text)')}
+      ${kpi('Antigüedad', ageDays!=null?ageDays+'d':'—', 'var(--text)')}
+      ${kpi('Símbolo Top', topPar?topPar[0]:'—', 'var(--gold)', topPar?`${topPar[1]} trades`:'')}
+      ${kpi('Mejor / Peor', fmtUSD(mejor)+' / '+fmtUSD(peor), 'var(--sub)')}
+    </div>
+
+    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+      <div class="section-label" style="margin-bottom:.8rem;">📈 Curva de Equity</div>
+      <canvas id="accDetailChart" height="90"></canvas>
+    </div>
+
+    ${(showTarget||showDD) ? `
+    <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+      <div class="section-label" style="margin-bottom:.9rem;">🎯 Objetivos</div>
+      ${showTarget?`<div class="prog-row" style="margin-bottom:.8rem;"><div class="prog-meta"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);">Target ${a.phase==='verification'?'Fase 2':'Fase 1'}: ${currentTarget}%</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);">${pnlPct.toFixed(2)}%</span></div><div class="prog-track"><div class="prog-fill pf-cyan" style="width:${targetProg}%"></div></div></div>`:''}
+      ${showDD?`
+      <div class="prog-row" style="margin-bottom:.8rem;"><div class="prog-meta"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);">Daily DD</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${dailyPct>=80?'var(--red)':dailyPct>=50?'var(--orange)':'var(--sub)'};">${cDaily.toFixed(2)}% / ${dailyDD}%</span></div><div class="prog-track"><div class="prog-fill ${ddColor(dailyPct)}" style="width:${dailyPct}%"></div></div></div>
+      <div class="prog-row"><div class="prog-meta"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);">Max DD</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${maxPct>=80?'var(--red)':maxPct>=50?'var(--orange)':'var(--sub)'};">${cMax.toFixed(2)}% / ${maxDD}%</span></div><div class="prog-track"><div class="prog-fill ${ddColor(maxPct)}" style="width:${maxPct}%"></div></div></div>`:''}
+    </div>` : ''}
+
+    <div class="section-label" style="margin:0 0 .7rem;">📋 Trades de esta cuenta (${n})</div>
+    <div class="table-wrap" id="accDetailTradesWrap" data-help="Todos los trades de esta cuenta. Hacé clic en una fila para ver la imagen del gráfico de TradingView si el trade tiene el link cargado."></div>
+  `;
+
+  renderAccDetailTradesTable(document.getElementById('accDetailTradesWrap'), [...accTrades].reverse());
+
+  openModal('accDetailModal');
+
+  if(accDetailChart){ accDetailChart.destroy(); accDetailChart=null; }
+  const canvas = document.getElementById('accDetailChart');
+  if(canvas){
+    const ctx = canvas.getContext('2d');
+    let eq = a.size||0;
+    const eqData=[eq], eqLabels=['Inicio'];
+    accTrades.forEach(t=>{ eq+=t.pnl||0; eqData.push(+eq.toFixed(2)); eqLabels.push((t.date||'').slice(5)||''); });
+    const grad = ctx.createLinearGradient(0,0,0,220);
+    grad.addColorStop(0,'#38bdf833'); grad.addColorStop(1,'#38bdf800');
+    accDetailChart = new Chart(ctx,{
+      type:'line',
+      data:{ labels:eqLabels, datasets:[{ data:eqData, borderColor:'#38bdf8', backgroundColor:grad, borderWidth:2, pointRadius:eqData.length>30?0:3, tension:.35, fill:true }] },
+      options:{ ...chartOpts(v=>'$'+v.toFixed(0)), maintainAspectRatio:false }
+    });
+  }
+}
+
+// Tabla de trades de una cuenta, con el mismo comportamiento que el Journal:
+// click en la fila expande y muestra la imagen del snapshot de TradingView.
+function renderAccDetailTradesTable(container, accTradesDesc){
+  if(!container) return;
+  if(!accTradesDesc.length){
+    container.innerHTML = '<div class="empty" style="padding:1.5rem;"><div class="empty-icon">📋</div>Sin trades cargados para esta cuenta.</div>';
+    return;
+  }
+  const table = document.createElement('table');
+  table.innerHTML = '<thead><tr><th>Fecha</th><th>Par</th><th>Tipo</th><th>Sesión</th><th>Zona</th><th>P&L</th><th>R:R</th><th>Notas</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+  accTradesDesc.forEach(t=>{
+    const detailId = 'acc-tv-detail-'+t.id;
+    const tr = document.createElement('tr');
+    tr.style.cursor = t.tv ? 'pointer' : 'default';
+    if(t.tv) tr.title = 'Click para ver el gráfico de TradingView';
+    tr.innerHTML = `<td class="muted">${t.date||'—'}${t.tv?`<div style="font-size:8px;color:var(--cyan);opacity:.7;line-height:1;margin-top:2px;" class="acc-tv-chev-${t.id}">▾ tv</div>`:''}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;color:var(--gold);">${t.pair||t.par||'—'}</td>
+      <td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type||'—'}</span></td>
+      <td class="muted">${t.session||'—'}</td>
+      <td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td>
+      <td class="${(t.pnl||0)>=0?'pos':'neg'}" style="font-weight:700;">${fmtUSD(t.pnl||0)}</td>
+      <td class="${(t.rr||0)>=1?'pos':'neg'}">${(t.rr||0).toFixed(2)}x</td>
+      <td class="muted" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.notes||'—'}</td>`;
+    if(t.tv){
+      tr.addEventListener('click', function(e){
+        if(e.target.tagName==='BUTTON'||e.target.tagName==='A') return;
+        const d=document.getElementById(detailId);
+        if(!d) return;
+        const open=d.style.display==='none';
+        d.style.display=open?'table-row':'none';
+        const chev=tr.querySelector('.acc-tv-chev-'+t.id);
+        if(chev) chev.textContent=open?'▴ tv':'▾ tv';
+      });
+    }
+    tbody.appendChild(tr);
+    if(t.tv){
+      const isSnapshot = /tradingview\.com\/x\//i.test(t.tv);
+      const detailTr = document.createElement('tr');
+      detailTr.id = detailId;
+      detailTr.style.display = 'none';
+      detailTr.innerHTML = `<td colspan="8" style="padding:0;"><div style="padding:10px 16px 14px;background:rgba(56,189,248,.04);border-top:1px solid rgba(56,189,248,.14);border-bottom:1px solid rgba(56,189,248,.08);">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:${isSnapshot?'10px':'0'};">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.1em;color:var(--sub);text-transform:uppercase;">Gráfico TradingView</span>
+            <a href="${escHtml(t.tv)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:7px;background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.35);color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;text-decoration:none;">Abrir en TradingView ↗</a>
+          </div>
+          ${isSnapshot?`<div id="acc-tv-img-${t.id}" style="border-radius:8px;overflow:hidden;border:1px solid rgba(56,189,248,.15);max-width:1935px;"><img src="${escHtml(t.tv)}" alt="Chart" style="width:100%;display:block;max-height:1080px;object-fit:contain;background:var(--bg2);" onerror="document.getElementById('acc-tv-img-${t.id}').style.display='none'"></div>`:''}
+        </div></td>`;
+      tbody.appendChild(detailTr);
+    }
+  });
+  table.appendChild(tbody);
+  container.innerHTML = '';
+  container.appendChild(table);
 }
 
 // Fecha límite de inactividad: último trade (o alta de cuenta) + 30 días.
