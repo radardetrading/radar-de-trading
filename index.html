@@ -3836,6 +3836,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
               <button class="hsim-acct-btn active" id="hsim_acct_5k" onclick="setHistSimAccount('5k')" style="background:var(--cyan);color:#fff;border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">5K</button>
               <button class="hsim-acct-btn" id="hsim_acct_50k" onclick="setHistSimAccount('50k')" style="background:transparent;color:var(--sub);border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">50K</button>
             </div>
+            <button onclick="openBtCfgModal(histSimAccount)" title="Editar reglas de la cuenta (fases, DD, retiro)" style="background:var(--glass2);border:1px solid var(--border2);color:var(--sub);padding:4px 9px;font-size:11px;border-radius:6px;cursor:pointer;">⚙</button>
           </div>
         </div>
         <div style="font-size:11px;color:var(--sub);margin-bottom:.5rem;line-height:1.5;">
@@ -5488,9 +5489,13 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
         <label>Daily DD máx Funded (%)</label>
         <input type="number" id="cfg_funded_daily" step="0.1" placeholder="4">
       </div>
-      <div class="form-group full">
+      <div class="form-group">
         <label>Max DD total Funded (%)</label>
         <input type="number" id="cfg_funded_max" step="0.1" placeholder="8">
+      </div>
+      <div class="form-group full">
+        <label>Retiro Objetivo (%)</label>
+        <input type="number" id="cfg_withdrawal" step="0.1" placeholder="6">
       </div>
     </div>
     <div class="form-actions">
@@ -5826,6 +5831,15 @@ const TELEGRAM_PREF_LABELS = {
   rutina:      '⚡ Rutina del día pendiente',
   metas:       '🎯 Meta por vencer'
 };
+// Valores por defecto de los umbrales que disparan cada tipo de aviso. Editables desde
+// el Perfil y replicados en scripts/telegram-daily-digest.js (mismos nombres de campo).
+const TELEGRAM_THRESHOLD_DEFAULTS = { inactividadDias: 7, drawdownPct: 80, metasDias: 7, cooldownDias: 3 };
+const TELEGRAM_THRESHOLD_FIELDS = [
+  { key: 'inactividadDias', label: 'Avisar por inactividad cuando falten (días)', min: 1, max: 30 },
+  { key: 'drawdownPct',     label: 'Avisar por drawdown al llegar a (% del límite)', min: 10, max: 100 },
+  { key: 'metasDias',       label: 'Avisar por metas cuando falten (días)', min: 1, max: 60 },
+  { key: 'cooldownDias',    label: 'Repetir aviso de drawdown/metas cada (días)', min: 1, max: 30 }
+];
 
 function renderTelegramSection(){
   const box = document.getElementById('telegramSection');
@@ -5845,6 +5859,17 @@ function renderTelegramSection(){
             ${TELEGRAM_PREF_LABELS[k]}
           </label>`).join('')}
       </div>
+      <details style="margin-bottom:1.2rem;">
+        <summary style="font-size:12px;color:var(--sub);cursor:pointer;font-weight:600;">⚙️ Umbrales de los avisos</summary>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:.9rem;">
+          ${TELEGRAM_THRESHOLD_FIELDS.map(f=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+              <label for="tg_th_${f.key}" style="font-size:12px;color:var(--sub);">${f.label}</label>
+              <input type="number" id="tg_th_${f.key}" min="${f.min}" max="${f.max}" value="${(perfil.telegramThresholds && perfil.telegramThresholds[f.key]) || TELEGRAM_THRESHOLD_DEFAULTS[f.key]}" style="width:60px;font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 8px;text-align:center;">
+            </div>`).join('')}
+          <button class="btn sm ghost" style="align-self:flex-start;margin-top:.2rem;" onclick="guardarTelegramThresholds()">Guardar umbrales</button>
+        </div>
+      </details>
       <button class="btn sm ghost" style="color:var(--red);border-color:rgba(248,113,113,.3);" onclick="desvincularTelegram()">Desvincular Telegram</button>
     `;
   } else {
@@ -5911,6 +5936,18 @@ function guardarTelegramPrefs(){
   perfil.telegramPrefs = prefs;
   save();
   toast('Preferencias de aviso guardadas','ok');
+}
+
+function guardarTelegramThresholds(){
+  const th = {};
+  for(const f of TELEGRAM_THRESHOLD_FIELDS){
+    const el = document.getElementById('tg_th_'+f.key);
+    const val = el ? parseInt(el.value) : NaN;
+    th[f.key] = (Number.isFinite(val) && val >= f.min && val <= f.max) ? val : TELEGRAM_THRESHOLD_DEFAULTS[f.key];
+  }
+  perfil.telegramThresholds = th;
+  save();
+  toast('Umbrales de avisos guardados','ok');
 }
 
 function desvincularTelegram(){
@@ -7271,9 +7308,9 @@ function goJournalPage(p){
 
 // Configuración por defecto (editable por el usuario)
 const NEOMAA_DEFAULT = {
-  '5k':  { nombre:'Neomaa', size:5000,  numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} },
-  '50k': { nombre:'Neomaa', size:50000, numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} },
-  'fut': { nombre:'Futuros', size:50000, numFases:1, instrumento:'ES', fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8} }
+  '5k':  { nombre:'Neomaa', size:5000,  numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8,withdrawal:6} },
+  '50k': { nombre:'Neomaa', size:50000, numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8,withdrawal:6} },
+  'fut': { nombre:'Futuros', size:50000, numFases:1, instrumento:'ES', fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8}, funded:{split:80,dailyDD:4,maxDD:8,withdrawal:6} }
 };
 // Cargamos config guardada o usamos defaults
 let NEOMAA = JSON.parse(localStorage.getItem('hq_bt_cfg')||'null') || JSON.parse(JSON.stringify(NEOMAA_DEFAULT));
@@ -7305,6 +7342,7 @@ function openBtCfgModal(key){
   document.getElementById('cfg_split').value    = cfg.funded.split||80;
   document.getElementById('cfg_funded_daily').value = cfg.funded.dailyDD||4;
   document.getElementById('cfg_funded_max').value   = cfg.funded.maxDD||8;
+  document.getElementById('cfg_withdrawal').value   = cfg.funded.withdrawal||6;
   const futWrap = document.getElementById('cfg_fut_wrap');
   if(futWrap){
     futWrap.style.display = key==='fut' ? '' : 'none';
@@ -7328,13 +7366,14 @@ function saveBtCfg(){
     ...(instrumento !== undefined && { instrumento }),
     fase1:  { target: parseFloat(document.getElementById('cfg_f1_target').value)||8,  dailyDD: parseFloat(document.getElementById('cfg_f1_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_f1_max').value)||8  },
     fase2:  { target: parseFloat(document.getElementById('cfg_f2_target').value)||5,  dailyDD: parseFloat(document.getElementById('cfg_f2_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_f2_max').value)||8  },
-    funded: { split:  parseFloat(document.getElementById('cfg_split').value)||80,     dailyDD: parseFloat(document.getElementById('cfg_funded_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_funded_max').value)||8 }
+    funded: { split:  parseFloat(document.getElementById('cfg_split').value)||80,     dailyDD: parseFloat(document.getElementById('cfg_funded_daily').value)||4, maxDD: parseFloat(document.getElementById('cfg_funded_max').value)||8, withdrawal: parseFloat(document.getElementById('cfg_withdrawal').value)||6 }
   };
   saveBtCfgToStorage();
   closeModal('btCfgModal');
   updateBtCards();
   renderBtRules();
   calcBacktest();
+  if(window._histEnriched) renderHistSim(window._histEnriched);
   toast('Configuración guardada','ok');
 }
 
@@ -15221,7 +15260,7 @@ function renderHistSim(enriched){
   if(!cardsEl) return;
 
   const cfg = NEOMAA[histSimAccount];
-  const WD = 6; // % de retiro objetivo en funded
+  const WD = cfg.funded.withdrawal || 6; // % de retiro objetivo en funded
   const all = enriched || [];
 
   if(rulesEl){
