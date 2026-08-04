@@ -5816,8 +5816,18 @@ const TELEGRAM_PREF_LABELS = {
   inactividad: '⏱ Cuenta en riesgo por inactividad',
   drawdown:    '📉 Drawdown cerca del límite',
   rutina:      '⚡ Rutina del día pendiente',
-  metas:       '🎯 Meta por vencer'
+  metas:       '🎯 Meta por vencer',
+  sesion:      '⏰ Recordatorio antes de tu sesión'
 };
+// Presets de sesión de mercado para el recordatorio — el horario se convierte a la
+// hora de Argentina al momento de avisar (espejo en scripts/telegram-session-reminder.js).
+const TELEGRAM_SESION_PRESETS = {
+  personalizado: { label: 'Personalizado (hora Argentina)', tz: null,                  hora: '' },
+  londres:       { label: 'Londres',                        tz: 'Europe/London',       hora: '08:00' },
+  nuevayork:     { label: 'Nueva York',                      tz: 'America/New_York',    hora: '08:00' },
+  asia:          { label: 'Asia (Tokio)',                    tz: 'Asia/Tokyo',          hora: '09:00' }
+};
+const TELEGRAM_SESION_AVISO_MIN = 30;
 // Valores por defecto de los umbrales que disparan cada tipo de aviso. Editables desde
 // el Perfil y replicados en scripts/telegram-daily-digest.js (mismos nombres de campo).
 const TELEGRAM_THRESHOLD_DEFAULTS = { inactividadDias: 7, drawdownPct: 80, metasDias: 7, cooldownDias: 3 };
@@ -5832,7 +5842,8 @@ function renderTelegramSection(){
   const box = document.getElementById('telegramSection');
   if(!box) return;
   if(perfil.telegramChatId){
-    const prefs = perfil.telegramPrefs || {inactividad:true, drawdown:true, rutina:true, metas:true};
+    const prefs = {inactividad:true, drawdown:true, rutina:true, metas:true, sesion:false, ...(perfil.telegramPrefs||{})};
+    const sesionCfg = perfil.telegramSesion || {modo:'personalizado', hora:''};
     const fecha = perfil.telegramLinkedAt ? new Date(perfil.telegramLinkedAt).toLocaleDateString('es-AR') : '';
     box.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:1rem;">
@@ -5855,6 +5866,23 @@ function renderTelegramSection(){
               <input type="number" id="tg_th_${f.key}" min="${f.min}" max="${f.max}" value="${(perfil.telegramThresholds && perfil.telegramThresholds[f.key]) || TELEGRAM_THRESHOLD_DEFAULTS[f.key]}" style="width:60px;font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 8px;text-align:center;">
             </div>`).join('')}
           <button class="btn sm ghost" style="align-self:flex-start;margin-top:.2rem;" onclick="guardarTelegramThresholds()">Guardar umbrales</button>
+        </div>
+      </details>
+      <details style="margin-bottom:1.2rem;">
+        <summary style="font-size:12px;color:var(--sub);cursor:pointer;font-weight:600;">⏰ Horario del aviso de sesión</summary>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:.9rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <label for="tg_sesion_modo" style="font-size:12px;color:var(--sub);" data-help="Elegí tu sesión de trading para que te avisemos 30 minutos antes de que empiece, o poné vos el horario en 'Personalizado'.">Sesión</label>
+            <select id="tg_sesion_modo" onchange="onCambioSesionModo()" style="font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 8px;">
+              ${Object.keys(TELEGRAM_SESION_PRESETS).map(k=>`<option value="${k}" ${(sesionCfg.modo||'personalizado')===k?'selected':''}>${TELEGRAM_SESION_PRESETS[k].label}</option>`).join('')}
+            </select>
+          </div>
+          <div id="tg_sesion_hora_wrap" style="display:${(sesionCfg.modo||'personalizado')==='personalizado'?'flex':'none'};align-items:center;justify-content:space-between;gap:10px;">
+            <label for="tg_sesion_hora" style="font-size:12px;color:var(--sub);">Hora de inicio (Argentina)</label>
+            <input type="time" id="tg_sesion_hora" value="${sesionCfg.hora||''}" style="font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 8px;">
+          </div>
+          <div style="font-size:11px;color:var(--sub);">Te avisamos ${TELEGRAM_SESION_AVISO_MIN} minutos antes de que arranque.</div>
+          <button class="btn sm ghost" style="align-self:flex-start;margin-top:.2rem;" onclick="guardarTelegramSesion()">Guardar horario</button>
         </div>
       </details>
       <button class="btn sm ghost" style="color:var(--red);border-color:rgba(248,113,113,.3);" onclick="desvincularTelegram()">Desvincular Telegram</button>
@@ -5935,6 +5963,26 @@ function guardarTelegramThresholds(){
   perfil.telegramThresholds = th;
   save();
   toast('Umbrales de avisos guardados','ok');
+}
+
+function onCambioSesionModo(){
+  const modo = document.getElementById('tg_sesion_modo').value;
+  document.getElementById('tg_sesion_hora_wrap').style.display = modo === 'personalizado' ? 'flex' : 'none';
+}
+
+function guardarTelegramSesion(){
+  const modo = document.getElementById('tg_sesion_modo').value;
+  let hora = TELEGRAM_SESION_PRESETS[modo]?.hora || '';
+  if(modo === 'personalizado'){
+    hora = document.getElementById('tg_sesion_hora').value;
+    if(!hora){ toast('Ingresá un horario para el aviso personalizado','err'); return; }
+  }
+  perfil.telegramSesion = { modo, hora };
+  if(!perfil.telegramPrefs) perfil.telegramPrefs = {inactividad:true, drawdown:true, rutina:true, metas:true};
+  perfil.telegramPrefs.sesion = true;
+  save();
+  renderTelegramSection();
+  toast('Horario de sesión guardado','ok');
 }
 
 function desvincularTelegram(){
