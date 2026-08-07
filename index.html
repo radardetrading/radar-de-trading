@@ -2762,7 +2762,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div id="dashPilaresList" style="display:flex;flex-direction:column;gap:7px;"></div>
       </div>
     </div>
-    <div class="card" data-help="Calendario de trading: cada día se pinta verde (ganador), rojo (perdedor) o gris (breakeven) según el P&L de ese día. El día de hoy tiene un borde celeste. Los días con borde dorado punteado y ⏰ marcan el vencimiento de inactividad (30 días) de alguna cuenta activa; si ese día cae sábado o domingo, se muestra el viernes anterior (último día hábil para operar forex/futuros)." style="padding:1.2rem;margin-bottom:1.5rem;">
+    <div class="card" data-help="Calendario: cada día se pinta verde (ganador), rojo (perdedor) o gris (breakeven) según el P&L de ese día. El puntito de color arriba a la izquierda marca cuánto cumpliste tu Rutina Ganadora ese día (verde 100%, celeste ≥50%, naranja algo, sin punto si no registraste nada) — en sábado y domingo, sin trades, ese punto y un fondo tenue son lo único que se ve, para poder seguir la rutina incluso los días que no operás forex/futuros. El día de hoy tiene un borde celeste. Los días con borde dorado punteado y ⏰ marcan el vencimiento de inactividad (30 días) de alguna cuenta activa." style="padding:1.2rem;margin-bottom:1.5rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
         <div class="section-label" id="calMonthLabel">Calendario</div>
         <div style="display:flex;gap:4px;">
@@ -2771,13 +2771,14 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <button class="btn sm ghost" onclick="calOffset++;renderCalendar()">▶</button>
         </div>
       </div>
-      <div id="calDayHeaders" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:4px;"></div>
-      <div id="calGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;"></div>
+      <div id="calDayHeaders" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;"></div>
+      <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
       <div style="display:flex;gap:16px;margin-top:1rem;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);"><div style="width:10px;height:10px;border-radius:3px;background:rgba(52,211,153,.4);"></div>Día ganador</div>
         <div style="display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);"><div style="width:10px;height:10px;border-radius:3px;background:rgba(248,113,113,.4);"></div>Día perdedor</div>
         <div style="display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);"><div style="width:10px;height:10px;border-radius:3px;background:rgba(122,143,171,.2);"></div>Breakeven</div>
         <div style="display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);"><div style="width:10px;height:10px;border-radius:3px;border:1px solid rgba(56,189,248,.5);"></div>Hoy</div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);"><div style="width:7px;height:7px;border-radius:50%;background:var(--cyan);"></div>Rutina cumplida</div>
       </div>
     </div>
         <div class="charts-grid">
@@ -12064,7 +12065,7 @@ function renderCalendar(){
   // Day headers — only build once
   const hdrs=document.getElementById('calDayHeaders');
   if(hdrs&&!hdrs.children.length){
-    ['Lun','Mar','Mié','Jue','Vie'].forEach(d=>{
+    ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(d=>{
       const el=document.createElement('div');
       el.style.cssText="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:center;padding:4px 0;";
       el.textContent=d; hdrs.appendChild(el);
@@ -12105,10 +12106,8 @@ function renderCalendar(){
   });
 
   const firstDay=new Date(year,month,1).getDay();
-  // For 5-col (Mon-Fri) grid: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4
-  // getDay(): 0=Sun,1=Mon,...,5=Fri,6=Sat
-  // If month starts on weekend, offset to next Monday
-  const startOffset=(firstDay===0||firstDay===6)?0:firstDay-1;
+  // 7-col grid (Lun..Dom): Mon=0, Tue=1 ... Sun=6 — getDay(): 0=Sun,1=Mon,...,6=Sat
+  const startOffset=firstDay===0?6:firstDay-1;
   const daysInMonth=new Date(year,month+1,0).getDate();
   const grid=document.getElementById('calGrid');
   if(!grid) return;
@@ -12120,12 +12119,11 @@ function renderCalendar(){
 
   for(let d=1;d<=daysInMonth;d++){
     const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const dow=new Date(year,month,d).getDay();
-    const isWeekend=dow===0||dow===6;
-    if(isWeekend) continue; // skip Saturday and Sunday
     const isToday=dateStr===todayStr;
     const isFuture=dateStr>todayStr;
     const data=dayMap[dateStr];
+    const rutDay=rutDays[dateStr];
+    const rPct=(rutDay&&!isFuture)?dayPct(rutDay):-1;
 
     let bg='rgba(255,255,255,.02)',border='1px solid var(--border)',textColor='var(--sub)',glow='',pnlText='';
     if(data&&!isFuture){
@@ -12135,15 +12133,23 @@ function renderCalendar(){
       else if(pnl<-0.01){bg='rgba(248,113,113,'+intensity+')';border='1px solid rgba(248,113,113,'+Math.min(.8,intensity+.2)+')';glow='box-shadow:0 0 14px rgba(248,113,113,'+intensity*.6+');';textColor='var(--red)';}
       else{bg='rgba(122,143,171,.12)';border='1px solid rgba(122,143,171,.2)';textColor='var(--sub)';}
       pnlText=(pnl>=0?'+':'')+fmtUSD(pnl);
+    } else if(rPct>=0){
+      // Sin trades ese día (típico de sábado/domingo) pero con rutina registrada: tinte suave según cumplimiento
+      if(rPct===100){bg='rgba(52,211,153,.10)';border='1px solid rgba(52,211,153,.3)';textColor='var(--green)';}
+      else if(rPct>=50){bg='rgba(56,189,248,.09)';border='1px solid rgba(56,189,248,.28)';textColor='var(--cyan)';}
+      else if(rPct>0){bg='rgba(251,146,60,.09)';border='1px solid rgba(251,146,60,.28)';textColor='var(--orange)';}
     }
     if(isToday){border='2px solid rgba(56,189,248,.6)';glow+=';box-shadow:0 0 18px rgba(56,189,248,.12)';}
 
     const cell=document.createElement('div');
     cell.style.cssText='min-height:58px;border-radius:10px;'+border+';background:'+bg+';'+glow+';padding:6px 7px;position:relative;cursor:'+(data?'pointer':'default')+';';
 
+    const dayNumRow=document.createElement('div');
+    dayNumRow.style.cssText='display:flex;align-items:center;gap:4px;';
     const dayNum=document.createElement('div');
-    dayNum.style.cssText="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:"+(isToday?800:500)+";color:"+(isToday?'var(--cyan)':isFuture?'var(--dim)':data?textColor:'var(--dim)')+";";
-    dayNum.textContent=d; cell.appendChild(dayNum);
+    dayNum.style.cssText="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:"+(isToday?800:500)+";color:"+(isToday?'var(--cyan)':isFuture?'var(--dim)':(data||rPct>=0)?textColor:'var(--dim)')+";";
+    dayNum.textContent=d; dayNumRow.appendChild(dayNum);
+    cell.appendChild(dayNumRow);
 
     if(data){
       const pDiv=document.createElement('div');
@@ -12175,6 +12181,17 @@ function renderCalendar(){
       ).join('\n');
       cell.title=dateStr+'\nTotal: '+(data.pnl>=0?'+':'')+fmtUSD(data.pnl)+' · '+data.count+' trades\n―――――――――\n'+accLines;
     }
+
+    // Punto de Rutina Ganadora — visible tanto en días con trades como en findes de semana sin operativa
+    if(rPct>=0){
+      const rColor=rPct===100?'var(--green)':rPct>=50?'var(--cyan)':rPct>0?'var(--orange)':'var(--dim)';
+      const rDot=document.createElement('div');
+      rDot.style.cssText='width:6px;height:6px;border-radius:50%;flex-shrink:0;background:'+rColor+';'+(rPct>0?'box-shadow:0 0 5px '+rColor+';':'');
+      dayNumRow.appendChild(rDot);
+      const rLine='🧭 Rutina: '+rPct.toFixed(0)+'%';
+      cell.title=cell.title?cell.title+'\n―――――――――\n'+rLine:dateStr+'\n'+rLine;
+    }
+
     if(isToday){
       const dot=document.createElement('div');
       dot.style.cssText='position:absolute;bottom:5px;right:6px;width:5px;height:5px;background:var(--cyan);border-radius:50%;box-shadow:0 0 6px var(--cyan);';
@@ -12182,6 +12199,9 @@ function renderCalendar(){
     }
     if(data){
       cell.onclick=()=>{document.getElementById('jSearch').value=dateStr;nav('journal');};
+    } else if(rPct>=0){
+      cell.style.cursor='pointer';
+      cell.onclick=()=>nav('rutina');
     }
     const vencs=vencMap[dateStr];
     if(vencs&&vencs.length){
