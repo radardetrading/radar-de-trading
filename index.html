@@ -5736,6 +5736,7 @@ function armarEstado(){
     moodQuestions,
     theme: (localStorage.getItem('rdm_theme')||'dark'),
     perfil,
+    btAccount,
     savedAt: new Date().toISOString()
   };
 }
@@ -5767,6 +5768,7 @@ function aplicarEstado(d){
   if(d.moodQuestions)  moodQuestions  = d.moodQuestions;
   if(d.theme){ try{ if(typeof setTheme==='function') setTheme(d.theme); else localStorage.setItem('rdm_theme', d.theme); }catch(_){} }
   if(d.perfil)     perfil     = d.perfil;
+  if(d.btAccount)  btAccount  = d.btAccount;
 }
 
 // ── PERFIL DE USUARIO ───────────────────────────────────────────────────────
@@ -6501,7 +6503,7 @@ function nav(name, fromPopState=false){
   currentPage=name;
   updateSectionHelp(name);
   updateHeader();
-  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{renderBtRules();renderBtQuickRules();renderBtZonasList();calcBacktest();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas,challenges:renderChallengeHistory,perfil:renderPerfil};
+  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{selectBtAccount(btAccount);renderBtQuickRules();renderBtZonasList();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas,challenges:renderChallengeHistory,perfil:renderPerfil};
   if(renders[name]) renders[name]();
   if(!fromPopState) history.pushState({page:name}, '', location.href);
 }
