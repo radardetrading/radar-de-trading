@@ -1558,6 +1558,14 @@ body.help-mode [data-help]{
 
   /* Topbar-left gap */
   .topbar-left{gap:0;}
+
+  /* Topbar-right — permitir que los botones bajen de linea en vez de empujar la pagina hacia el costado */
+  .topbar-right{flex-wrap:wrap;justify-content:flex-end;row-gap:6px;}
+
+  /* Grillas de 2/3/4 columnas armadas inline dentro de la app — se apilan para no desbordar en mobile */
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns:repeat(3,1fr)"],
+  [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:1fr!important;}
 }
 
 /* ══════════════════════════════════════════════
