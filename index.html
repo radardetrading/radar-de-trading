@@ -6721,6 +6721,16 @@ function todayStr(){return new Date().toISOString().split('T')[0];}
 function addEvent(type,text){events.unshift({id:Date.now(),type,text,date:new Date().toISOString()});if(events.length>300) events=events.slice(0,300);}
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.addEventListener('click', function(e){
+  if(e.target.classList && e.target.classList.contains('overlay') && e.target.classList.contains('open')){
+    e.target.classList.remove('open');
+  }
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    document.querySelectorAll('.overlay.open').forEach(function(ov){ ov.classList.remove('open'); });
+  }
+});
 function toast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),2500);}
 
 function renderBiDirBars(containerId,labels,values){
