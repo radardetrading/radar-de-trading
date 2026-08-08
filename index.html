@@ -2847,7 +2847,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <option value="XAUUSD">XAUUSD</option><option value="US30">US30</option><option value="NAS100">NAS100</option>
         </select>
         <select id="jAccount" onchange="journalPage=1;renderJournal()"><option value="">Todas las cuentas</option></select>
-        <select id="jTipoInstr" data-help="Filtra el journal para ver solo trades Forex, solo Futuros, o ambos." onchange="journalPage=1;renderJournal()"><option value="">Forex + Futuros</option><option value="forex">Solo Forex</option><option value="futuros">Solo Futuros</option></select>
+        <select id="jTipoInstr" data-help="Filtra el journal para ver solo trades Forex, solo Futuros, solo Cripto, o todos." onchange="journalPage=1;renderJournal()"><option value="">Todos</option><option value="forex">Solo Forex</option><option value="futuros">Solo Futuros</option><option value="cripto">Solo Cripto</option></select>
         <select id="jZona" onchange="journalPage=1;renderJournal()"><option value="">Todas las zonas</option></select>
         <select id="jOrder" onchange="journalPage=1;renderJournal()">
           <option value="desc">Más nuevo primero</option>
@@ -2988,9 +2988,10 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div style="display:flex;flex-direction:column;gap:4px;">
           <label>Tipo de instrumento</label>
           <select id="st_tipo_instr" onchange="onStTipoChange()" style="font-size:11px;padding:5px 10px;height:30px;min-width:140px;">
-            <option value="">Forex + Futuros</option>
+            <option value="">Todos</option>
             <option value="forex">Solo Forex</option>
             <option value="futuros">Solo Futuros</option>
+            <option value="cripto">Solo Cripto</option>
           </select>
         </div>
       </div>
@@ -3489,6 +3490,22 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </table>
       <div id="futInstrEmpty" class="empty" style="display:none"><div class="empty-icon">📊</div>Sin instrumentos. Agregá uno.</div>
     </div>
+
+    <!-- CATÁLOGO DE INSTRUMENTOS DE CRIPTO -->
+    <div class="table-wrap" data-help="Catálogo de criptomonedas con su valor por punto, usado por la Calculadora de Cripto para saber cuánto vale cada movimiento de precio." style="margin-top:1.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.9rem 1.1rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="section-label">🪙 Instrumentos de Cripto</div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--purple);background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.2);padding:2px 8px;border-radius:20px;">CRIPTO</span>
+        </div>
+        <button class="btn sm primary" onclick="openCryptoInstrModal()">+ Nuevo</button>
+      </div>
+      <table>
+        <thead><tr><th>Símbolo</th><th>Nombre</th><th>Tick Size</th><th>Tick Value</th><th>Point Value</th><th></th></tr></thead>
+        <tbody id="cryptoInstrBody"></tbody>
+      </table>
+      <div id="cryptoInstrEmpty" class="empty" style="display:none"><div class="empty-icon">🪙</div>Sin instrumentos. Agregá uno.</div>
+    </div>
   </div>
 
   <!-- CUENTAS -->
@@ -3708,6 +3725,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             <button id="repFiltAll" onclick="setRepFilt('all')" style="background:var(--cyan);color:#fff;border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">Todos</button>
             <button id="repFiltFx"  onclick="setRepFilt('forex')" style="background:transparent;color:var(--sub);border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">Forex</button>
             <button id="repFiltFut" onclick="setRepFilt('futuros')" style="background:transparent;color:var(--sub);border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">Futuros</button>
+            <button id="repFiltCr"  onclick="setRepFilt('cripto')" style="background:transparent;color:var(--sub);border:none;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-radius:6px;cursor:pointer;">Cripto</button>
           </div>
         </div>
       </div>
@@ -4071,6 +4089,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div style="display:flex;gap:8px;margin-bottom:1.2rem;">
         <button id="calcTabForex" class="btn primary" onclick="switchCalcTab('forex')" style="flex:1;">Forex</button>
         <button id="calcTabFut" class="btn" onclick="switchCalcTab('futuros')" style="flex:1;color:var(--orange);">📊 Futuros</button>
+        <button id="calcTabCripto" class="btn" onclick="switchCalcTab('cripto')" style="flex:1;color:var(--purple);">🪙 Cripto</button>
       </div>
 
       <!-- TAB FOREX -->
@@ -4178,6 +4197,44 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <div id="calcFutLevels"></div>
         </div>
       </div><!-- /calcFutPanel -->
+
+      <!-- TAB CRIPTO -->
+      <div id="calcCriptoPanel" style="display:none;">
+        <div class="kpi-grid" id="calcCriptoResult" style="margin-bottom:1.5rem;"></div>
+        <div class="card" style="padding:1.5rem;margin-bottom:1.2rem;">
+          <div class="section-label" style="margin-bottom:1.2rem;">⚙ Calculadora de Cripto</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Tamaño de Cuenta ($)</label>
+              <input type="number" id="cc_account" value="10000" oninput="calcCripto()">
+            </div>
+            <div class="form-group">
+              <label>Riesgo por Trade (%)</label>
+              <input type="number" id="cc_risk" value="1" step="0.1" min="0.1" oninput="calcCripto()">
+            </div>
+            <div class="form-group">
+              <label>Instrumento</label>
+              <select id="cc_instr" onchange="calcCripto()"></select>
+            </div>
+            <div class="form-group">
+              <label>Stop Loss (puntos)</label>
+              <input type="number" id="cc_sl_pts" value="10" step="any" min="0" oninput="calcCripto()">
+            </div>
+            <div class="form-group">
+              <label>R:R Objetivo</label>
+              <input type="number" id="cc_rr" value="2" step="0.1" min="0.1" oninput="calcCripto()">
+            </div>
+            <div class="form-group">
+              <label>Precio de Entrada (opcional)</label>
+              <input type="number" id="cc_entry" step="any" placeholder="65000.00" oninput="calcCripto()">
+            </div>
+          </div>
+        </div>
+        <div class="card" data-help="Resultado de la calculadora de cripto: cantidad de unidades, riesgo real en dólares y ganancia potencial según el R:R objetivo." style="padding:1.5rem;">
+          <div class="section-label" style="margin-bottom:1rem;">📊 Resultado</div>
+          <div id="calcCriptoLevels"></div>
+        </div>
+      </div><!-- /calcCriptoPanel -->
 
     </div>
   </div>
@@ -4492,6 +4549,10 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
             <input type="radio" name="t_tipo" id="t_tipo_futuros" value="futuros" style="width:auto;background:none;border:none;padding:0;" onchange="toggleTradeTipo()">
             <div style="text-align:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--orange);">Futuros</div></div>
           </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="t_tipo" id="t_tipo_cripto" value="cripto" style="width:auto;background:none;border:none;padding:0;" onchange="toggleTradeTipo()">
+            <div style="text-align:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--purple);">Cripto</div></div>
+          </label>
         </div>
       </div>
       <div class="form-sep"></div>
@@ -4582,6 +4643,38 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
         </div>
         <div class="form-group"><label>Riesgo ($) — para calcular R</label><input type="number" id="t_fut_risk" step="0.01" placeholder="Ej: 100"></div>
         <div class="form-group"><label>Comisión ($)</label><input type="number" id="t_fut_commission" step="0.01" min="0" value="0"></div>
+      </div>
+
+      <!-- ── CAMPOS CRIPTO ────────────────────────────────────── -->
+      <div id="t_cripto_wrap" style="display:none;">
+        <div class="form-group full">
+          <label>Modo de ingreso</label>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+              <input type="radio" name="t_cripto_mode" id="t_cripto_mode_precios" value="precios" style="width:auto;background:none;border:none;padding:0;" onchange="toggleCriptoMode()" checked>
+              <div style="text-align:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--cyan);">Precios</div><div style="font-size:9px;color:var(--sub);">calcula P&L solo</div></div>
+            </label>
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+              <input type="radio" name="t_cripto_mode" id="t_cripto_mode_directo" value="directo" style="width:auto;background:none;border:none;padding:0;" onchange="toggleCriptoMode()">
+              <div style="text-align:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--orange);">P&L Directo</div><div style="font-size:9px;color:var(--sub);">ingresás el resultado</div></div>
+            </label>
+          </div>
+        </div>
+        <div class="form-group"><label>Instrumento</label><select id="t_cripto_instr" onchange="calcCriptoPnlModal()"></select></div>
+        <div class="form-group"><label>Cantidad (unidades)</label><input type="number" id="t_cripto_contratos" step="any" min="0" value="1" oninput="calcCriptoPnlModal();calcCriptoRiskModal()"></div>
+        <div class="form-group" id="t_cripto_entry_grp"><label>Precio Entrada</label><input type="number" id="t_cripto_entry" step="any" oninput="calcCriptoPnlModal();calcCriptoRiskModal()"></div>
+        <div class="form-group" id="t_cripto_exit_grp"><label>Precio Salida</label><input type="number" id="t_cripto_exit" step="any" oninput="calcCriptoPnlModal()"></div>
+        <div class="form-group" id="t_cripto_sl_grp"><label>Stop Loss (precio)</label><input type="number" id="t_cripto_sl_price" step="any" oninput="calcCriptoRiskModal()"></div>
+        <div class="form-group full" id="t_cripto_pnl_calc_grp">
+          <label>P&L calculado</label>
+          <div id="t_cripto_pnl_display" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;padding:8px 0;color:var(--sub);">—</div>
+        </div>
+        <div class="form-group full" id="t_cripto_pnl_direct_grp" style="display:none;">
+          <label>P&L ($) — positivo = ganancia, negativo = pérdida</label>
+          <input type="number" id="t_cripto_pnl_direct" step="0.01">
+        </div>
+        <div class="form-group"><label>Riesgo ($) — para calcular R</label><input type="number" id="t_cripto_risk" step="0.01" placeholder="Ej: 100"></div>
+        <div class="form-group"><label>Comisión ($)</label><input type="number" id="t_cripto_commission" step="0.01" min="0" value="0"></div>
       </div>
 
       <div class="form-sep"></div>
@@ -4932,6 +5025,13 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
               <div style="font-size:10px;color:var(--sub);margin-top:2px;">ES, NQ, CL...</div>
             </div>
           </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="ac_tipo" id="ac_tipo_cripto" value="cripto" style="width:auto;background:none;border:none;padding:0;" onchange="toggleAccTipo()">
+            <div style="text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:var(--purple);">Cripto</div>
+              <div style="font-size:10px;color:var(--sub);margin-top:2px;">BTC, ETH, SOL...</div>
+            </div>
+          </label>
         </div>
       </div>
 
@@ -5147,6 +5247,40 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     <div class="form-actions">
       <button class="btn" onclick="closeModal('futInstrModal')">Cancelar</button>
       <button class="btn primary" onclick="saveFutInstr()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CRIPTO — INSTRUMENTO MODAL -->
+<div class="overlay" id="cryptoInstrModal">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" onclick="closeModal('cryptoInstrModal')">✕</button>
+    <div class="modal-title">🪙 <span id="cryptoInstrModalTitle">Nuevo Instrumento</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Símbolo</label>
+        <input type="text" id="ci_symbol" placeholder="BTCUSD, ETHUSD..." style="text-transform:uppercase;">
+      </div>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="ci_nombre" placeholder="Bitcoin">
+      </div>
+      <div class="form-group">
+        <label>Tick Size</label>
+        <input type="number" id="ci_tickSize" step="0.0001" placeholder="1" oninput="calcCiPointValue()">
+      </div>
+      <div class="form-group">
+        <label>Tick Value ($)</label>
+        <input type="number" id="ci_tickValue" step="0.0001" placeholder="1" oninput="calcCiPointValue()">
+      </div>
+      <div class="form-group full">
+        <label>Point Value ($/punto) — se calcula solo</label>
+        <input type="number" id="ci_pointValue" step="0.01" placeholder="1" readonly style="opacity:.6;cursor:not-allowed;">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('cryptoInstrModal')">Cancelar</button>
+      <button class="btn primary" onclick="saveCryptoInstr()">Guardar</button>
     </div>
   </div>
 </div>
@@ -5637,6 +5771,14 @@ const FUT_INSTR_DEFAULT = [
   { id:'GC',  nombre:'Gold',              tickSize:0.10, tickValue:10.00, pointValue:100   },
 ];
 let futInstruments = JSON.parse(JSON.stringify(FUT_INSTR_DEFAULT));
+
+const CRYPTO_INSTR_DEFAULT = [
+  { id:'BTCUSD', nombre:'Bitcoin',   tickSize:1,    tickValue:1,    pointValue:1 },
+  { id:'ETHUSD', nombre:'Ethereum',  tickSize:0.1,  tickValue:0.1,  pointValue:1 },
+  { id:'SOLUSD', nombre:'Solana',    tickSize:0.01, tickValue:0.01, pointValue:1 },
+  { id:'XRPUSD', nombre:'XRP',       tickSize:0.0001, tickValue:0.0001, pointValue:1 },
+];
+let cryptoInstruments = JSON.parse(JSON.stringify(CRYPTO_INSTR_DEFAULT));
 let metas = JSON.parse(localStorage.getItem('rdm_metas')||'[]');
 let histView='R'; // R | USD | PCT
 let histSimAccount='5k'; // cuenta para el simulador de fondeo por sesión del histórico
@@ -5727,6 +5869,7 @@ function armarEstado(){
     btChallenges,
     metas,
     futInstruments,
+    cryptoInstruments,
     btCfg: NEOMAA,
     btRules: btQuickRules,
     btZonas,
@@ -5759,6 +5902,7 @@ function aplicarEstado(d){
   if(d.btChallenges)    btChallenges    = d.btChallenges;
   if(d.metas)           metas           = d.metas;
   if(d.futInstruments)  futInstruments  = d.futInstruments;
+  if(d.cryptoInstruments) cryptoInstruments = d.cryptoInstruments;
   if(d.btCfg)           NEOMAA          = d.btCfg;
   if(d.btRules)    btQuickRules = d.btRules;
   if(d.btZonas)    btZonas    = d.btZonas;
@@ -6503,7 +6647,7 @@ function nav(name, fromPopState=false){
   currentPage=name;
   updateSectionHelp(name);
   updateHeader();
-  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{selectBtAccount(btAccount);renderBtQuickRules();renderBtZonasList();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas,challenges:renderChallengeHistory,perfil:renderPerfil};
+  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{selectBtAccount(btAccount);renderBtQuickRules();renderBtZonasList();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();renderCryptoInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas,challenges:renderChallengeHistory,perfil:renderPerfil};
   if(renders[name]) renders[name]();
   if(!fromPopState) history.pushState({page:name}, '', location.href);
 }
@@ -6544,7 +6688,7 @@ function calcRisk(type,entry,sl,lots,acc){const slp=type==='LONG'?(entry-sl)*100
 // Forex guarda 'risk' como fracción del tamaño de cuenta (calcRisk); Futuros guarda 'riskUSD' en dólares,
 // así que hay que dividirlo por el tamaño de la cuenta correspondiente para obtener el mismo %.
 function tradeRiskPct(t){
-  if(t.tipo==='futuros'){
+  if(t.tipo==='futuros'||t.tipo==='cripto'){
     const a=accounts.find(a=>a.id===t.accountId);
     const size=a?(a.initialBalance||a.size||10000):10000;
     return size>0 ? (t.riskUSD||0)/size*100 : 0;
@@ -6908,13 +7052,25 @@ function populateFutInstrSelect(){
   if(cur && futInstruments.find(f=>f.id===cur)) sel.value=cur;
 }
 
+function populateCryptoInstrSelect(){
+  const sel = document.getElementById('t_cripto_instr');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = cryptoInstruments.map(f=>`<option value="${f.id}">${f.id} — ${f.nombre} ($${f.pointValue}/pto)</option>`).join('');
+  if(cur && cryptoInstruments.find(f=>f.id===cur)) sel.value=cur;
+}
+
 function toggleTradeTipo(){
   const isFut = document.getElementById('t_tipo_futuros')?.checked;
+  const isCripto = document.getElementById('t_tipo_cripto')?.checked;
   const fw = document.getElementById('t_forex_wrap');
   const futw = document.getElementById('t_fut_wrap');
-  if(fw)  fw.style.display  = isFut ? 'none' : 'contents';
+  const criw = document.getElementById('t_cripto_wrap');
+  if(fw)  fw.style.display  = (isFut||isCripto) ? 'none' : 'contents';
   if(futw) futw.style.display = isFut ? 'contents' : 'none';
+  if(criw) criw.style.display = isCripto ? 'contents' : 'none';
   if(isFut) populateFutInstrSelect();
+  if(isCripto) populateCryptoInstrSelect();
 }
 
 function toggleFutMode(){
@@ -6922,6 +7078,14 @@ function toggleFutMode(){
   const preciosIds = ['t_fut_entry_grp','t_fut_exit_grp','t_fut_sl_grp','t_fut_pnl_calc_grp'];
   preciosIds.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=isDirecto?'none':'block'; });
   const dg = document.getElementById('t_fut_pnl_direct_grp');
+  if(dg) dg.style.display = isDirecto ? 'block' : 'none';
+}
+
+function toggleCriptoMode(){
+  const isDirecto = document.getElementById('t_cripto_mode_directo')?.checked;
+  const preciosIds = ['t_cripto_entry_grp','t_cripto_exit_grp','t_cripto_sl_grp','t_cripto_pnl_calc_grp'];
+  preciosIds.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=isDirecto?'none':'block'; });
+  const dg = document.getElementById('t_cripto_pnl_direct_grp');
   if(dg) dg.style.display = isDirecto ? 'block' : 'none';
 }
 
@@ -6956,6 +7120,37 @@ function calcFutRiskModal(){
   }
 }
 
+function calcCriptoPnlModal(){
+  const instr = cryptoInstruments.find(f=>f.id===document.getElementById('t_cripto_instr')?.value);
+  if(!instr) return;
+  const entry = parseFloat(document.getElementById('t_cripto_entry').value);
+  const exit  = parseFloat(document.getElementById('t_cripto_exit').value);
+  const cont  = parseFloat(document.getElementById('t_cripto_contratos').value)||1;
+  const disp  = document.getElementById('t_cripto_pnl_display');
+  if(!disp) return;
+  if(!isNaN(entry) && !isNaN(exit)){
+    const pnl = (exit - entry) * instr.pointValue * cont;
+    disp.textContent = (pnl>=0?'+':'') + fmtUSD(pnl);
+    disp.style.color = pnl>=0?'var(--green)':'var(--red)';
+  } else {
+    disp.textContent='—'; disp.style.color='var(--sub)';
+  }
+}
+
+function calcCriptoRiskModal(){
+  const instr = cryptoInstruments.find(f=>f.id===document.getElementById('t_cripto_instr')?.value);
+  if(!instr) return;
+  const entry = parseFloat(document.getElementById('t_cripto_entry').value);
+  const sl    = parseFloat(document.getElementById('t_cripto_sl_price').value);
+  const cont  = parseFloat(document.getElementById('t_cripto_contratos').value)||1;
+  const riskEl= document.getElementById('t_cripto_risk');
+  if(!riskEl) return;
+  if(!isNaN(entry) && !isNaN(sl) && sl!==entry){
+    const risk = Math.abs(entry - sl) * instr.pointValue * cont;
+    riskEl.value = risk.toFixed(2);
+  }
+}
+
 function onTradeAccountChange(){
   const accId = parseInt(document.getElementById('t_account').value)||null;
   if(!accId) return;
@@ -6963,6 +7158,8 @@ function onTradeAccountChange(){
   if(!acc) return;
   if(acc.tipo==='futuros'){
     document.getElementById('t_tipo_futuros').checked=true;
+  } else if(acc.tipo==='cripto'){
+    document.getElementById('t_tipo_cripto').checked=true;
   } else {
     document.getElementById('t_tipo_forex').checked=true;
   }
@@ -7042,6 +7239,14 @@ function openTradeModal(){
   document.getElementById('t_fut_commission').value='0';
   document.getElementById('t_fut_pnl_display').textContent='—';
   document.getElementById('t_fut_pnl_display').style.color='var(--sub)';
+  // reset campos cripto
+  document.getElementById('t_cripto_mode_precios').checked=true;
+  toggleCriptoMode();
+  ['t_cripto_entry','t_cripto_exit','t_cripto_sl_price','t_cripto_risk','t_cripto_pnl_direct'].forEach(x=>{ const el=document.getElementById(x); if(el) el.value=''; });
+  document.getElementById('t_cripto_contratos').value='1';
+  document.getElementById('t_cripto_commission').value='0';
+  document.getElementById('t_cripto_pnl_display').textContent='—';
+  document.getElementById('t_cripto_pnl_display').style.color='var(--sub)';
   window._jZonaSelected = '';
   renderJournalZonaChips();
   document.getElementById('t_zona_selected').textContent='';
@@ -7069,7 +7274,8 @@ function editTrade(id){
   document.getElementById('t_session').value=t.session||'Londres';
   // tipo de instrumento
   const isFut = t.tipo==='futuros';
-  document.getElementById(isFut?'t_tipo_futuros':'t_tipo_forex').checked=true;
+  const isCripto = t.tipo==='cripto';
+  document.getElementById(isFut?'t_tipo_futuros':isCripto?'t_tipo_cripto':'t_tipo_forex').checked=true;
   toggleTradeTipo();
   if(isFut){
     populateFutInstrSelect();
@@ -7085,6 +7291,20 @@ function editTrade(id){
     document.getElementById('t_fut_risk').value=t.riskUSD||'';
     document.getElementById('t_fut_commission').value=t.commission||0;
     calcFutPnlModal();
+  } else if(isCripto){
+    populateCryptoInstrSelect();
+    document.getElementById('t_cripto_instr').value=t.instrumento||'';
+    document.getElementById('t_cripto_contratos').value=t.contratos||1;
+    const usedPrecios = t.entryPrice!=null && t.exitPrice!=null;
+    document.getElementById(usedPrecios?'t_cripto_mode_precios':'t_cripto_mode_directo').checked=true;
+    toggleCriptoMode();
+    document.getElementById('t_cripto_entry').value=t.entryPrice||'';
+    document.getElementById('t_cripto_exit').value=t.exitPrice||'';
+    document.getElementById('t_cripto_sl_price').value=t.slPrice||'';
+    document.getElementById('t_cripto_pnl_direct').value=t.pnl_direct||'';
+    document.getElementById('t_cripto_risk').value=t.riskUSD||'';
+    document.getElementById('t_cripto_commission').value=t.commission||0;
+    calcCriptoPnlModal();
   } else {
     document.getElementById('t_pair').value=t.pair||'EUR/USD';
     document.getElementById('t_lots').value=t.lots||0.1;
@@ -7120,6 +7340,7 @@ function deleteTrade(id){trades=trades.filter(t=>t.id!==id);markDirty();save();r
 
 function saveTrade(){
   const isFut = document.getElementById('t_tipo_futuros')?.checked;
+  const isCripto = document.getElementById('t_tipo_cripto')?.checked;
   const type  = document.getElementById('t_type').value;
   const accId = parseInt(document.getElementById('t_account').value)||null;
   const acc   = accObj(accId);
@@ -7182,6 +7403,45 @@ function saveTrade(){
     } else {
       trades.push(tradeData);
       addEvent(pnl>=0?'win':'loss',`Futuros ${type} ${instrId} x${contratos}: ${fmtUSD(pnl)}`);
+      toast('Trade guardado','ok');
+    }
+  } else if(isCripto){
+    const instrId  = document.getElementById('t_cripto_instr').value;
+    const instr    = cryptoInstruments.find(f=>f.id===instrId);
+    if(!instr){ toast('Seleccioná un instrumento','err'); return; }
+    const contratos= parseFloat(document.getElementById('t_cripto_contratos').value)||1;
+    const commission= parseFloat(document.getElementById('t_cripto_commission').value)||0;
+    const riskUSD  = parseFloat(document.getElementById('t_cripto_risk').value)||0;
+    const isDirecto= document.getElementById('t_cripto_mode_directo')?.checked;
+    let pnl_direct, entryPrice, exitPrice, slPrice;
+    if(isDirecto){
+      pnl_direct = parseFloat(document.getElementById('t_cripto_pnl_direct').value);
+      if(isNaN(pnl_direct)){ toast('Ingresá el P&L','err'); return; }
+    } else {
+      entryPrice = parseFloat(document.getElementById('t_cripto_entry').value);
+      exitPrice  = parseFloat(document.getElementById('t_cripto_exit').value);
+      slPrice    = parseFloat(document.getElementById('t_cripto_sl_price').value)||null;
+      if(isNaN(entryPrice)||isNaN(exitPrice)){ toast('Ingresá precio de entrada y salida','err'); return; }
+      pnl_direct = +((exitPrice - entryPrice) * instr.pointValue * contratos).toFixed(2);
+    }
+    const pnl = +(pnl_direct - commission).toFixed(2);
+    const rr  = riskUSD>0 ? +(pnl_direct/riskUSD).toFixed(2) : 0;
+    tradeData = {
+      ...commonFields,
+      tipo:'cripto', instrumento:instrId,
+      par: instrId,  // para compatibilidad con estadísticas y filtros
+      contratos, entryPrice, exitPrice, slPrice,
+      pnl_direct, commission, pnl, rr, riskUSD,
+      result: getResult(pnl),
+      // campos forex en 0 para no romper cálculos legacy
+      lots:0, entry:entryPrice||0, sl:slPrice||0, tp:0, close:exitPrice||0, pips:0, pnlGross:pnl_direct, risk:riskUSD
+    };
+    if(editTradeId){
+      const idx=trades.findIndex(t=>t.id===editTradeId); trades[idx]=tradeData;
+      toast('Trade actualizado','ok');
+    } else {
+      trades.push(tradeData);
+      addEvent(pnl>=0?'win':'loss',`Cripto ${type} ${instrId} x${contratos}: ${fmtUSD(pnl)}`);
       toast('Trade guardado','ok');
     }
   } else {
@@ -7290,8 +7550,9 @@ function renderJournal(){
     const tr=document.createElement('tr');
     tr.style.cursor='pointer';
     tr.title='Click para expandir gráfico';
-    const isFutT = t.tipo==='futuros';
-    tr.innerHTML=`<td class="muted">${f.length-globalI}${t.tv?`<div style="font-size:8px;color:var(--cyan);opacity:.7;line-height:1;margin-top:2px;" class="tv-chev-${t.id}">▾ tv</div>`:''}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;color:${isFutT?'var(--orange)':'var(--gold)'};">${isFutT?`${t.instrumento||'—'} <span style="font-size:8px;opacity:.7;">×${t.contratos||1}</span>`:(t.pair||'EUR/USD')}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${isFutT?(t.entryPrice??t.entry)?.toFixed(2)||'—':t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${isFutT?(t.slPrice??t.sl)?.toFixed(2)||'—':t.sl?.toFixed(5)||'—'}</td><td class="muted">${isFutT?'—':t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${isFutT?(t.exitPrice??t.close)?.toFixed(2)||'—':t.close?.toFixed(5)||'—'}</td><td>${isFutT?`<span style="color:var(--orange);">${t.contratos||1} cto${(t.contratos||1)!==1?'s':''}</span>`:t.lots?.toFixed(2)||'—'}</td><td class="${isFutT?'muted':(t.pips>=0?'pos':'neg')}">${isFutT?'—':t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${isFutT?(t.riskUSD>0?fmtUSD(t.riskUSD):'—'):((t.risk||0)*100).toFixed(2)+'%'}</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${(()=>{const rp=t.rutinaDelDia;if(rp==null||rp===undefined)return '<span style="color:var(--dim);font-size:10px;">—</span>';const rc=rp===100?'var(--green)':rp>=50?'var(--cyan)':rp>0?'var(--orange)':'var(--dim)';return `<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:${rc};background:${rc}18;border:1px solid ${rc}40;padding:1px 6px;border-radius:10px;">${rp}%</span>`;})()}</td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td class="muted" style="font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;">${fmtLastMod(t.updatedAt)}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
+    const isFutT = t.tipo==='futuros'||t.tipo==='cripto';
+    const instrColorT = t.tipo==='cripto'?'var(--purple)':(isFutT?'var(--orange)':'var(--gold)');
+    tr.innerHTML=`<td class="muted">${f.length-globalI}${t.tv?`<div style="font-size:8px;color:var(--cyan);opacity:.7;line-height:1;margin-top:2px;" class="tv-chev-${t.id}">▾ tv</div>`:''}</td><td class="muted">${t.date||'—'}</td><td style="color:var(--cyan);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc?`<span title="${acc.name}">${acc.name.slice(0,12)}${acc.name.length>12?'…':''}</span>`:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;color:${instrColorT};">${isFutT?`${t.instrumento||'—'} <span style="font-size:8px;opacity:.7;">×${t.contratos||1}</span>`:(t.pair||'EUR/USD')}</td><td class="muted">${t.hEnt||'—'}</td><td class="muted">${t.hSal||'—'}</td><td><span class="badge b-${t.type==='LONG'?'long':'short'}">${t.type}</span></td><td class="muted">${t.session||'—'}</td><td>${t.zona?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);">${t.zona}</span>`:'<span style="color:var(--dim);font-size:10px;">—</span>'}</td><td class="gold">${isFutT?(t.entryPrice??t.entry)?.toFixed(2)||'—':t.entry?.toFixed(5)||'—'}</td><td style="color:var(--red)">${isFutT?(t.slPrice??t.sl)?.toFixed(2)||'—':t.sl?.toFixed(5)||'—'}</td><td class="muted">${isFutT?'—':t.tp?t.tp.toFixed(5):'—'}</td><td class="gold">${isFutT?(t.exitPrice??t.close)?.toFixed(2)||'—':t.close?.toFixed(5)||'—'}</td><td>${isFutT?`<span style="color:var(--orange);">${t.contratos||1} cto${(t.contratos||1)!==1?'s':''}</span>`:t.lots?.toFixed(2)||'—'}</td><td class="${isFutT?'muted':(t.pips>=0?'pos':'neg')}">${isFutT?'—':t.pips?.toFixed(1)||0}</td><td class="${t.pnl>=0?'pos':'neg'}" style="font-weight:700">${fmtUSD(t.pnl||0)}${t.commission>0?`<span style="display:block;font-size:9px;color:var(--sub);font-weight:400;">bruto ${fmtUSD(t.pnlGross||0)} − com. ${fmtUSD(t.commission)}</span>`:''}</td><td class="${t.rr>=1?'pos':'neg'}">${t.rr?.toFixed(2)||0}x</td><td style="color:var(--orange)">${isFutT?(t.riskUSD>0?fmtUSD(t.riskUSD):'—'):((t.risk||0)*100).toFixed(2)+'%'}</td><td><span class="badge b-${t.result?.toLowerCase()}">${t.result}</span></td><td>${(()=>{const rp=t.rutinaDelDia;if(rp==null||rp===undefined)return '<span style="color:var(--dim);font-size:10px;">—</span>';const rc=rp===100?'var(--green)':rp>=50?'var(--cyan)':rp>0?'var(--orange)':'var(--dim)';return `<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:${rc};background:${rc}18;border:1px solid ${rc}40;padding:1px 6px;border-radius:10px;">${rp}%</span>`;})()}</td><td>${t.tv?`<a class="tv-link" href="${t.tv}" target="_blank">Ver ↗</a>`:'—'}</td><td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;">${t.setup||'—'}</td><td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${t.notes||'—'}</td><td class="muted" style="font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;">${fmtLastMod(t.updatedAt)}</td><td style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="editTrade(${t.id})">✎</button><button class="btn sm danger" onclick="deleteTrade(${t.id})">✕</button></td>`;
     tr.addEventListener('click',function(e){
       if(e.target.tagName==='BUTTON'||e.target.tagName==='A') return;
       const d=document.getElementById(detailId);
@@ -9278,6 +9539,71 @@ function deleteFutInstr(id){
   markDirty(); save(); renderFutInstr();
 }
 
+// ── Catálogo de Instrumentos de Cripto ───────────────────────
+let editingCryptoInstr = null;
+
+function renderCryptoInstr(){
+  const body = document.getElementById('cryptoInstrBody');
+  const empty = document.getElementById('cryptoInstrEmpty');
+  if(!body) return;
+  if(!cryptoInstruments.length){ body.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  body.innerHTML = cryptoInstruments.map(f=>`
+    <tr>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--purple);">${f.id}</span></td>
+      <td>${f.nombre}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">${f.tickSize}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">$${f.tickValue}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">$${f.pointValue}/punto</td>
+      <td style="text-align:right;white-space:nowrap;">
+        <button class="btn sm ghost" onclick="openCryptoInstrModal('${f.id}')">✎</button>
+        <button class="btn sm danger" onclick="deleteCryptoInstr('${f.id}')">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openCryptoInstrModal(id=null){
+  editingCryptoInstr = id;
+  document.getElementById('cryptoInstrModalTitle').textContent = id ? 'Editar Instrumento' : 'Nuevo Instrumento';
+  const f = id ? cryptoInstruments.find(x=>x.id===id) : null;
+  document.getElementById('ci_symbol').value    = f ? f.id        : '';
+  document.getElementById('ci_nombre').value    = f ? f.nombre    : '';
+  document.getElementById('ci_tickSize').value  = f ? f.tickSize  : '';
+  document.getElementById('ci_tickValue').value = f ? f.tickValue : '';
+  document.getElementById('ci_pointValue').value= f ? f.pointValue: '';
+  document.getElementById('ci_symbol').readOnly = !!id;
+  openModal('cryptoInstrModal');
+}
+
+function calcCiPointValue(){
+  const ts = parseFloat(document.getElementById('ci_tickSize').value);
+  const tv = parseFloat(document.getElementById('ci_tickValue').value);
+  if(ts>0 && tv>0) document.getElementById('ci_pointValue').value = +(tv/ts).toFixed(4);
+}
+
+function saveCryptoInstr(){
+  const sym  = document.getElementById('ci_symbol').value.trim().toUpperCase();
+  const nombre= document.getElementById('ci_nombre').value.trim();
+  const ts   = parseFloat(document.getElementById('ci_tickSize').value);
+  const tv   = parseFloat(document.getElementById('ci_tickValue').value);
+  if(!sym || !nombre || !ts || !tv){ toast('Completá todos los campos','err'); return; }
+  const pv = +(tv/ts).toFixed(4);
+  if(editingCryptoInstr){
+    const idx = cryptoInstruments.findIndex(x=>x.id===editingCryptoInstr);
+    if(idx>-1) cryptoInstruments[idx] = { id:sym, nombre, tickSize:ts, tickValue:tv, pointValue:pv };
+  } else {
+    if(cryptoInstruments.find(x=>x.id===sym)){ toast('Ya existe un instrumento con ese símbolo','err'); return; }
+    cryptoInstruments.push({ id:sym, nombre, tickSize:ts, tickValue:tv, pointValue:pv });
+  }
+  markDirty(); save(); closeModal('cryptoInstrModal'); renderCryptoInstr();
+  toast('Instrumento guardado','ok');
+}
+
+function deleteCryptoInstr(id){
+  cryptoInstruments = cryptoInstruments.filter(x=>x.id!==id);
+  markDirty(); save(); renderCryptoInstr();
+}
+
 function renderPares(){
   // hoy
   const parsHoy=getParHoy();
@@ -9475,7 +9801,7 @@ function openAccModal(id=null){
     document.getElementById(`ac_cat_${cat}`).checked=true;
     toggleAccCategoria();
     // set tipo radio
-    document.getElementById(a.tipo==='futuros'?'ac_tipo_futuros':'ac_tipo_forex').checked=true;
+    document.getElementById(a.tipo==='futuros'?'ac_tipo_futuros':a.tipo==='cripto'?'ac_tipo_cripto':'ac_tipo_forex').checked=true;
     // set fases radio
     const numFases = a.numFases||1;
     document.getElementById(numFases===2?'ac_fases2':'ac_fases1').checked=true;
@@ -9527,7 +9853,7 @@ function saveAcc(){
     target:  categoria==='challenge' ? (parseFloat(document.getElementById('ac_target').value)||10) : 0,
     target2: categoria==='challenge' ? (parseFloat(document.getElementById('ac_target2').value)||5)  : 0,
     numFases,
-    tipo: document.getElementById('ac_tipo_futuros').checked ? 'futuros' : 'forex',
+    tipo: document.getElementById('ac_tipo_futuros').checked ? 'futuros' : document.getElementById('ac_tipo_cripto').checked ? 'cripto' : 'forex',
     startDate:document.getElementById('ac_start').value,
     nextTrade:document.getElementById('ac_next').value,
     notes:document.getElementById('ac_notes').value,
@@ -9734,7 +10060,7 @@ function renderCuentas(){
     card.className=cardClass;
     card.setAttribute('data-help','Tarjeta de cuenta: arriba, firma, nombre y fase (Challenge/Verification/Funded). En el cuerpo, balance actual, P&L en $ y %, trades del journal vinculados, tu progreso hacia el target de la fase y las barras de Daily DD / Max DD respecto al límite que permite la prop firm.');
     const cat = a.categoria || 'challenge';
-    const futBadge = a.tipo==='futuros' ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--orange);background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);padding:1px 5px;border-radius:4px;letter-spacing:.05em;">FUTUROS</span>' : '';
+    const futBadge = a.tipo==='futuros' ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--orange);background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);padding:1px 5px;border-radius:4px;letter-spacing:.05em;">FUTUROS</span>' : a.tipo==='cripto' ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--purple);background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.25);padding:1px 5px;border-radius:4px;letter-spacing:.05em;">CRIPTO</span>' : '';
     const catBadgeHtml = cat==='funded'
       ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:var(--green);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);padding:2px 7px;border-radius:4px;letter-spacing:.06em;">FONDEADA</span>'
       : cat==='propia'
@@ -10304,11 +10630,16 @@ chequearSesion();   // decide: mostrar login o entrar con sesión activa
 // ════════════════════════════════════════════════════════════
 function switchCalcTab(tab){
   const isFut = tab==='futuros';
-  document.getElementById('calcForexPanel').style.display = isFut?'none':'';
+  const isCripto = tab==='cripto';
+  document.getElementById('calcForexPanel').style.display = (isFut||isCripto)?'none':'';
   document.getElementById('calcFutPanel').style.display   = isFut?'':'none';
-  document.getElementById('calcTabForex').className = isFut?'btn':'btn primary';
+  document.getElementById('calcCriptoPanel').style.display= isCripto?'':'none';
+  document.getElementById('calcTabForex').className = (isFut||isCripto)?'btn':'btn primary';
   document.getElementById('calcTabFut').className   = isFut?'btn primary':'btn';
-  if(isFut){ populateCfInstrSelect(); calcFuturos(); } else { calcLotaje(); }
+  document.getElementById('calcTabCripto').className= isCripto?'btn primary':'btn';
+  if(isFut){ populateCfInstrSelect(); calcFuturos(); }
+  else if(isCripto){ populateCcInstrSelect(); calcCripto(); }
+  else { calcLotaje(); }
 }
 
 function populateCfInstrSelect(){
@@ -10317,6 +10648,14 @@ function populateCfInstrSelect(){
   const cur = sel.value;
   sel.innerHTML = futInstruments.map(f=>`<option value="${f.id}">${f.id} — ${f.nombre} ($${f.pointValue}/pto)</option>`).join('');
   if(cur && futInstruments.find(f=>f.id===cur)) sel.value=cur;
+}
+
+function populateCcInstrSelect(){
+  const sel = document.getElementById('cc_instr');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = cryptoInstruments.map(f=>`<option value="${f.id}">${f.id} — ${f.nombre} ($${f.pointValue}/pto)</option>`).join('');
+  if(cur && cryptoInstruments.find(f=>f.id===cur)) sel.value=cur;
 }
 
 function calcFuturos(){
@@ -10357,6 +10696,73 @@ function calcFuturos(){
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">Target</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--green);">${targetPts} pts</div>
         <div style="font-size:10px;color:var(--sub);margin-top:2px;">= ${fmtUSD(targetPts*instr.pointValue)}/cto</div>
+      </div>
+      <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.8rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">Tick Size</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--cyan);">${instr.tickSize}</div>
+        <div style="font-size:10px;color:var(--sub);margin-top:2px;">= ${fmtUSD(instr.tickValue)}/tick</div>
+      </div>
+    </div>`;
+  if(entry){
+    const slPrice     = entry - slPts;
+    const targetPrice = entry + targetPts;
+    levHtml += `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:.5rem;">
+      <div style="background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:var(--r);padding:.7rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:4px;">SL PRECIO</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--red);">${slPrice.toFixed(2)}</div>
+      </div>
+      <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:var(--r);padding:.7rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:4px;">ENTRADA</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--gold);">${entry.toFixed(2)}</div>
+      </div>
+      <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:var(--r);padding:.7rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:4px;">TARGET</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--green);">${targetPrice.toFixed(2)}</div>
+      </div>
+    </div>`;
+  }
+  levEl.innerHTML = levHtml;
+}
+
+function calcCripto(){
+  const account = parseFloat(document.getElementById('cc_account')?.value)||10000;
+  const riskPct = (parseFloat(document.getElementById('cc_risk')?.value)||1)/100;
+  const instrId = document.getElementById('cc_instr')?.value;
+  const instr   = cryptoInstruments.find(f=>f.id===instrId);
+  const slPts   = parseFloat(document.getElementById('cc_sl_pts')?.value)||10;
+  const rr      = parseFloat(document.getElementById('cc_rr')?.value)||2;
+  const entry   = parseFloat(document.getElementById('cc_entry')?.value)||null;
+
+  const resEl  = document.getElementById('calcCriptoResult');
+  const levEl  = document.getElementById('calcCriptoLevels');
+  if(!instr||!resEl||!levEl) return;
+
+  const riskUSD   = account * riskPct;
+  const riskPerUnit= slPts * instr.pointValue;
+  const cantidad  = riskPerUnit>0 ? +(riskUSD / riskPerUnit).toFixed(6) : 0;
+  const cantidadMax = Math.max(cantidad,0);
+  const riskReal  = cantidadMax * riskPerUnit;
+  const targetPts = slPts * rr;
+  const targetUSD = cantidadMax * targetPts * instr.pointValue;
+
+  resEl.innerHTML = `
+    <div class="kpi-box" style="--accent:var(--purple)"><div class="kpi-label">Cantidad</div><div class="kpi-value" style="color:var(--purple)">${cantidadMax}</div><div class="kpi-sub">${instr.id}</div></div>
+    <div class="kpi-box" style="--accent:var(--red)"><div class="kpi-label">Riesgo Real</div><div class="kpi-value" style="color:var(--red)">${fmtUSD(riskReal)}</div><div class="kpi-sub">${(riskReal/account*100).toFixed(2)}% de la cuenta</div></div>
+    <div class="kpi-box" style="--accent:var(--green)"><div class="kpi-label">Target (${rr}R)</div><div class="kpi-value" style="color:var(--green)">${fmtUSD(targetUSD)}</div><div class="kpi-sub">${targetPts} puntos</div></div>
+    <div class="kpi-box" style="--accent:var(--cyan)"><div class="kpi-label">Point Value</div><div class="kpi-value" style="color:var(--cyan)">$${instr.pointValue}</div><div class="kpi-sub">por unidad</div></div>
+  `;
+  let levHtml = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;">
+      <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.8rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">SL</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);">${slPts} pts</div>
+        <div style="font-size:10px;color:var(--sub);margin-top:2px;">= ${fmtUSD(slPts*instr.pointValue)}/unidad</div>
+      </div>
+      <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.8rem;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">Target</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--green);">${targetPts} pts</div>
+        <div style="font-size:10px;color:var(--sub);margin-top:2px;">= ${fmtUSD(targetPts*instr.pointValue)}/unidad</div>
       </div>
       <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:.8rem;text-align:center;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">Tick Size</div>
@@ -11137,7 +11543,8 @@ function checkReglasWeek(weekTrades, start, end){
 // ════════════════════════════════════════════════════════════
 
 function onStTipoChange(){
-  const isFut = document.getElementById('st_tipo_instr')?.value === 'futuros';
+  const tv = document.getElementById('st_tipo_instr')?.value;
+  const isFut = tv === 'futuros' || tv === 'cripto';
   const metSel = document.getElementById('st_metrica');
   if(metSel){
     const pipsOpt = metSel.querySelector('option[value="pips"]');
@@ -15895,12 +16302,12 @@ function updateAutosave(){
 // Métricas en paralelo: R y USD. Curva unificada + comparativa lado a lado.
 // ════════════════════════════════════════════════════════════════════════
 let repView = 'R';            // 'R' | 'USD'
-let repFilt = 'all';          // 'all' | 'forex' | 'futuros'
+let repFilt = 'all';          // 'all' | 'forex' | 'futuros' | 'cripto'
 
 function setRepFilt(f){
   repFilt = f;
-  ['all','forex','futuros'].forEach(k=>{
-    const b = document.getElementById('repFilt'+{all:'All',forex:'Fx',futuros:'Fut'}[k]);
+  ['all','forex','futuros','cripto'].forEach(k=>{
+    const b = document.getElementById('repFilt'+{all:'All',forex:'Fx',futuros:'Fut',cripto:'Cr'}[k]);
     if(!b) return;
     const active = k === f;
     b.style.background = active ? 'var(--cyan)' : 'transparent';
@@ -15924,14 +16331,17 @@ function repFromHist(t){
   const usd = (t.pctGan / 100) * bal;
   const par = (t.par || '').toString().trim() || '—';
   const futIds = (typeof futInstruments !== 'undefined' ? futInstruments : []).map(f=>f.id.toUpperCase());
-  const isFut = futIds.includes(par.toUpperCase()) || (t.tipo === 'futuros');
+  const cryptoIds = (typeof cryptoInstruments !== 'undefined' ? cryptoInstruments : []).map(f=>f.id.toUpperCase());
+  const isCripto = cryptoIds.includes(par.toUpperCase()) || (t.tipo === 'cripto');
+  const isFut = !isCripto && (futIds.includes(par.toUpperCase()) || (t.tipo === 'futuros'));
+  const tipoCat = isCripto ? 'cripto' : isFut ? 'futuros' : 'forex';
   return {
     date: t.date || '',
     source: 'hist',
     par,
     session: (t.session || '').toString().trim() || '—',
     zona: (t.zona || '').toString().trim() || '(sin zona)',
-    r, usd, isFut,
+    r, usd, isFut: isFut||isCripto, isCripto, tipoCat,
     pct: t.pctGan,
     result: t.pctGan !== undefined ? t.pctGan : (t.pnl !== undefined ? t.pnl : 0)
   };
@@ -15943,13 +16353,15 @@ function repFromBt(t){
   const riskUSD = (typeof t.riskUSD === 'number') ? t.riskUSD : parseFloat(t.riskUSD) || 0;
   let r = riskUSD > 0 ? usd / riskUSD : (typeof t.rr === 'number' ? t.rr : parseFloat(t.rr) || 0);
   const isFut = t.tipo === 'futuros';
+  const isCripto = t.tipo === 'cripto';
+  const tipoCat = isCripto ? 'cripto' : isFut ? 'futuros' : 'forex';
   return {
     date: t.date || '',
     source: 'bt',
-    par: isFut ? (t.instrumento || 'FUT') : 'EUR/USD',
+    par: (isFut||isCripto) ? (t.instrumento || (isCripto?'CRYPTO':'FUT')) : 'EUR/USD',
     session: (t.session || '').toString().trim() || '—',
     zona: (t.zona || '').toString().trim() || '(sin zona)',
-    r, usd, isFut,
+    r, usd, isFut: isFut||isCripto, isCripto, tipoCat,
     pct: null,
     result: usd
   };
@@ -15959,8 +16371,9 @@ function repFromBt(t){
 function buildRepUniverse(){
   let hist = (typeof histTrades !== 'undefined' ? histTrades : []).map(repFromHist);
   let bt   = (typeof btTrades  !== 'undefined' ? btTrades  : []).map(repFromBt);
-  if(repFilt === 'forex')   { hist = hist.filter(t=>!t.isFut); bt = bt.filter(t=>!t.isFut); }
-  if(repFilt === 'futuros') { hist = hist.filter(t=> t.isFut); bt = bt.filter(t=> t.isFut); }
+  if(repFilt === 'forex')   { hist = hist.filter(t=>t.tipoCat==='forex');   bt = bt.filter(t=>t.tipoCat==='forex'); }
+  if(repFilt === 'futuros') { hist = hist.filter(t=>t.tipoCat==='futuros'); bt = bt.filter(t=>t.tipoCat==='futuros'); }
+  if(repFilt === 'cripto')  { hist = hist.filter(t=>t.tipoCat==='cripto');  bt = bt.filter(t=>t.tipoCat==='cripto'); }
   const all  = [...hist, ...bt].sort((a,b)=>{
     const c = (a.date||'').localeCompare(b.date||'');
     if(c !== 0) return c;
