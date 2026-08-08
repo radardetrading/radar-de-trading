@@ -5729,6 +5729,15 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
   </div>
 </div>
 
+<!-- DETALLE DE CICLO — Simulador de Fondeo -->
+<div class="overlay" id="sfCicloModal">
+  <div class="modal" style="width:min(960px,96vw);">
+    <button class="modal-close" onclick="closeModal('sfCicloModal')">✕</button>
+    <div class="modal-title">🏆 <span id="sfCicloTitle">Detalle del Ciclo</span></div>
+    <div id="sfCicloBody"></div>
+  </div>
+</div>
+
 <!-- DETALLE DE CUENTA -->
 <div class="overlay" id="accDetailModal">
   <div class="modal" style="width:min(1100px,96vw);">
@@ -17583,14 +17592,16 @@ function simularChallengeTodos(){
   let phase = 1;
   let phasePnl = 0, phasePeak = 0;
   let dayPnl = {}, attemptTrades = 0;
+  let segTrades = [];
 
-  const resetAttempt = ()=>{ phase=1; phasePnl=0; phasePeak=0; dayPnl={}; attemptTrades=0; };
+  const resetAttempt = ()=>{ phase=1; phasePnl=0; phasePeak=0; dayPnl={}; attemptTrades=0; segTrades=[]; };
   const nextPhase = (p)=>{ phase=p; phasePnl=0; phasePeak=0; dayPnl={}; };
 
   for(let i=0; i<sorted.length; i++){
     const t = sorted[i];
     const pnl = riskFixedOn ? (t.r || 0) * riskFixedPct : (t.pctGan || 0);
     attemptTrades++;
+    segTrades.push({...t, simPhase:phase, simPnl:pnl});
 
     const curDD      = phase===1 ? p1DD      : phase===2 ? p2DD      : fundedDD;
     const curDailyDD = phase===1 ? p1DailyDD : phase===2 ? p2DailyDD : fundedDaily;
@@ -17600,8 +17611,8 @@ function simularChallengeTodos(){
       dayPnl[d] = (dayPnl[d]||0) + pnl;
       if(dayPnl[d] <= -curDailyDD){
         const ev = phase==='funded'
-          ? {result:'blown_funded', reason:'dailydd', trades:attemptTrades}
-          : {result:'fail', failPhase:phase, reason:'dailydd', trades:attemptTrades};
+          ? {result:'blown_funded', reason:'dailydd', trades:attemptTrades, tradesList:segTrades}
+          : {result:'fail', failPhase:phase, reason:'dailydd', trades:attemptTrades, tradesList:segTrades};
         attempts.push(ev);
         resetAttempt(); continue;
       }
@@ -17613,8 +17624,8 @@ function simularChallengeTodos(){
     const ddVal = ddType==='trailing' ? (phasePeak - phasePnl) : -phasePnl;
     if(ddVal >= curDD){
       const ev = phase==='funded'
-        ? {result:'blown_funded', reason:'dd', trades:attemptTrades}
-        : {result:'fail', failPhase:phase, reason:'dd', trades:attemptTrades};
+        ? {result:'blown_funded', reason:'dd', trades:attemptTrades, tradesList:segTrades}
+        : {result:'fail', failPhase:phase, reason:'dd', trades:attemptTrades, tradesList:segTrades};
       attempts.push(ev);
       resetAttempt(); continue;
     }
@@ -17622,27 +17633,28 @@ function simularChallengeTodos(){
     if(phase===1 && phasePnl >= p1Target){
       if(sfPhasesCount===1){
         if(fundedOn){ nextPhase('funded'); }
-        else { attempts.push({result:'pass', trades:attemptTrades}); resetAttempt(); continue; }
+        else { attempts.push({result:'pass', trades:attemptTrades, tradesList:segTrades}); resetAttempt(); continue; }
       } else {
         nextPhase(2);
       }
     } else if(phase===2 && phasePnl >= p2Target){
       if(fundedOn){ nextPhase('funded'); }
-      else { attempts.push({result:'pass', trades:attemptTrades}); resetAttempt(); continue; }
+      else { attempts.push({result:'pass', trades:attemptTrades, tradesList:segTrades}); resetAttempt(); continue; }
     } else if(phase==='funded' && phasePnl >= withdrawal){
-      attempts.push({result:'payout', trades:attemptTrades});
+      attempts.push({result:'payout', trades:attemptTrades, tradesList:segTrades});
       resetAttempt(); continue;
     }
   }
 
   if(attemptTrades > 0){
-    attempts.push({result:'partial', phase, phasePnl, trades:attemptTrades});
+    attempts.push({result:'partial', phase, phasePnl, trades:attemptTrades, tradesList:segTrades});
   }
 
   renderFondeoAllResults(attempts);
 }
 
 function renderFondeoAllResults(attempts){
+  window._sfAllAttempts = attempts;
   const resEl      = document.getElementById('sfAllResults');
   const kpisEl     = document.getElementById('sfAllKpis');
   const timelineEl = document.getElementById('sfAllTimeline');
@@ -17715,9 +17727,9 @@ function renderFondeoAllResults(attempts){
       var pct = typeof a.phasePnl==='number' ? a.phasePnl.toFixed(2)+'%' : '?';
       title='Incompleto: ' + phStr + ', ' + pct + ', ' + a.trades + ' trades';
     }
-    return '<div title="' + title + '" style="min-width:30px;height:26px;border-radius:5px;padding:0 4px;background:' + bg
+    return '<div title="' + title + ' — clic para ver los trades" onclick="abrirSfCicloDetalle(' + idx + ')" style="min-width:30px;height:26px;border-radius:5px;padding:0 4px;background:' + bg
       + ';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:' + textColor
-      + ';cursor:default;flex-shrink:0;">' + lbl + '</div>';
+      + ';cursor:pointer;flex-shrink:0;">' + lbl + '</div>';
   }).join('');
 
   var det = '';
@@ -17734,6 +17746,62 @@ function renderFondeoAllResults(attempts){
   }
   legendEl.innerHTML = det;
   resEl.style.display = 'block';
+}
+
+function abrirSfCicloDetalle(idx){
+  const attempts = window._sfAllAttempts || [];
+  const a = attempts[idx];
+  if(!a) return;
+  const n = idx + 1;
+
+  const resultLabel = {
+    pass:'✅ Pasó la prueba', payout:'💰 Retiro cobrado',
+    blown_funded:'🟣 Blown fondeada', partial:'⏳ Incompleto al final del período'
+  };
+  let titulo, badge;
+  if(a.result==='fail'){
+    titulo = 'Ciclo ' + n + ' — Falló en Fase ' + a.failPhase;
+    badge = '<span class="badge" style="background:rgba(248,113,113,.15);color:var(--red);">❌ Falló Fase ' + a.failPhase + ' (' + (a.reason==='dailydd'?'DD diario':'DD total') + ')</span>';
+  } else {
+    titulo = 'Ciclo ' + n + ' — ' + (resultLabel[a.result] || a.result);
+    badge = '<span class="badge" style="background:rgba(255,255,255,.08);color:var(--text);">' + (resultLabel[a.result] || a.result) + '</span>';
+  }
+  document.getElementById('sfCicloTitle').textContent = titulo;
+
+  const fasesLbl = {1:'Fase 1', 2:'Fase 2', funded:'Fondeada'};
+  const list = a.tradesList || [];
+
+  const rows = list.map(function(t){
+    const isSnap = t.tv && /tradingview\.com\/x\//i.test(t.tv);
+    const grafico = !t.tv ? '—'
+      : '<a class="tv-link" href="' + escHtml(t.tv) + '" target="_blank" rel="noopener">Ver ↗</a>'
+        + (isSnap ? '<img src="' + escHtml(t.tv) + '" alt="Chart" style="height:44px;border-radius:5px;border:1px solid rgba(56,189,248,.25);display:block;margin-top:3px;" onerror="this.style.display=\'none\'">' : '');
+    return '<tr>'
+      + '<td>' + (t.date||'') + '</td>'
+      + '<td>' + escHtml(t.par||'') + '</td>'
+      + '<td>' + (t.session||'') + '</td>'
+      + '<td>' + escHtml(t.zona||'') + '</td>'
+      + '<td>' + (t.type||'') + '</td>'
+      + '<td>' + (fasesLbl[t.simPhase]||t.simPhase) + '</td>'
+      + '<td>' + (t.pctArr!=null ? t.pctArr.toFixed(2)+'%' : '—') + '</td>'
+      + '<td style="color:' + (t.simPnl>=0?'var(--green)':'var(--red)') + '">' + (t.simPnl!=null ? t.simPnl.toFixed(2)+'%' : '—') + '</td>'
+      + '<td>' + (t.r!=null ? t.r.toFixed(2)+'R' : '—') + '</td>'
+      + '<td>' + grafico + '</td>'
+      + '<td style="font-size:11px;color:var(--sub);">' + escHtml(t.notes||'') + '</td>'
+      + '</tr>';
+  }).join('');
+
+  document.getElementById('sfCicloBody').innerHTML = ''
+    + '<div style="display:flex;gap:10px;align-items:center;margin-bottom:1rem;flex-wrap:wrap;">'
+    + badge
+    + '<span style="font-size:11px;color:var(--sub);">' + list.length + ' trades</span>'
+    + '</div>'
+    + '<div class="table-wrap"><table style="width:100%;">'
+    + '<thead><tr><th>Fecha</th><th>Par</th><th>Sesión</th><th>Zona</th><th>Tipo</th><th>Fase</th><th>% Riesgo</th><th>% Ganado</th><th>R</th><th>Gráfico</th><th>Notas</th></tr></thead>'
+    + '<tbody>' + (rows || '<tr><td colspan="11" style="text-align:center;color:var(--sub);">Sin trades registrados en este ciclo.</td></tr>') + '</tbody>'
+    + '</table></div>';
+
+  openModal('sfCicloModal');
 }
 
 
