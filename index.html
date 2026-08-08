@@ -3886,6 +3886,14 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             <input type="checkbox" id="sfFundedEnabled" onchange="setSfFunded(this.checked)" style="accent-color:var(--cyan);width:14px;height:14px;">
             SIMULAR FASE FONDEADA
           </label>
+          <div data-help="Si lo activás, cada trade histórico se recalcula como si SIEMPRE hubieras arriesgado este % fijo, en vez del % real que usaste en esa operación. Toma el resultado en R de cada trade (R = %ganado / %arriesgado real) y lo multiplica por este % fijo. Útil para ver cómo hubiera dado tu racha con una gestión de riesgo constante.">
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;">
+              <input type="checkbox" id="sfRiskFixedEnabled" onchange="toggleSfRiskFixed(this.checked)" style="accent-color:var(--cyan);width:14px;height:14px;">
+              RIESGO FIJO (%)
+            </label>
+            <input type="number" id="sfRiskFixed" value="1" step="0.1" min="0.1" max="10" disabled
+              style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;width:90px;opacity:.55;cursor:not-allowed;">
+          </div>
         </div>
 
         <!-- PARÁMETROS POR FASE -->
@@ -17538,6 +17546,14 @@ function setSfFunded(on){
   if(box) box.style.display = on ? '' : 'none';
 }
 
+function toggleSfRiskFixed(on){
+  const input = document.getElementById('sfRiskFixed');
+  if(!input) return;
+  input.disabled = !on;
+  input.style.opacity = on ? '' : '.55';
+  input.style.cursor = on ? '' : 'not-allowed';
+}
+
 function simularChallengeTodos(){
   const enriched = window._histEnriched;
   if(!enriched || !enriched.length){ toast('Cargá trades históricos primero','err'); return; }
@@ -17555,6 +17571,8 @@ function simularChallengeTodos(){
   const fundedDaily = fundedOn ? (parseFloat(document.getElementById('sfFundedDailyDD').value) || 0) : 0;
   const dateFrom    = document.getElementById('sfDateFrom').value;
   const dateTo      = document.getElementById('sfDateTo').value;
+  const riskFixedOn  = document.getElementById('sfRiskFixedEnabled').checked;
+  const riskFixedPct = riskFixedOn ? (parseFloat(document.getElementById('sfRiskFixed').value) || 1) : null;
 
   let sorted = [...enriched].sort((a,b)=>(a.date||'')<(b.date||'') ? -1 : 1);
   if(dateFrom) sorted = sorted.filter(t=>(t.date||'') >= dateFrom);
@@ -17571,7 +17589,7 @@ function simularChallengeTodos(){
 
   for(let i=0; i<sorted.length; i++){
     const t = sorted[i];
-    const pnl = t.pctGan || 0;
+    const pnl = riskFixedOn ? (t.r || 0) * riskFixedPct : (t.pctGan || 0);
     attemptTrades++;
 
     const curDD      = phase===1 ? p1DD      : phase===2 ? p2DD      : fundedDD;
