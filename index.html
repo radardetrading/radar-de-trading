@@ -3734,6 +3734,12 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.7rem;">◆ Universo Total Combinado</div>
       <div class="kpi-grid" id="repKpis" style="margin-bottom:1.4rem;"></div>
 
+      <!-- HEATMAP MENSUAL -->
+      <div class="card" data-help="Mapa de calor con el P&L de cada mes de tu historial: verde más intenso = mejor mes, rojo más intenso = peor mes." style="padding:1.2rem;margin-bottom:1.5rem;">
+        <div class="section-label" style="margin-bottom:1rem;">🗓️ Heatmap por Mes</div>
+        <div id="histHeatmap"></div>
+      </div>
+
       <!-- Curva de equity unificada -->
       <div class="card" style="padding:1.4rem;margin-bottom:1.4rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem;">
@@ -3927,12 +3933,6 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <div id="sfAllTimeline" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.9rem;"></div>
           <div id="sfAllLegend" style="font-size:10.5px;color:var(--sub);line-height:1.8;"></div>
         </div>
-      </div>
-
-      <!-- HEATMAP MENSUAL -->
-      <div class="card" data-help="Mapa de calor con el P&L de cada mes de tu historial: verde más intenso = mejor mes, rojo más intenso = peor mes." style="padding:1.2rem;margin-bottom:1.5rem;">
-        <div class="section-label" style="margin-bottom:1rem;">🗓️ Heatmap por Mes</div>
-        <div id="histHeatmap"></div>
       </div>
       </div>
 
