@@ -2591,6 +2591,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <div class="nav-section">Operativa</div>
     <div class="nav-item" onclick="nav('journal')" data-help="Journal: registra cada trade real con entrada, salida, resultado, setup y notas."><span class="nav-icon">📋</span>Journal</div>
+    <div class="nav-item" onclick="nav('probfondeo')" data-help="Probabilidad de Fondeo: simula miles de intentos de tu prueba de fondeo usando tu propia estadistica (Journal, Backtest Historico o datos manuales) para estimar que probabilidad tenes de pasarla, y comparar reglas de distintas prop firms."><span class="nav-icon">🎲</span>Probabilidad de Fondeo</div>
     <div class="nav-item" onclick="nav('calculadora')" data-help="Calculadora de Posicion: ingresa tu capital, riesgo % y stop loss para saber cuantos lotes operar."><span class="nav-icon">📐</span>Calculadora de Tamaño de Posición</div>
     <div class="nav-item" onclick="nav('riesgo')" data-help="Simulador de Fondeo: visualiza reglas de drawdown, objetivos por fase y margen disponible en tu prop firm."><span class="nav-icon">🛡</span>Calculadora de Riesgo</div>
 
@@ -4316,6 +4317,127 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     </div>
   </div>
 
+  <!-- PROBABILIDAD DE FONDEO -->
+  <div id="page-probfondeo" class="page">
+    <div class="card" style="padding:1.4rem 1.6rem;margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(56,189,248,.05));border:1px solid rgba(167,139,250,.2);">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);margin-bottom:6px;">🎲 Probabilidad de Fondeo</div>
+      <div style="font-size:14px;color:var(--sub);max-width:680px;line-height:1.45;">
+        Simulá miles de intentos de tu prueba de fondeo (Monte Carlo) usando tu propia estadística para estimar qué probabilidad tenés de pasarla, y comparar reglas de distintas prop firms para ver cuál te conviene más.
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div class="card" data-help="Elegí de dónde sale la estadística que alimenta la simulación: tus trades reales del Journal, tu Backtest Histórico, o números puestos a mano si todavía no tenés datos propios." style="padding:1.2rem;">
+        <div class="section-label" style="margin-bottom:.9rem;">📊 Fuente de resultados</div>
+        <div style="display:flex;gap:8px;margin-bottom:.9rem;flex-wrap:wrap;">
+          <label style="flex:1;min-width:100px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="pf_fuente" value="journal" style="width:auto;background:none;border:none;padding:0;" onchange="pfSetFuente('journal')" checked>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--cyan);">Journal</span>
+          </label>
+          <label style="flex:1;min-width:100px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="pf_fuente" value="hist" style="width:auto;background:none;border:none;padding:0;" onchange="pfSetFuente('hist')">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--purple);">Histórico</span>
+          </label>
+          <label style="flex:1;min-width:100px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="pf_fuente" value="manual" style="width:auto;background:none;border:none;padding:0;" onchange="pfSetFuente('manual')">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--gold);">Manual</span>
+          </label>
+        </div>
+        <div id="pf_fuente_auto" style="font-size:12px;color:var(--sub);line-height:1.5;"></div>
+        <div id="pf_fuente_manual" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:.6rem;">
+          <div class="form-group">
+            <label>Win Rate (%)</label>
+            <input type="number" id="pf_manual_wr" value="50" step="1" min="1" max="99" oninput="pfSetNum('manualWR',this.value)">
+          </div>
+          <div class="form-group">
+            <label>R:R promedio</label>
+            <input type="number" id="pf_manual_rr" value="2" step="0.1" min="0.1" oninput="pfSetNum('manualRR',this.value)">
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-help="Fijo: arriesgás el mismo % en cada trade. Variable: usa la misma cascada de la Calculadora de Riesgo (el riesgo sube con cada trade dentro de la fase actual, hasta el tope configurado, y se reinicia al pasar de fase)." style="padding:1.2rem;">
+        <div class="section-label" style="margin-bottom:.9rem;">⚖ Riesgo por trade</div>
+        <div style="display:flex;gap:8px;margin-bottom:.9rem;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="pf_riesgo_modo" value="fijo" style="width:auto;background:none;border:none;padding:0;" onchange="pfSetModoRiesgo('fijo')" checked>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--cyan);">Fijo</span>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .2s;">
+            <input type="radio" name="pf_riesgo_modo" value="cascada" style="width:auto;background:none;border:none;padding:0;" onchange="pfSetModoRiesgo('cascada')">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--purple);">Variable (cascada)</span>
+          </label>
+        </div>
+        <div id="pf_riesgo_fijo">
+          <div class="form-group">
+            <label>Riesgo por trade (%)</label>
+            <input type="number" id="pf_risk_fijo" value="1" step="0.1" min="0.1" max="10" oninput="pfSetNum('riskFijo',this.value)">
+          </div>
+        </div>
+        <div id="pf_riesgo_cascada" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div class="form-group">
+            <label>Riesgo inicial (%)</label>
+            <input type="number" id="pf_risk_inicial" value="0.7" step="0.1" min="0.1" max="5" oninput="pfSetNum('riskInicial',this.value)">
+          </div>
+          <div class="form-group">
+            <label>Multiplicador</label>
+            <input type="number" id="pf_risk_mult" value="1.35" step="0.05" min="1" max="3" oninput="pfSetNum('riskMult',this.value)">
+          </div>
+          <div class="form-group">
+            <label>Trades de la cascada</label>
+            <input type="number" id="pf_risk_trades" value="9" min="1" max="20" oninput="pfSetNum('riskTrades',this.value)">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:1.2rem;margin-bottom:14px;" data-help="Las reglas que querés poner a prueba: target de ganancia, drawdown diario y drawdown máximo por fase. Podés cargar varias para comparar cuál te conviene más según tu estadística.">
+      <div class="section-row" style="margin-bottom:.9rem;">
+        <div class="section-label">📜 Reglas del challenge a testear</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn sm ghost" onclick="pfImportarNeomaa()">📥 Importar de Backtest Challenge</button>
+          <button class="btn sm primary" onclick="pfAddRegla()">+ Regla propia</button>
+        </div>
+      </div>
+      <div id="pf_reglas_list"></div>
+      <div id="pf_reglas_empty" class="empty" style="display:none;"><div class="empty-icon">📜</div>Todavía no cargaste ninguna regla. Importá las de Backtest Challenge o agregá una propia.</div>
+    </div>
+
+    <div class="card" style="padding:1.2rem;margin-bottom:14px;">
+      <div class="section-label" style="margin-bottom:.9rem;">🎲 Parámetros de la simulación</div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr 1fr;gap:10px;align-items:end;">
+        <div class="form-group" data-help="Cuántos trades por día se asume en promedio, para poder aplicar el límite de Daily Drawdown dentro de la simulación. Se puede calcular solo desde tu Journal con el botón ↻.">
+          <label>Trades por día (estimado)</label>
+          <input type="number" id="pf_trades_dia" value="3" step="1" min="1" max="30" oninput="pfSetNum('tradesPorDia',this.value)">
+        </div>
+        <button class="btn sm ghost" onclick="pfAutoTradesDia()" title="Calcular desde el Journal" style="height:38px;">↻</button>
+        <div class="form-group">
+          <label>Cantidad de simulaciones</label>
+          <input type="number" id="pf_n_sims" value="3000" step="500" min="500" max="10000" oninput="pfSetNum('nSims',this.value)">
+        </div>
+        <button class="btn primary" id="pf_sim_btn" onclick="pfSimular()" style="height:38px;">🎲 Simular</button>
+      </div>
+      <div style="font-size:10px;color:var(--sub);margin-top:.7rem;line-height:1.5;">
+        ⚡ El Daily DD se aproxima agrupando los trades simulados de a "Trades por día" — es una proyección hacia adelante, todavía no hay fechas reales.
+      </div>
+    </div>
+
+    <div id="pf_resultados" style="display:none;">
+      <div class="kpi-grid" id="pf_kpis" style="margin-bottom:1.5rem;"></div>
+      <div id="pf_comparativa_wrap" style="display:none;margin-bottom:1.5rem;">
+        <div class="table-wrap" data-help="Cada perfil de reglas cargado, simulado con la misma estadística y el mismo modo de riesgo, ordenado por probabilidad de pasar de mayor a menor.">
+          <div style="padding:.9rem 1.1rem;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);">Comparativa de reglas</div>
+          <table><thead><tr><th>Regla</th><th>Fases</th><th>Prob. de Fondeo</th><th>Blown Max DD</th><th>Blown Daily DD</th><th>Trades prom.</th></tr></thead>
+          <tbody id="pf_comparativa_body"></tbody></table>
+        </div>
+      </div>
+      <div class="card" data-help="Distribución de la cantidad de trades que tardaron en pasar el challenge las simulaciones exitosas del perfil con mayor probabilidad." style="padding:1.2rem;">
+        <div class="section-label" style="margin-bottom:1rem;">📊 Trades hasta pasar (simulaciones exitosas)</div>
+        <canvas id="pfHistChart" height="90"></canvas>
+      </div>
+    </div>
+  </div>
+
   <!-- RESUMEN SEMANAL -->
   <div id="page-semanal" class="page">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px;">
@@ -5891,6 +6013,8 @@ function armarEstado(){
     btRules: btQuickRules,
     btZonas,
     fondCfg: loadFondeoCfg(),
+    pfRules: PF_RULES,
+    pfCfg: PF_CFG,
     rutHabitos,
     rutDays,
     moodQuestions,
@@ -5924,6 +6048,8 @@ function aplicarEstado(d){
   if(d.btRules)    btQuickRules = d.btRules;
   if(d.btZonas)    btZonas    = d.btZonas;
   if(d.fondCfg){ try{ localStorage.setItem('hq_fond_v1', JSON.stringify(d.fondCfg)); }catch(_){} }
+  if(d.pfRules){ PF_RULES=d.pfRules; try{ localStorage.setItem('hq_pf_rules_v1', JSON.stringify(PF_RULES)); }catch(_){} }
+  if(d.pfCfg){ PF_CFG=Object.assign({}, PF_CFG_DEFAULT, d.pfCfg); try{ localStorage.setItem('hq_pf_cfg_v1', JSON.stringify(PF_CFG)); }catch(_){} }
   if(d.rutHabitos)     rutHabitos     = d.rutHabitos;
   if(d.rutDays)        rutDays        = d.rutDays;
   if(d.moodQuestions)  moodQuestions  = d.moodQuestions;
@@ -6645,7 +6771,7 @@ function escHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
 // ════════════════════════════════════════════════════════════
-const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Pares',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Historial de Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas',challenges:'Historial de Challenges',perfil:'Mi Perfil'};
+const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Pares',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Historial de Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas',challenges:'Historial de Challenges',perfil:'Mi Perfil',probfondeo:'Probabilidad de Fondeo'};
 const ctaLabels={dashboard:'+ Nuevo Trade',journal:'+ Nuevo Trade',estadisticas:null,backtest:'+ Trade BT',historico:null,pares:'+ Registrar Día',calculadora:null,riesgo:null,semanal:null,reglas:'+ Nueva Regla',cuentas:'+ Nueva Cuenta',pagos:'+ Registrar Pago',diario:null,rutina:null,reportes:null,metas:'+ Nueva Meta',challenges:null,perfil:null};
 const ctaActions={dashboard:'openTradeModal()',journal:'openTradeModal()',estadisticas:null,backtest:"openBtModal()",historico:null,pares:'openUsoModal()',calculadora:null,riesgo:null,semanal:null,reglas:'openReglaModal()',cuentas:'openAccModal()',pagos:'openPagoModal()',diario:null,rutina:null,reportes:null,metas:"openMetaModal('trading')",challenges:null,perfil:null};
 let currentPage='dashboard';
@@ -6664,7 +6790,7 @@ function nav(name, fromPopState=false){
   currentPage=name;
   updateSectionHelp(name);
   updateHeader();
-  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{selectBtAccount(btAccount);renderBtQuickRules();renderBtZonasList();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();renderCryptoInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas,challenges:renderChallengeHistory,perfil:renderPerfil};
+  const renders={dashboard:renderDashboard,journal:renderJournal,estadisticas:renderEstadisticas,backtest:()=>{selectBtAccount(btAccount);renderBtQuickRules();renderBtZonasList();},historico:renderHistorico,pares:()=>{renderPares();renderFutInstr();renderCryptoInstr();},calculadora:()=>{calcLotaje();},riesgo:()=>{initFondeo();},semanal:renderSemanal,reglas:renderReglas,cuentas:renderCuentas,pagos:renderPagos,diario:renderDiario,rutina:renderRutina,reporte:()=>{renderReporte(); if(histTrades&&histTrades.length) renderHistorico();},reportes:()=>{renderReportes();updateRepFormatHint();},metas:renderMetas,challenges:renderChallengeHistory,perfil:renderPerfil,probfondeo:renderProbFondeo};
   if(renders[name]) renders[name]();
   if(!fromPopState) history.pushState({page:name}, '', location.href);
 }
@@ -11232,6 +11358,357 @@ function calcFondeo(skipRowRead){
 
   // Persistir parámetros + riesgos editados para la próxima visita
   saveFondeo();
+}
+
+// ════════════════════════════════════════════════════════════
+// PROBABILIDAD DE FONDEO — SIMULACIÓN MONTE CARLO
+// ════════════════════════════════════════════════════════════
+const PF_RULES_KEY = 'hq_pf_rules_v1';
+const PF_CFG_KEY   = 'hq_pf_cfg_v1';
+const PF_CFG_DEFAULT = { fuente:'journal', manualWR:50, manualRR:2, modoRiesgo:'fijo', riskFijo:1, riskInicial:0.7, riskMult:1.35, riskTrades:9, tradesPorDia:3, nSims:3000 };
+let PF_RULES = JSON.parse(localStorage.getItem(PF_RULES_KEY)||'null') || [];
+let PF_CFG   = Object.assign({}, PF_CFG_DEFAULT, JSON.parse(localStorage.getItem(PF_CFG_KEY)||'null')||{});
+let pfChart = null;
+let pfLastResults = null; // último resultado de simulación (para redibujar al volver a la página)
+let pfAutoCalcDone = false;
+
+function pfSaveState(){
+  try{
+    localStorage.setItem(PF_RULES_KEY, JSON.stringify(PF_RULES));
+    localStorage.setItem(PF_CFG_KEY, JSON.stringify(PF_CFG));
+  }catch(e){}
+  if(typeof markDirty==='function') markDirty();
+}
+
+function pfSetNum(field, val){ PF_CFG[field] = parseFloat(val)||0; pfSaveState(); }
+
+function pfSetFuente(v){
+  PF_CFG.fuente = v;
+  const manual = document.getElementById('pf_fuente_manual');
+  if(manual) manual.style.display = v==='manual' ? 'grid' : 'none';
+  pfUpdateFuenteInfo();
+  pfSaveState();
+}
+
+function pfSetModoRiesgo(v){
+  PF_CFG.modoRiesgo = v;
+  const fijo = document.getElementById('pf_riesgo_fijo');
+  const cascada = document.getElementById('pf_riesgo_cascada');
+  if(fijo) fijo.style.display = v==='fijo' ? 'block' : 'none';
+  if(cascada) cascada.style.display = v==='cascada' ? 'grid' : 'none';
+  pfSaveState();
+}
+
+function pfUpdateFuenteInfo(){
+  const el = document.getElementById('pf_fuente_auto');
+  if(!el) return;
+  if(PF_CFG.fuente==='manual'){ el.innerHTML=''; return; }
+  const datos = perfNormalize(PF_CFG.fuente==='hist'?'hist':'journal');
+  if(!datos.length){
+    el.innerHTML = `<span style="color:var(--red);">Sin trades cargados en esta fuente todavía.</span>`;
+    return;
+  }
+  const wins = datos.filter(t=>t.r>0.001).length;
+  const wr = (wins/datos.length*100).toFixed(1);
+  const avgR = (datos.reduce((s,t)=>s+t.r,0)/datos.length).toFixed(2);
+  el.innerHTML = `<b style="color:var(--cyan);">${datos.length}</b> trades · Win Rate real <b style="color:var(--cyan);">${wr}%</b> · R promedio <b style="color:var(--cyan);">${avgR}</b>`;
+}
+
+function pfAutoTradesDia(){
+  const dias = new Set(trades.map(t=>(t.date||'').slice(0,10)).filter(Boolean));
+  if(!dias.size){
+    if(typeof toast==='function') toast('No hay trades en el Journal para calcularlo','error');
+    return;
+  }
+  const val = Math.max(1, Math.round(trades.length/dias.size));
+  const input = document.getElementById('pf_trades_dia');
+  if(input) input.value = val;
+  PF_CFG.tradesPorDia = val;
+  pfSaveState();
+  if(typeof toast==='function') toast(`Trades por día calculado: ${val}`,'ok');
+}
+
+// ── Perfiles de reglas ──────────────────────────────────────
+function renderPfReglas(){
+  const list = document.getElementById('pf_reglas_list');
+  const empty = document.getElementById('pf_reglas_empty');
+  if(!list) return;
+  if(!PF_RULES.length){ list.innerHTML=''; if(empty) empty.style.display='block'; return; }
+  if(empty) empty.style.display='none';
+  list.innerHTML = PF_RULES.map((r,i)=>`
+    <div class="card" style="padding:1rem;margin-bottom:10px;background:var(--glass2);">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;">
+        <input type="text" value="${escHtml(r.nombre)}" oninput="pfUpdateRegla(${i},'nombre',this.value)" style="flex:1;min-width:140px;font-weight:700;">
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--sub);cursor:pointer;">
+          <input type="radio" name="pf_r${i}_fases" style="width:auto;" ${r.numFases===1?'checked':''} onchange="pfUpdateRegla(${i},'numFases',1)">1 fase
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--sub);cursor:pointer;">
+          <input type="radio" name="pf_r${i}_fases" style="width:auto;" ${r.numFases!==1?'checked':''} onchange="pfUpdateRegla(${i},'numFases',2)">2 fases
+        </label>
+        <button class="btn sm ghost" onclick="pfRemoveRegla(${i})" title="Quitar esta regla">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(${r.numFases===1?3:6},1fr);gap:8px;">
+        <div class="form-group"><label>Target F1 (%)</label><input type="number" step="0.1" value="${r.fase1.target}" oninput="pfUpdateReglaFase(${i},'fase1','target',this.value)"></div>
+        <div class="form-group"><label>Daily DD F1 (%)</label><input type="number" step="0.1" value="${r.fase1.dailyDD}" oninput="pfUpdateReglaFase(${i},'fase1','dailyDD',this.value)"></div>
+        <div class="form-group"><label>Max DD F1 (%)</label><input type="number" step="0.1" value="${r.fase1.maxDD}" oninput="pfUpdateReglaFase(${i},'fase1','maxDD',this.value)"></div>
+        ${r.numFases!==1?`
+        <div class="form-group"><label>Target F2 (%)</label><input type="number" step="0.1" value="${r.fase2.target}" oninput="pfUpdateReglaFase(${i},'fase2','target',this.value)"></div>
+        <div class="form-group"><label>Daily DD F2 (%)</label><input type="number" step="0.1" value="${r.fase2.dailyDD}" oninput="pfUpdateReglaFase(${i},'fase2','dailyDD',this.value)"></div>
+        <div class="form-group"><label>Max DD F2 (%)</label><input type="number" step="0.1" value="${r.fase2.maxDD}" oninput="pfUpdateReglaFase(${i},'fase2','maxDD',this.value)"></div>
+        `:''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function pfUpdateRegla(i, campo, valor){
+  if(!PF_RULES[i]) return;
+  if(campo==='numFases'){ PF_RULES[i].numFases = Number(valor); renderPfReglas(); }
+  else PF_RULES[i][campo] = valor;
+  pfSaveState();
+}
+
+function pfUpdateReglaFase(i, fase, campo, valor){
+  if(!PF_RULES[i]) return;
+  PF_RULES[i][fase][campo] = parseFloat(valor)||0;
+  pfSaveState();
+}
+
+function pfAddRegla(){
+  PF_RULES.push({ nombre:`Regla ${PF_RULES.length+1}`, numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8} });
+  renderPfReglas();
+  pfSaveState();
+}
+
+function pfRemoveRegla(i){
+  PF_RULES.splice(i,1);
+  renderPfReglas();
+  pfSaveState();
+}
+
+function pfImportarNeomaa(){
+  let n=0;
+  ['5k','50k','fut'].forEach(key=>{
+    const cfg = NEOMAA[key];
+    if(!cfg) return;
+    PF_RULES.push({
+      nombre: `${cfg.nombre} ${fmtUSD(cfg.size)}`,
+      numFases: cfg.numFases||2,
+      fase1: {...cfg.fase1},
+      fase2: {...cfg.fase2}
+    });
+    n++;
+  });
+  renderPfReglas();
+  pfSaveState();
+  if(typeof toast==='function') toast(`${n} reglas importadas desde Backtest Challenge`,'ok');
+}
+
+// ── Motor Monte Carlo ────────────────────────────────────────
+// Arma el array de riesgos en cascada (misma matemática que Calculadora de Riesgo, sin acople al DOM)
+function pfBuildCascada(riskInicialPct, mult, nTrades){
+  const arr = [];
+  let cur = riskInicialPct/100;
+  for(let i=0;i<nTrades;i++){ arr.push(cur); cur *= mult; }
+  return arr;
+}
+
+// Sampler de resultados en R-múltiplos según la fuente elegida. null si no hay datos.
+function pfBuildSampler(cfg){
+  if(cfg.fuente==='manual'){
+    const wr = Math.min(99,Math.max(1,cfg.manualWR))/100;
+    const rr = cfg.manualRR;
+    return ()=> Math.random()<wr ? rr : -1;
+  }
+  const datos = perfNormalize(cfg.fuente==='hist'?'hist':'journal').map(t=>t.r).filter(r=>isFinite(r));
+  if(!datos.length) return null;
+  return ()=> datos[Math.floor(Math.random()*datos.length)];
+}
+
+// Corre UN intento completo de challenge. Reproduce la misma semántica de fases/DD que calcBacktest():
+// Max DD trailing desde el pico, target medido desde el arranque de la fase, "cuenta nueva" al pasar de fase.
+function pfSimulateOne(rule, sampler, riskCfg, tradesPorDia){
+  const fases = (rule.numFases===1) ? [rule.fase1] : [rule.fase1, rule.fase2];
+  const cascada = riskCfg.modo==='cascada' ? pfBuildCascada(riskCfg.inicial, riskCfg.mult, riskCfg.trades) : null;
+  const horizonteMax = 500; // tope de trades para evitar loops sin salida (timeout)
+
+  let equity=1, maxEq=1, dayStartEquity=1, tradesToday=0, days=0;
+  let phaseIdx=0, tradeInPhase=0, totalTrades=0;
+
+  while(totalTrades < horizonteMax){
+    const r = sampler();
+    const riskPct = riskCfg.modo==='fijo' ? riskCfg.fijo : cascada[Math.min(tradeInPhase, cascada.length-1)];
+    equity += riskPct * r;
+    totalTrades++; tradeInPhase++; tradesToday++;
+    if(tradesToday >= tradesPorDia){ tradesToday=0; dayStartEquity=equity; days++; }
+
+    if(equity>maxEq) maxEq=equity;
+    const ddPct = (maxEq-equity)*100;
+    const dailyDDpct = (dayStartEquity-equity)*100;
+    const fase = fases[phaseIdx];
+
+    if(ddPct >= fase.maxDD) return {result:'blown_maxdd', trades:totalTrades, days};
+    if(dailyDDpct >= fase.dailyDD) return {result:'blown_daily', trades:totalTrades, days};
+
+    const phasePnlPct = (equity-1)*100;
+    if(phasePnlPct >= fase.target){
+      if(phaseIdx === fases.length-1) return {result:'funded', trades:totalTrades, days};
+      phaseIdx++; tradeInPhase=0;
+      equity=1; maxEq=1; dayStartEquity=1; tradesToday=0; // "cuenta nueva", igual a calcBacktest
+    }
+  }
+  return {result:'timeout', trades:totalTrades, days};
+}
+
+function pfRunMonteCarlo(rule, sampler, riskCfg, nSims, tradesPorDia){
+  let pass=0, blownMax=0, blownDaily=0, timeout=0;
+  const tradesPass=[];
+  for(let i=0;i<nSims;i++){
+    const res = pfSimulateOne(rule, sampler, riskCfg, tradesPorDia);
+    if(res.result==='funded'){ pass++; tradesPass.push(res.trades); }
+    else if(res.result==='blown_maxdd') blownMax++;
+    else if(res.result==='blown_daily') blownDaily++;
+    else timeout++;
+  }
+  const avg = tradesPass.length ? tradesPass.reduce((a,b)=>a+b,0)/tradesPass.length : 0;
+  return {
+    rule, nSims,
+    probPass: pass/nSims*100,
+    probBlownMaxDD: blownMax/nSims*100,
+    probBlownDaily: blownDaily/nSims*100,
+    probTimeout: timeout/nSims*100,
+    avgTradesToPass: avg,
+    avgDaysToPass: tradesPorDia>0 ? avg/tradesPorDia : 0,
+    tradesPass
+  };
+}
+
+function pfSimular(){
+  if(!PF_RULES.length){
+    if(typeof toast==='function') toast('Agregá al menos una regla de challenge para simular','error');
+    return;
+  }
+  const sampler = pfBuildSampler(PF_CFG);
+  if(!sampler){
+    if(typeof toast==='function') toast('No hay trades suficientes en esa fuente para simular','error');
+    return;
+  }
+  const riskCfg = PF_CFG.modoRiesgo==='fijo'
+    ? {modo:'fijo', fijo:PF_CFG.riskFijo/100}
+    : {modo:'cascada', inicial:PF_CFG.riskInicial, mult:PF_CFG.riskMult, trades:PF_CFG.riskTrades};
+
+  const btn = document.getElementById('pf_sim_btn');
+  if(btn){ btn.disabled=true; btn.textContent='Simulando...'; }
+  setTimeout(()=>{
+    const resultados = PF_RULES.map(rule => pfRunMonteCarlo(rule, sampler, riskCfg, PF_CFG.nSims, PF_CFG.tradesPorDia));
+    resultados.sort((a,b)=>b.probPass-a.probPass);
+    pfLastResults = resultados;
+    pfRenderResultados(resultados);
+    if(btn){ btn.disabled=false; btn.textContent='🎲 Simular'; }
+  }, 30);
+}
+
+// ── Render de resultados ─────────────────────────────────────
+function pfRenderResultados(resultados){
+  const wrapResultados = document.getElementById('pf_resultados');
+  if(wrapResultados) wrapResultados.style.display='';
+  const top = resultados[0];
+
+  const kpis = document.getElementById('pf_kpis');
+  if(kpis){
+    kpis.innerHTML = `
+      <div class="kpi-box" style="--accent:var(--green)"><div class="kpi-label">Probabilidad de Fondeo</div><div class="kpi-value" style="color:var(--green);font-size:26px;">${top.probPass.toFixed(1)}%</div><div class="kpi-sub">${escHtml(top.rule.nombre)} · ${top.nSims.toLocaleString()} simulaciones</div></div>
+      <div class="kpi-box" style="--accent:var(--red)"><div class="kpi-label">Blown por Max DD</div><div class="kpi-value" style="color:var(--red);">${top.probBlownMaxDD.toFixed(1)}%</div></div>
+      <div class="kpi-box" style="--accent:var(--orange)"><div class="kpi-label">Blown por Daily DD</div><div class="kpi-value" style="color:var(--orange);">${top.probBlownDaily.toFixed(1)}%</div></div>
+      <div class="kpi-box" style="--accent:var(--cyan)"><div class="kpi-label">Trades promedio hasta pasar</div><div class="kpi-value" style="color:var(--cyan);">${top.avgTradesToPass?top.avgTradesToPass.toFixed(0):'—'}</div><div class="kpi-sub">${top.avgDaysToPass?'≈ '+top.avgDaysToPass.toFixed(0)+' días':''}</div></div>
+    `;
+    if(typeof applyKpiHelp==='function') applyKpiHelp(kpis);
+  }
+
+  const wrap = document.getElementById('pf_comparativa_wrap');
+  if(wrap){
+    if(resultados.length>1){
+      wrap.style.display='';
+      const body = document.getElementById('pf_comparativa_body');
+      if(body) body.innerHTML = resultados.map(r=>`
+        <tr>
+          <td>${escHtml(r.rule.nombre)}</td>
+          <td>${r.rule.numFases===1?'1 fase':'2 fases'}</td>
+          <td style="color:var(--green);font-weight:700;">${r.probPass.toFixed(1)}%</td>
+          <td style="color:var(--red);">${r.probBlownMaxDD.toFixed(1)}%</td>
+          <td style="color:var(--orange);">${r.probBlownDaily.toFixed(1)}%</td>
+          <td>${r.avgTradesToPass?r.avgTradesToPass.toFixed(0):'—'}</td>
+        </tr>`).join('');
+    } else {
+      wrap.style.display='none';
+    }
+  }
+
+  pfRenderHistChart(top);
+}
+
+function pfRenderHistChart(res){
+  const canvas = document.getElementById('pfHistChart');
+  if(!canvas) return;
+  if(pfChart) pfChart.destroy();
+  const maxT = res.tradesPass.length ? Math.max(...res.tradesPass) : 0;
+  const bucketSize = Math.max(1, Math.ceil((maxT||10)/10));
+  const buckets = [];
+  for(let start=0; start<maxT; start+=bucketSize){
+    buckets.push({label:`${start+1}-${start+bucketSize}`, min:start, max:start+bucketSize, count:0});
+  }
+  if(!buckets.length) buckets.push({label:'—', min:0, max:1, count:0});
+  res.tradesPass.forEach(t=>{
+    const b = buckets.find(b=>t>b.min && t<=b.max) || buckets[buckets.length-1];
+    b.count++;
+  });
+  const ctx = canvas.getContext('2d');
+  pfChart = new Chart(ctx, {
+    type:'bar',
+    data:{ labels:buckets.map(b=>b.label), datasets:[{ data:buckets.map(b=>b.count), backgroundColor:'#a78bfa', borderRadius:4 }] },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>`${c.parsed.y} simulaciones`}}},
+      scales:{
+        x:{ticks:{color:'#7a8fab',font:{family:'JetBrains Mono',size:9}},grid:{display:false}},
+        y:{ticks:{color:'#7a8fab',font:{family:'JetBrains Mono',size:9},stepSize:1},grid:{color:'rgba(255,255,255,.04)'}}
+      }
+    }
+  });
+}
+
+function renderProbFondeo(){
+  const fuenteInput = document.querySelector(`input[name="pf_fuente"][value="${PF_CFG.fuente}"]`);
+  if(fuenteInput) fuenteInput.checked=true;
+  const manualWrap = document.getElementById('pf_fuente_manual');
+  if(manualWrap) manualWrap.style.display = PF_CFG.fuente==='manual' ? 'grid' : 'none';
+  const mWr = document.getElementById('pf_manual_wr'); if(mWr) mWr.value = PF_CFG.manualWR;
+  const mRr = document.getElementById('pf_manual_rr'); if(mRr) mRr.value = PF_CFG.manualRR;
+
+  const riesgoInput = document.querySelector(`input[name="pf_riesgo_modo"][value="${PF_CFG.modoRiesgo}"]`);
+  if(riesgoInput) riesgoInput.checked=true;
+  const fijoWrap = document.getElementById('pf_riesgo_fijo');
+  const cascadaWrap = document.getElementById('pf_riesgo_cascada');
+  if(fijoWrap) fijoWrap.style.display = PF_CFG.modoRiesgo==='fijo' ? 'block' : 'none';
+  if(cascadaWrap) cascadaWrap.style.display = PF_CFG.modoRiesgo==='cascada' ? 'grid' : 'none';
+  const rf = document.getElementById('pf_risk_fijo'); if(rf) rf.value = PF_CFG.riskFijo;
+  const ri = document.getElementById('pf_risk_inicial'); if(ri) ri.value = PF_CFG.riskInicial;
+  const rm = document.getElementById('pf_risk_mult'); if(rm) rm.value = PF_CFG.riskMult;
+  const rt = document.getElementById('pf_risk_trades'); if(rt) rt.value = PF_CFG.riskTrades;
+  const td = document.getElementById('pf_trades_dia'); if(td) td.value = PF_CFG.tradesPorDia;
+  const ns = document.getElementById('pf_n_sims'); if(ns) ns.value = PF_CFG.nSims;
+
+  pfUpdateFuenteInfo();
+  renderPfReglas();
+
+  if(!pfAutoCalcDone && !localStorage.getItem(PF_CFG_KEY) && trades.length){
+    pfAutoCalcDone = true;
+    pfAutoTradesDia();
+  }
+
+  const wrapResultados = document.getElementById('pf_resultados');
+  if(wrapResultados) wrapResultados.style.display = pfLastResults ? '' : 'none';
+  if(pfLastResults) pfRenderResultados(pfLastResults);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -17833,6 +18310,10 @@ const SECTION_HELP = {
     t:'🛡 Simulador de Fondeo',
     b:'Simulá las reglas de drawdown de tu prop firm para saber cuánto margen te queda antes de violar una regla.<br><br>Ingresá <b>capital inicial, máximo drawdown permitido y drawdown diario máximo</b>. La herramienta calcula en tiempo real los límites exactos de pérdida que no podés superar.<br><br>Muy útil para las <b>fases de evaluación y cuentas fondeadas</b> donde el incumplimiento significa perder la cuenta. Simulá distintos escenarios antes de operar.'
   },
+  probfondeo:{
+    t:'🎲 Probabilidad de Fondeo',
+    b:'Antes de arrancar una prueba de fondeo real, estimá tu <b>probabilidad de pasarla</b> corriendo miles de intentos simulados (Monte Carlo) con tu propia estadística.<br><br>Elegí la <b>fuente de resultados</b> (Journal, Backtest Histórico o números puestos a mano), el <b>modo de riesgo</b> (fijo o cascada variable, igual que en Calculadora de Riesgo) y cargá una o varias <b>reglas de challenge</b> (target, Daily DD y Max DD por fase) para comparar cuál te conviene más.<br><br>El resultado muestra el % de simulaciones que llegan a fondearse, cuántas revientan por Max DD o Daily DD, y cuántos trades tardan en promedio — y si cargaste más de una regla, las ordena de mayor a menor probabilidad.'
+  },
   backtest:{
     t:'🔬 Backtest Challenge',
     b:'Practicá tu estrategia <b>sin riesgo real</b>. Registrá operaciones hipotéticas con los mismos campos que el journal (setup, zona, sesión, resultado, notas) para ver cómo funcionaría en distintos escenarios de mercado.<br><br>Los resultados se analizan en el <b>Reporte de Backtest</b> junto al Histórico.<br><br>Ideal para <b>validar nuevos setups</b> o analizar tu desempeño en períodos pasados antes de arriesgar capital real.'
@@ -17947,6 +18428,10 @@ const KPI_HELP = {
   'R:R Promedio':'Relación riesgo:beneficio promedio de tus trades (cuánto arriesgás vs. cuánto podés ganar).',
   'R Total':'Suma de todos los resultados expresados en múltiplos de R (riesgo).',
   'Max DD':'Máxima caída de capital desde un pico hasta un valle, en el período analizado.',
+  'Probabilidad de Fondeo':'Porcentaje de las simulaciones Monte Carlo que llegaron a fondearse (pasaron todas las fases) sin romper el Max DD ni el Daily DD, usando tu estadística y la regla de challenge con mejor resultado de las que cargaste.',
+  'Blown por Max DD':'Porcentaje de las simulaciones que reventaron la cuenta por superar el drawdown máximo permitido.',
+  'Blown por Daily DD':'Porcentaje de las simulaciones que reventaron la cuenta por superar el drawdown diario permitido.',
+  'Trades promedio hasta pasar':'Cantidad promedio de operaciones que necesitaron las simulaciones exitosas para llegar a fondearse.',
   'Max Drawdown':'Máxima caída de capital desde un pico hasta un valle, en el período analizado.',
   'Max Win Streak':'Racha más larga de trades ganadores consecutivos.',
   'Max Loss Streak':'Racha más larga de trades perdedores consecutivos.',
