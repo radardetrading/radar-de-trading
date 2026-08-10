@@ -4368,6 +4368,10 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
             <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--purple);">Variable (cascada)</span>
           </label>
         </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--sub);cursor:pointer;margin-bottom:.9rem;" data-help="Simula los dos modos de riesgo en simultáneo con la misma estadística y las mismas reglas, para comparar cuál pasa más rápido, cuál revienta más rápido y cuál tiene mayor probabilidad de fondeo.">
+          <input type="checkbox" id="pf_comparar_modos" style="width:auto;" onchange="pfSetCompararModos(this.checked)">
+          🆚 Comparar Fijo vs Variable en simultáneo
+        </label>
         <div id="pf_riesgo_fijo">
           <div class="form-group">
             <label>Riesgo por trade (%)</label>
@@ -4391,7 +4395,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
     </div>
 
-    <div class="card" style="padding:1.2rem;margin-bottom:14px;" data-help="Las reglas que querés poner a prueba: target de ganancia, drawdown diario y drawdown máximo por fase. Podés cargar varias para comparar cuál te conviene más según tu estadística.">
+    <div class="card" style="padding:1.2rem;margin-bottom:14px;" data-help="Las reglas que querés poner a prueba: target de ganancia, drawdown diario y drawdown máximo por fase, más el precio de la prueba. Podés cargar varias para comparar cuál te conviene más según tu estadística — si cargás precio, la comparativa ordena automáticamente por cuánto vas a terminar gastando en promedio hasta fondearte.">
       <div class="section-row" style="margin-bottom:.9rem;">
         <div class="section-label">📜 Reglas del challenge a testear</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -4426,9 +4430,15 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <div class="kpi-grid" id="pf_kpis" style="margin-bottom:1.5rem;"></div>
       <div id="pf_comparativa_wrap" style="display:none;margin-bottom:1.5rem;">
         <div class="table-wrap" data-help="Cada perfil de reglas cargado, simulado con la misma estadística y el mismo modo de riesgo, ordenado por probabilidad de pasar de mayor a menor.">
-          <div style="padding:.9rem 1.1rem;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);">Comparativa de reglas</div>
-          <table><thead><tr><th>Regla</th><th>Fases</th><th>Prob. de Fondeo</th><th>Blown Max DD</th><th>Blown Daily DD</th><th>Trades prom.</th></tr></thead>
+          <div id="pf_comparativa_title" style="padding:.9rem 1.1rem;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);">Comparativa de reglas</div>
+          <table><thead id="pf_comparativa_thead"><tr><th>Regla</th><th>Fases</th><th>Prob. de Fondeo</th><th>Blown Max DD</th><th>Blown Daily DD</th><th>Trades hasta pasar</th><th>Trades hasta reventar</th></tr></thead>
           <tbody id="pf_comparativa_body"></tbody></table>
+        </div>
+      </div>
+      <div id="pf_h2h_wrap" style="display:none;margin-bottom:1.5rem;">
+        <div class="card" data-help="Compara, en promedio entre todas las reglas simuladas, Riesgo Fijo contra Riesgo Variable (cascada): quién tiene mayor probabilidad de fondeo, quién llega más rápido al objetivo, y quién revienta más rápido si el DD lo agarra en un mal momento." style="padding:1.2rem;">
+          <div class="section-label" style="margin-bottom:1rem;">🆚 Fijo vs Variable</div>
+          <div id="pf_h2h_body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
         </div>
       </div>
       <div class="card" data-help="Distribución de la cantidad de trades que tardaron en pasar el challenge las simulaciones exitosas del perfil con mayor probabilidad." style="padding:1.2rem;">
@@ -11365,7 +11375,7 @@ function calcFondeo(skipRowRead){
 // ════════════════════════════════════════════════════════════
 const PF_RULES_KEY = 'hq_pf_rules_v1';
 const PF_CFG_KEY   = 'hq_pf_cfg_v1';
-const PF_CFG_DEFAULT = { fuente:'journal', manualWR:50, manualRR:2, modoRiesgo:'fijo', riskFijo:1, riskInicial:0.7, riskMult:1.35, riskTrades:9, tradesPorDia:3, nSims:3000 };
+const PF_CFG_DEFAULT = { fuente:'journal', manualWR:50, manualRR:2, modoRiesgo:'fijo', compararModos:false, riskFijo:1, riskInicial:0.7, riskMult:1.35, riskTrades:9, tradesPorDia:3, nSims:3000 };
 let PF_RULES = JSON.parse(localStorage.getItem(PF_RULES_KEY)||'null') || [];
 let PF_CFG   = Object.assign({}, PF_CFG_DEFAULT, JSON.parse(localStorage.getItem(PF_CFG_KEY)||'null')||{});
 let pfChart = null;
@@ -11392,10 +11402,28 @@ function pfSetFuente(v){
 
 function pfSetModoRiesgo(v){
   PF_CFG.modoRiesgo = v;
+  if(!PF_CFG.compararModos){
+    const fijo = document.getElementById('pf_riesgo_fijo');
+    const cascada = document.getElementById('pf_riesgo_cascada');
+    if(fijo) fijo.style.display = v==='fijo' ? 'block' : 'none';
+    if(cascada) cascada.style.display = v==='cascada' ? 'grid' : 'none';
+  }
+  pfSaveState();
+}
+
+// Cuando está activo, muestra los dos bloques de parámetros (Fijo y Cascada) a la vez
+// para poder simular ambos modos en simultáneo con el mismo perfil de reglas.
+function pfSetCompararModos(checked){
+  PF_CFG.compararModos = checked;
   const fijo = document.getElementById('pf_riesgo_fijo');
   const cascada = document.getElementById('pf_riesgo_cascada');
-  if(fijo) fijo.style.display = v==='fijo' ? 'block' : 'none';
-  if(cascada) cascada.style.display = v==='cascada' ? 'grid' : 'none';
+  if(checked){
+    if(fijo) fijo.style.display = 'block';
+    if(cascada) cascada.style.display = 'grid';
+  } else {
+    if(fijo) fijo.style.display = PF_CFG.modoRiesgo==='fijo' ? 'block' : 'none';
+    if(cascada) cascada.style.display = PF_CFG.modoRiesgo==='cascada' ? 'grid' : 'none';
+  }
   pfSaveState();
 }
 
@@ -11439,6 +11467,10 @@ function renderPfReglas(){
     <div class="card" style="padding:1rem;margin-bottom:10px;background:var(--glass2);">
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;">
         <input type="text" value="${escHtml(r.nombre)}" oninput="pfUpdateRegla(${i},'nombre',this.value)" style="flex:1;min-width:140px;font-weight:700;">
+        <div class="form-group" style="width:120px;margin:0;" data-help="Cuánto cobra la prop firm por comprar esta prueba. Con este dato la comparativa calcula cuánto vas a terminar gastando en promedio hasta fondearte (precio ÷ probabilidad de fondeo).">
+          <label style="font-size:8px;">💵 Precio ($)</label>
+          <input type="number" step="1" min="0" value="${r.precio||0}" oninput="pfUpdateRegla(${i},'precio',this.value)">
+        </div>
         <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--sub);cursor:pointer;">
           <input type="radio" name="pf_r${i}_fases" style="width:auto;" ${r.numFases===1?'checked':''} onchange="pfUpdateRegla(${i},'numFases',1)">1 fase
         </label>
@@ -11464,6 +11496,7 @@ function renderPfReglas(){
 function pfUpdateRegla(i, campo, valor){
   if(!PF_RULES[i]) return;
   if(campo==='numFases'){ PF_RULES[i].numFases = Number(valor); renderPfReglas(); }
+  else if(campo==='precio'){ PF_RULES[i].precio = parseFloat(valor)||0; }
   else PF_RULES[i][campo] = valor;
   pfSaveState();
 }
@@ -11475,7 +11508,7 @@ function pfUpdateReglaFase(i, fase, campo, valor){
 }
 
 function pfAddRegla(){
-  PF_RULES.push({ nombre:`Regla ${PF_RULES.length+1}`, numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8} });
+  PF_RULES.push({ nombre:`Regla ${PF_RULES.length+1}`, precio:0, numFases:2, fase1:{target:8,dailyDD:4,maxDD:8}, fase2:{target:5,dailyDD:4,maxDD:8} });
   renderPfReglas();
   pfSaveState();
 }
@@ -11493,6 +11526,7 @@ function pfImportarNeomaa(){
     if(!cfg) return;
     PF_RULES.push({
       nombre: `${cfg.nombre} ${fmtUSD(cfg.size)}`,
+      precio: 0,
       numFases: cfg.numFases||2,
       fase1: {...cfg.fase1},
       fase2: {...cfg.fase2}
@@ -11563,14 +11597,16 @@ function pfSimulateOne(rule, sampler, riskCfg, tradesPorDia){
 function pfRunMonteCarlo(rule, sampler, riskCfg, nSims, tradesPorDia){
   let pass=0, blownMax=0, blownDaily=0, timeout=0;
   const tradesPass=[];
+  const tradesBlown=[]; // trades hasta reventar (Max DD o Daily DD), para medir qué tan rápido pierde
   for(let i=0;i<nSims;i++){
     const res = pfSimulateOne(rule, sampler, riskCfg, tradesPorDia);
     if(res.result==='funded'){ pass++; tradesPass.push(res.trades); }
-    else if(res.result==='blown_maxdd') blownMax++;
-    else if(res.result==='blown_daily') blownDaily++;
+    else if(res.result==='blown_maxdd'){ blownMax++; tradesBlown.push(res.trades); }
+    else if(res.result==='blown_daily'){ blownDaily++; tradesBlown.push(res.trades); }
     else timeout++;
   }
   const avg = tradesPass.length ? tradesPass.reduce((a,b)=>a+b,0)/tradesPass.length : 0;
+  const avgBlown = tradesBlown.length ? tradesBlown.reduce((a,b)=>a+b,0)/tradesBlown.length : 0;
   return {
     rule, nSims,
     probPass: pass/nSims*100,
@@ -11579,6 +11615,8 @@ function pfRunMonteCarlo(rule, sampler, riskCfg, nSims, tradesPorDia){
     probTimeout: timeout/nSims*100,
     avgTradesToPass: avg,
     avgDaysToPass: tradesPorDia>0 ? avg/tradesPorDia : 0,
+    avgTradesToBlow: avgBlown,
+    avgDaysToBlow: tradesPorDia>0 ? avgBlown/tradesPorDia : 0,
     tradesPass
   };
 }
@@ -11593,14 +11631,31 @@ function pfSimular(){
     if(typeof toast==='function') toast('No hay trades suficientes en esa fuente para simular','error');
     return;
   }
-  const riskCfg = PF_CFG.modoRiesgo==='fijo'
-    ? {modo:'fijo', fijo:PF_CFG.riskFijo/100}
-    : {modo:'cascada', inicial:PF_CFG.riskInicial, mult:PF_CFG.riskMult, trades:PF_CFG.riskTrades};
+  const riskFijo = {modo:'fijo', fijo:PF_CFG.riskFijo/100};
+  const riskCascada = {modo:'cascada', inicial:PF_CFG.riskInicial, mult:PF_CFG.riskMult, trades:PF_CFG.riskTrades};
 
   const btn = document.getElementById('pf_sim_btn');
   if(btn){ btn.disabled=true; btn.textContent='Simulando...'; }
   setTimeout(()=>{
-    const resultados = PF_RULES.map(rule => pfRunMonteCarlo(rule, sampler, riskCfg, PF_CFG.nSims, PF_CFG.tradesPorDia));
+    let resultados;
+    if(PF_CFG.compararModos){
+      // Corre AMBOS modos de riesgo, con el mismo sampler y las mismas reglas, para comparar cara a cara.
+      resultados = [];
+      PF_RULES.forEach(rule=>{
+        const rf = pfRunMonteCarlo(rule, sampler, riskFijo, PF_CFG.nSims, PF_CFG.tradesPorDia);
+        rf.modo = 'fijo';
+        const rc = pfRunMonteCarlo(rule, sampler, riskCascada, PF_CFG.nSims, PF_CFG.tradesPorDia);
+        rc.modo = 'cascada';
+        resultados.push(rf, rc);
+      });
+    } else {
+      const riskCfg = PF_CFG.modoRiesgo==='fijo' ? riskFijo : riskCascada;
+      resultados = PF_RULES.map(rule => {
+        const r = pfRunMonteCarlo(rule, sampler, riskCfg, PF_CFG.nSims, PF_CFG.tradesPorDia);
+        r.modo = PF_CFG.modoRiesgo;
+        return r;
+      });
+    }
     resultados.sort((a,b)=>b.probPass-a.probPass);
     pfLastResults = resultados;
     pfRenderResultados(resultados);
@@ -11608,11 +11663,30 @@ function pfSimular(){
   }, 30);
 }
 
+// Cuánto vas a terminar gastando en promedio hasta fondearte con esta regla: precio de la
+// prueba dividido por tu probabilidad de fondeo (si tenés que comprarla de nuevo cada vez que
+// la revientas). null si no cargaste precio o la probabilidad de fondeo dio 0.
+function pfCostoEsperado(r){
+  const precio = r.rule && r.rule.precio;
+  if(!precio || precio<=0) return null;
+  if(!r.probPass || r.probPass<=0) return null;
+  return precio / (r.probPass/100);
+}
+
 // ── Render de resultados ─────────────────────────────────────
 function pfRenderResultados(resultados){
   const wrapResultados = document.getElementById('pf_resultados');
   if(wrapResultados) wrapResultados.style.display='';
   const top = resultados[0];
+  const anyPrecio = resultados.some(r=>r.rule.precio>0);
+
+  let bestCosto = null;
+  if(anyPrecio){
+    resultados.forEach(r=>{
+      const c = pfCostoEsperado(r);
+      if(c!=null && (bestCosto==null || c<bestCosto.costo)) bestCosto = {r, costo:c};
+    });
+  }
 
   const kpis = document.getElementById('pf_kpis');
   if(kpis){
@@ -11621,30 +11695,93 @@ function pfRenderResultados(resultados){
       <div class="kpi-box" style="--accent:var(--red)"><div class="kpi-label">Blown por Max DD</div><div class="kpi-value" style="color:var(--red);">${top.probBlownMaxDD.toFixed(1)}%</div></div>
       <div class="kpi-box" style="--accent:var(--orange)"><div class="kpi-label">Blown por Daily DD</div><div class="kpi-value" style="color:var(--orange);">${top.probBlownDaily.toFixed(1)}%</div></div>
       <div class="kpi-box" style="--accent:var(--cyan)"><div class="kpi-label">Trades promedio hasta pasar</div><div class="kpi-value" style="color:var(--cyan);">${top.avgTradesToPass?top.avgTradesToPass.toFixed(0):'—'}</div><div class="kpi-sub">${top.avgDaysToPass?'≈ '+top.avgDaysToPass.toFixed(0)+' días':''}</div></div>
+      ${bestCosto?`<div class="kpi-box" style="--accent:var(--gold)"><div class="kpi-label">Mejor Costo Esperado</div><div class="kpi-value" style="color:var(--gold);">${fmtUSD(bestCosto.costo)}</div><div class="kpi-sub">${escHtml(bestCosto.r.rule.nombre)}${bestCosto.r.modo?' · '+(bestCosto.r.modo==='fijo'?'Fijo':'Variable'):''}</div></div>`:''}
     `;
     if(typeof applyKpiHelp==='function') applyKpiHelp(kpis);
   }
 
+  const comparando = !!PF_CFG.compararModos;
   const wrap = document.getElementById('pf_comparativa_wrap');
   if(wrap){
     if(resultados.length>1){
       wrap.style.display='';
+      const titleEl = document.getElementById('pf_comparativa_title');
+      if(titleEl) titleEl.textContent = anyPrecio ? 'Comparativa de reglas · ordenada por costo esperado hasta fondearte' : 'Comparativa de reglas';
+      const thead = document.getElementById('pf_comparativa_thead');
+      if(thead) thead.innerHTML = `<tr><th>Regla</th>${comparando?'<th>Modo</th>':''}<th>Fases</th><th>Precio</th><th>Prob. de Fondeo</th><th>Blown Max DD</th><th>Blown Daily DD</th><th>Trades hasta pasar</th><th>Trades hasta reventar</th><th>Costo hasta fondearte</th></tr>`;
+      const filas = anyPrecio
+        ? [...resultados].sort((a,b)=>{
+            const ca=pfCostoEsperado(a), cb=pfCostoEsperado(b);
+            if(ca==null && cb==null) return b.probPass-a.probPass;
+            if(ca==null) return 1;
+            if(cb==null) return -1;
+            return ca-cb;
+          })
+        : resultados;
       const body = document.getElementById('pf_comparativa_body');
-      if(body) body.innerHTML = resultados.map(r=>`
+      if(body) body.innerHTML = filas.map(r=>{
+        const costo = pfCostoEsperado(r);
+        return `
         <tr>
           <td>${escHtml(r.rule.nombre)}</td>
+          ${comparando?`<td><span style="font-weight:700;color:${r.modo==='fijo'?'var(--cyan)':'var(--purple)'};">${r.modo==='fijo'?'Fijo':'Variable'}</span></td>`:''}
           <td>${r.rule.numFases===1?'1 fase':'2 fases'}</td>
+          <td>${r.rule.precio>0?fmtUSD(r.rule.precio):'—'}</td>
           <td style="color:var(--green);font-weight:700;">${r.probPass.toFixed(1)}%</td>
           <td style="color:var(--red);">${r.probBlownMaxDD.toFixed(1)}%</td>
           <td style="color:var(--orange);">${r.probBlownDaily.toFixed(1)}%</td>
           <td>${r.avgTradesToPass?r.avgTradesToPass.toFixed(0):'—'}</td>
-        </tr>`).join('');
+          <td>${r.avgTradesToBlow?r.avgTradesToBlow.toFixed(0):'—'}</td>
+          <td style="${costo!=null?'color:var(--gold);font-weight:700;':''}">${costo!=null?fmtUSD(costo):'—'}</td>
+        </tr>`;
+      }).join('');
     } else {
       wrap.style.display='none';
     }
   }
 
+  const h2h = document.getElementById('pf_h2h_wrap');
+  if(h2h){
+    if(comparando){ h2h.style.display=''; pfRenderHeadToHead(resultados); }
+    else h2h.style.display='none';
+  }
+
   pfRenderHistChart(top);
+}
+
+// Compara, entre todas las reglas simuladas, el promedio de Fijo vs Variable en 3 ejes:
+// quién gana más (prob. de fondeo), quién pasa más rápido, quién revienta más rápido.
+function pfRenderHeadToHead(resultados){
+  const body = document.getElementById('pf_h2h_body');
+  if(!body) return;
+  const fijoRes = resultados.filter(r=>r.modo==='fijo');
+  const casRes  = resultados.filter(r=>r.modo==='cascada');
+  const avg = (arr, field) => arr.length ? arr.reduce((s,r)=>s+(r[field]||0),0)/arr.length : 0;
+
+  const rows = [
+    { label:'🏆 Probabilidad de Fondeo (quién gana más)', field:'probPass', fmt:v=>v.toFixed(1)+'%', higherIsBetter:true },
+    { label:'⚡ Trades hasta pasar (quién pasa más rápido)', field:'avgTradesToPass', fmt:v=>v?v.toFixed(0):'—', higherIsBetter:false },
+    { label:'💥 Trades hasta reventar (quién pierde más rápido)', field:'avgTradesToBlow', fmt:v=>v?v.toFixed(0):'—', higherIsBetter:true }
+  ];
+
+  body.innerHTML = rows.map(row=>{
+    const vf = avg(fijoRes, row.field);
+    const vc = avg(casRes, row.field);
+    let winner = null;
+    if(vf>0 && vc>0 && vf!==vc) winner = row.higherIsBetter ? (vf>vc?'fijo':'cascada') : (vf<vc?'fijo':'cascada');
+    return `
+      <div style="background:var(--glass2);border:1px solid var(--border);border-radius:8px;padding:.9rem;">
+        <div style="font-size:10px;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.7rem;">${row.label}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
+          <span style="font-size:11px;color:var(--cyan);">Fijo</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px;color:${winner==='fijo'?'var(--green)':'var(--text)'};">${row.fmt(vf)}${winner==='fijo'?' 🏆':''}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
+          <span style="font-size:11px;color:var(--purple);">Variable</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px;color:${winner==='cascada'?'var(--green)':'var(--text)'};">${row.fmt(vc)}${winner==='cascada'?' 🏆':''}</span>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function pfRenderHistChart(res){
@@ -11687,10 +11824,17 @@ function renderProbFondeo(){
 
   const riesgoInput = document.querySelector(`input[name="pf_riesgo_modo"][value="${PF_CFG.modoRiesgo}"]`);
   if(riesgoInput) riesgoInput.checked=true;
+  const cmpInput = document.getElementById('pf_comparar_modos');
+  if(cmpInput) cmpInput.checked = !!PF_CFG.compararModos;
   const fijoWrap = document.getElementById('pf_riesgo_fijo');
   const cascadaWrap = document.getElementById('pf_riesgo_cascada');
-  if(fijoWrap) fijoWrap.style.display = PF_CFG.modoRiesgo==='fijo' ? 'block' : 'none';
-  if(cascadaWrap) cascadaWrap.style.display = PF_CFG.modoRiesgo==='cascada' ? 'grid' : 'none';
+  if(PF_CFG.compararModos){
+    if(fijoWrap) fijoWrap.style.display = 'block';
+    if(cascadaWrap) cascadaWrap.style.display = 'grid';
+  } else {
+    if(fijoWrap) fijoWrap.style.display = PF_CFG.modoRiesgo==='fijo' ? 'block' : 'none';
+    if(cascadaWrap) cascadaWrap.style.display = PF_CFG.modoRiesgo==='cascada' ? 'grid' : 'none';
+  }
   const rf = document.getElementById('pf_risk_fijo'); if(rf) rf.value = PF_CFG.riskFijo;
   const ri = document.getElementById('pf_risk_inicial'); if(ri) ri.value = PF_CFG.riskInicial;
   const rm = document.getElementById('pf_risk_mult'); if(rm) rm.value = PF_CFG.riskMult;
@@ -18432,6 +18576,7 @@ const KPI_HELP = {
   'Blown por Max DD':'Porcentaje de las simulaciones que reventaron la cuenta por superar el drawdown máximo permitido.',
   'Blown por Daily DD':'Porcentaje de las simulaciones que reventaron la cuenta por superar el drawdown diario permitido.',
   'Trades promedio hasta pasar':'Cantidad promedio de operaciones que necesitaron las simulaciones exitosas para llegar a fondearse.',
+  'Mejor Costo Esperado':'De todas las reglas con precio cargado, la que menos vas a terminar gastando en promedio hasta fondearte (precio de la prueba dividido por tu probabilidad de fondeo), asumiendo que comprás la prueba de nuevo cada vez que la revientas.',
   'Max Drawdown':'Máxima caída de capital desde un pico hasta un valle, en el período analizado.',
   'Max Win Streak':'Racha más larga de trades ganadores consecutivos.',
   'Max Loss Streak':'Racha más larga de trades perdedores consecutivos.',
