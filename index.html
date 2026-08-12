@@ -1832,8 +1832,8 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 }
 
 /* ── Hero ────────────────────────────────────────────────── */
-.lp-hero { padding: 5.5rem 2.8rem 7rem; gap: 3rem; position: relative; overflow: hidden; }
-.lp-hero-left, .lp-hero-right { position: relative; z-index: 1; }
+.lp-hero { display: block; padding: 7rem 2.8rem 3rem; position: relative; overflow: hidden; min-height: 600px; }
+.lp-hero-left { position: relative; z-index: 1; max-width: 560px; }
 
 /* ── Marca de agua ───────────────────────────────────────── */
 .lp-watermark {
@@ -1957,6 +1957,107 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 }
 .lp-strip-item strong { color: #f5a623; font-weight: 600; }
 .lp-strip-sep { color: rgba(99,160,255,.25); opacity: 1; }
+
+/* ── Foto de fondo del hero (full-bleed) ─────────────────── */
+.lp-hero-photo{
+  position:absolute;inset:0;z-index:0;
+  background-image:url('foto landing.png');
+  background-size:cover;
+  background-position:67% 46%;
+}
+.lp-hero-scrim{
+  position:absolute;inset:0;z-index:0;
+  background:linear-gradient(90deg,
+    #060d1f 0%, rgba(6,13,31,.94) 26%, rgba(6,13,31,.68) 46%,
+    rgba(6,13,31,.28) 66%, rgba(6,13,31,.05) 82%, transparent 95%),
+    linear-gradient(0deg, #060d1f 0%, transparent 18%);
+}
+.lp-dish-flare{
+  position:absolute;top:46%;left:67%;width:22px;height:22px;
+  transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle, #fff2cf 0%, #ffcf6b 32%, rgba(245,166,35,.55) 60%, transparent 76%);
+  filter:blur(1.5px);mix-blend-mode:screen;
+  animation:lpFlareFlicker 3.4s ease-in-out infinite;
+}
+@keyframes lpFlareFlicker{
+  0%,100%{opacity:.55;transform:translate(-50%,-50%) scale(.85);}
+  8%{opacity:1;transform:translate(-50%,-50%) scale(1.2);}
+  15%{opacity:.45;transform:translate(-50%,-50%) scale(.75);}
+  24%{opacity:1;transform:translate(-50%,-50%) scale(1.15);}
+  38%{opacity:.7;transform:translate(-50%,-50%) scale(.95);}
+  52%{opacity:1;transform:translate(-50%,-50%) scale(1.25);}
+  67%{opacity:.55;transform:translate(-50%,-50%) scale(.85);}
+  82%{opacity:.9;transform:translate(-50%,-50%) scale(1.05);}
+}
+@media (max-width:880px){
+  .lp-hero-scrim{
+    background:linear-gradient(180deg, rgba(6,13,31,.55) 0%, rgba(6,13,31,.88) 55%, #060d1f 100%);
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  .lp-dish-flare{animation:none;opacity:.85;}
+}
+
+/* ── Cintas de fotos (carrusel) ──────────────────────────── */
+.lp-ribbon-wrap{display:flex;flex-direction:column;gap:1.6rem;margin-top:1rem;}
+.lp-ribbon{overflow:hidden;position:relative;}
+.lp-ribbon::before,.lp-ribbon::after{
+  content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none;
+}
+.lp-ribbon::before{left:0;background:linear-gradient(to right,var(--lp-bg),transparent);}
+.lp-ribbon::after{right:0;background:linear-gradient(to left,var(--lp-bg),transparent);}
+.lp-ribbon-track{display:flex;gap:1.4rem;width:max-content;}
+.lp-ribbon-a .lp-ribbon-track{animation:lpMarquee 46s linear infinite;}
+.lp-ribbon-b .lp-ribbon-track{animation:lpMarquee 46s linear infinite reverse;}
+.lp-ribbon:hover .lp-ribbon-track{animation-play-state:paused;}
+.lp-ribbon-card{
+  flex:none;width:400px;border-radius:14px;overflow:hidden;
+  border:1px solid rgba(99,160,255,.16);background:var(--lp-card);
+  box-shadow:0 18px 40px rgba(0,0,0,.4);
+}
+.lp-ribbon-card img{width:100%;height:auto;display:block;pointer-events:none;user-select:none;}
+.lp-ribbon-cap{padding:.9rem 1.1rem 1.1rem;}
+.lp-ribbon-cap strong{
+  display:block;color:var(--lp-text);font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:.4rem;
+}
+.lp-ribbon-cap span{display:block;color:var(--lp-sub);font-size:.82rem;line-height:1.5;}
+@media (max-width:520px){
+  .lp-ribbon-card{width:260px;}
+  .lp-ribbon::before,.lp-ribbon::after{width:36px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .lp-ribbon-a .lp-ribbon-track,.lp-ribbon-b .lp-ribbon-track{animation:none;}
+}
+
+/* ── Franja de valor (4 features) ───────────────────────── */
+.lp-feature-row{border-top:1px solid rgba(99,160,255,.1);position:relative;z-index:1;}
+.lp-feature-row-inner{
+  max-width:1200px;margin:0 auto;padding:1.6rem 2.4rem 2.2rem;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;
+}
+.lp-feature-item{display:flex;align-items:flex-start;gap:.9rem;padding-right:1.4rem;border-right:1px solid rgba(99,160,255,.1);}
+.lp-feature-item:last-child{border-right:none;padding-right:0;}
+.lp-feature-icon{
+  flex:none;width:42px;height:42px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(245,166,35,.3);background:rgba(245,166,35,.06);
+  color:#f5a623;
+}
+.lp-feature-icon svg{width:20px;height:20px;}
+.lp-feature-text h3{
+  margin:0 0 .3rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--lp-text);font-weight:700;
+}
+.lp-feature-text p{margin:0;font-size:.82rem;line-height:1.5;color:var(--lp-sub);}
+@media (max-width:880px){
+  .lp-feature-row-inner{grid-template-columns:1fr 1fr;}
+  .lp-feature-item:nth-child(2){border-right:none;}
+}
+@media (max-width:520px){
+  .lp-feature-row-inner{grid-template-columns:1fr;padding:2rem 1.3rem;gap:1.6rem;}
+  .lp-feature-item{border-right:none;padding-right:0;}
+}
 
 /* ── Section titles ──────────────────────────────────────── */
 .lp-section-title {
@@ -2220,9 +2321,11 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
   <!-- HERO -->
   <section class="lp-hero" id="lp-top">
-    <div class="lp-watermark" aria-hidden="true">
-      <img src="la que va.jpeg" alt="">
+    <div class="lp-hero-photo" aria-hidden="true">
+      <span class="lp-dish-flare"></span>
     </div>
+    <div class="lp-hero-scrim" aria-hidden="true"></div>
+
     <div class="lp-hero-left">
       <div class="lp-badge"><span class="lp-badge-dot"></span>Tu trading. Tu sistema. Tu evolución.</div>
       <h1 class="lp-title">
@@ -2240,59 +2343,47 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </button>
       <p class="lp-secure">&#128274; Tus datos están 100% seguros y encriptados.</p>
     </div>
-
-    <div class="lp-hero-right">
-      <div class="lp-radar">
-        <div class="lp-radar-scene">
-          <div class="lp-radar-disk">
-            <div class="lp-radar-rings"></div>
-            <div class="lp-radar-sweep"></div>
-            <span class="lp-blip" style="top:30%;left:58%">Disciplina</span>
-            <span class="lp-blip" style="top:46%;left:78%">Gestión</span>
-            <span class="lp-blip" style="top:64%;left:70%">Consistencia</span>
-            <span class="lp-blip" style="top:72%;left:42%">Paciencia</span>
-            <span class="lp-blip" style="top:34%;left:34%">Proceso</span>
-            <div class="lp-radar-core"></div>
-          </div>
-          <div class="lp-orbit lp-orbit-1"></div>
-          <div class="lp-orbit lp-orbit-2"></div>
-          <div class="lp-orbit lp-orbit-3"></div>
-        </div>
-      </div>
-    </div>
   </section>
 
-  <!-- PROOF STRIP -->
-  <div class="lp-strip">
-    <div class="lp-strip-inner">
-      <span class="lp-strip-item"><strong>Journal</strong> profesional</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Backtest</strong> integrado</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Multi-cuenta</strong> Prop Firms</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Equity curve</strong> en tiempo real</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>An&aacute;lisis</strong> psicol&oacute;gico</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Metas</strong> y reglas personalizadas</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Drawdown</strong> en tiempo real</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Journal</strong> profesional</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Backtest</strong> integrado</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Multi-cuenta</strong> Prop Firms</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Equity curve</strong> en tiempo real</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>An&aacute;lisis</strong> psicol&oacute;gico</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Metas</strong> y reglas personalizadas</span>
-      <span class="lp-strip-sep">&#183;</span>
-      <span class="lp-strip-item"><strong>Drawdown</strong> en tiempo real</span>
-      <span class="lp-strip-sep">&#183;</span>
+  <!-- FRANJA DE VALOR -->
+  <div class="lp-feature-row">
+    <div class="lp-feature-row-inner">
+      <div class="lp-feature-item">
+        <div class="lp-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <div class="lp-feature-text">
+          <h3>Foco Total</h3>
+          <p>Centralizá todas tus cuentas y operá con claridad.</p>
+        </div>
+      </div>
+      <div class="lp-feature-item">
+        <div class="lp-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg>
+        </div>
+        <div class="lp-feature-text">
+          <h3>Análisis Profundo</h3>
+          <p>Detectá patrones, fortalezas y oportunidades reales.</p>
+        </div>
+      </div>
+      <div class="lp-feature-item">
+        <div class="lp-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="lp-feature-text">
+          <h3>Gestión Inteligente</h3>
+          <p>Controlá drawdowns, metas y reglas como un pro.</p>
+        </div>
+      </div>
+      <div class="lp-feature-item">
+        <div class="lp-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 6h6v6"/></svg>
+        </div>
+        <div class="lp-feature-text">
+          <h3>Evolución Constante</h3>
+          <p>Cada operación te acerca a tu mejor versión como trader.</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2300,23 +2391,39 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <section class="lp-carousel-section lp-reveal">
     <h2 class="lp-section-title" style="margin-bottom:.5rem;">MIRÁ POR DENTRO</h2>
     <p class="lp-section-sub">Cada sección diseñada para que tomes mejores decisiones.</p>
-    <div class="lp-cf-wrap">
-      <div class="lp-cf" id="lpCf">
-        <div class="lp-cf-card"><img src="fotos/dashboad.png" alt="Dashboard" loading="lazy"></div>
-        <div class="lp-cf-card"><img src="fotos/journal.png" alt="Journal" loading="lazy"></div>
-        <div class="lp-cf-card"><img src="fotos/backtest.png" alt="Backtest" loading="lazy"></div>
-        <div class="lp-cf-card"><img src="fotos/estadisticas.png" alt="Estadísticas" loading="lazy"></div>
-        <div class="lp-cf-card"><img src="fotos/cuentas.png" alt="Cuentas" loading="lazy"></div>
-        <div class="lp-cf-card"><img src="fotos/diario mental.png" alt="Diario Mental" loading="lazy"></div>
-        <div class="lp-cf-card"><img src="fotos/rutina.png" alt="Rutina Ganadora" loading="lazy"></div>
-        <div class="lp-cf-card"><img src="fotos/reporte backtest.png" alt="Reporte de Backtest" loading="lazy"></div>
-        <div class="lp-cf-card"><img src="fotos/reportes.png" alt="Reportes PDF" loading="lazy"></div>
-        <div class="lp-cf-card"><img src="fotos/correlacion de habitos con tus trade.png" alt="Correlación de Hábitos" loading="lazy"></div>
+
+    <div class="lp-ribbon-wrap">
+      <div class="lp-ribbon lp-ribbon-a">
+        <div class="lp-ribbon-track">
+          <div class="lp-ribbon-card"><img src="fotos/dashboad.png" alt="Dashboard" loading="lazy"><div class="lp-ribbon-cap"><strong>Dashboard</strong><span>Tu rendimiento de un vistazo: equity, P&amp;L, rachas y alertas de drawdown en tiempo real.</span></div></div>
+          <div class="lp-ribbon-card"><img src="fotos/journal.png" alt="Journal" loading="lazy"><div class="lp-ribbon-cap"><strong>Journal</strong><span>Registrá cada operación con todos los detalles: entrada, salida, sesión, zona y notas.</span></div></div>
+          <div class="lp-ribbon-card"><img src="fotos/backtest.png" alt="Backtest" loading="lazy"><div class="lp-ribbon-cap"><strong>Backtest Challenge</strong><span>Simulá tu estrategia contra los parámetros reales de tu prop firm antes de arriesgar capital.</span></div></div>
+          <div class="lp-ribbon-card"><img src="fotos/estadisticas.png" alt="Estadísticas" loading="lazy"><div class="lp-ribbon-cap"><strong>Estadísticas</strong><span>Analizá tu edge real: win rate, expectancy, mejores sesiones, días y zonas de reacción.</span></div></div>
+          <div class="lp-ribbon-card"><img src="fotos/cuentas.png" alt="Cuentas" loading="lazy"><div class="lp-ribbon-cap"><strong>Cuentas Prop Firm</strong><span>Gestioná todas tus cuentas fondeadas y controlá el drawdown diario y máximo.</span></div></div>
+          <!-- duplicado para loop continuo -->
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/dashboad.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Dashboard</strong><span>Tu rendimiento de un vistazo: equity, P&amp;L, rachas y alertas de drawdown en tiempo real.</span></div></div>
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/journal.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Journal</strong><span>Registrá cada operación con todos los detalles: entrada, salida, sesión, zona y notas.</span></div></div>
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/backtest.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Backtest Challenge</strong><span>Simulá tu estrategia contra los parámetros reales de tu prop firm antes de arriesgar capital.</span></div></div>
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/estadisticas.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Estadísticas</strong><span>Analizá tu edge real: win rate, expectancy, mejores sesiones, días y zonas de reacción.</span></div></div>
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/cuentas.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Cuentas Prop Firm</strong><span>Gestioná todas tus cuentas fondeadas y controlá el drawdown diario y máximo.</span></div></div>
+        </div>
       </div>
-      <button class="lp-car-btn lp-car-prev" onclick="lpCarMove(-1)" aria-label="Anterior">&#8592;</button>
-      <button class="lp-car-btn lp-car-next" onclick="lpCarMove(1)" aria-label="Siguiente">&#8594;</button>
-      <div class="lp-car-dots" id="lpCfDots"></div>
-      <div class="lp-cf-desc-area" id="lpCfDesc"></div>
+
+      <div class="lp-ribbon lp-ribbon-b">
+        <div class="lp-ribbon-track">
+          <div class="lp-ribbon-card"><img src="fotos/diario mental.png" alt="Diario Mental" loading="lazy"><div class="lp-ribbon-cap"><strong>Diario Mental</strong><span>Registrá tu estado emocional antes y después de operar para detectar patrones de comportamiento.</span></div></div>
+          <div class="lp-ribbon-card"><img src="fotos/rutina.png" alt="Rutina Ganadora" loading="lazy"><div class="lp-ribbon-cap"><strong>Rutina Ganadora</strong><span>Seguí tus hábitos de preparación diarios y medí cómo impactan en tu rendimiento.</span></div></div>
+          <div class="lp-ribbon-card"><img src="fotos/reporte backtest.png" alt="Reporte de Backtest" loading="lazy"><div class="lp-ribbon-cap"><strong>Reporte de Backtest</strong><span>Combiná tu histórico y tu backtest en una sola equity curve con expectancy y max drawdown.</span></div></div>
+          <div class="lp-ribbon-card"><img src="fotos/reportes.png" alt="Reportes PDF" loading="lazy"><div class="lp-ribbon-cap"><strong>Reportes PDF</strong><span>Exportá tu progreso completo a PDF o Excel, listo para archivar o compartir.</span></div></div>
+          <div class="lp-ribbon-card"><img src="fotos/correlacion de habitos con tus trade.png" alt="Correlación de Hábitos" loading="lazy"><div class="lp-ribbon-cap"><strong>Correlación de Hábitos</strong><span>Descubrí qué hábitos de tu rutina realmente mejoran tu win rate y tu P&amp;L.</span></div></div>
+          <!-- duplicado para loop continuo -->
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/diario mental.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Diario Mental</strong><span>Registrá tu estado emocional antes y después de operar para detectar patrones de comportamiento.</span></div></div>
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/rutina.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Rutina Ganadora</strong><span>Seguí tus hábitos de preparación diarios y medí cómo impactan en tu rendimiento.</span></div></div>
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/reporte backtest.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Reporte de Backtest</strong><span>Combiná tu histórico y tu backtest en una sola equity curve con expectancy y max drawdown.</span></div></div>
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/reportes.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Reportes PDF</strong><span>Exportá tu progreso completo a PDF o Excel, listo para archivar o compartir.</span></div></div>
+          <div class="lp-ribbon-card" aria-hidden="true"><img src="fotos/correlacion de habitos con tus trade.png" alt="" loading="lazy"><div class="lp-ribbon-cap"><strong>Correlación de Hábitos</strong><span>Descubrí qué hábitos de tu rutina realmente mejoran tu win rate y tu P&amp;L.</span></div></div>
+        </div>
+      </div>
     </div>
   </section>
 
