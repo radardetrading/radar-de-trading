@@ -703,8 +703,9 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
 .filters input{min-width:180px;}
 
 /* ── PAIRS ───────────────────────────── */
-.pairs-today{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:1.5rem;}
+.pairs-today{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:1.5rem;}
 .pair-card{
+  min-width:0;
   border-radius:var(--r2);overflow:hidden;border:1px solid;
   backdrop-filter:blur(24px);
   -webkit-backdrop-filter:blur(24px);
