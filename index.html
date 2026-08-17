@@ -2714,7 +2714,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div class="nav-section">Cuentas</div>
     <div class="nav-item" onclick="nav('cuentas')" data-help="Cuentas: gestiona tus prop firms, fases, saldo, drawdown y cuenta regresiva de inactividad (30 dias)."><span class="nav-icon">🏦</span>Cuentas</div>
     <div class="nav-item" onclick="nav('pagos')" data-help="Pagos: registra y consulta el historial de splits cobrados de tus prop firms."><span class="nav-icon">💰</span>Pagos</div>
-    <div class="nav-item" onclick="nav('pares')" data-help="Pares: coordina cuentas que operan en paralelo para evitar correlacion y proteger el drawdown cruzado."><span class="nav-icon">⚡</span>Pares</div>
+    <div class="nav-item" onclick="nav('pares')" data-help="Grupos: coordina cuentas que operan en paralelo para evitar correlacion y proteger el drawdown cruzado."><span class="nav-icon">⚡</span>Grupos</div>
 
     <div class="nav-section">Psicología</div>
     <div class="nav-item" onclick="nav('diario')" data-help="Diario Mental: registra tu estado emocional y psicologico antes y despues de cada sesion de trading."><span class="nav-icon">🧠</span>Diario Mental</div>
@@ -3554,7 +3554,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     <div id="paresToday" style="margin-bottom:1.5rem;"></div>
     <div id="paresAlerts" style="margin-bottom:1rem;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
-      <div class="card" data-help="Calendario de la semana con qué par de cuentas te toca operar cada día, según la configuración de Mis Pares." style="padding:1.2rem;">
+      <div class="card" data-help="Calendario de la semana con qué grupo de cuentas te toca operar cada día, según la configuración de Mis Grupos." style="padding:1.2rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
           <div class="section-label">Calendario Semanal</div>
           <div style="display:flex;gap:4px;">
@@ -3568,7 +3568,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
       <div class="card" data-help="Grupos de cuentas que operás en paralelo para evitar correlación y proteger el drawdown cruzado entre ellas." style="padding:1.2rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-          <div class="section-label">Mis Pares</div>
+          <div class="section-label">Mis Grupos</div>
           <button class="btn sm primary" onclick="openParModal()">+ Nuevo</button>
         </div>
         <div id="paresList"></div>
@@ -3579,8 +3579,8 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
         <div class="section-label">Historial de Uso</div>
         <button class="btn sm primary" onclick="openUsoModal()">+ Registrar Día</button>
       </div>
-      <table><thead><tr><th>Fecha</th><th>Par</th><th>Cuentas</th><th>Resultado</th><th>¿Siguen?</th><th>Notas</th><th></th></tr></thead><tbody id="paresHistBody"></tbody></table>
-      <div id="paresHistEmpty" class="empty" style="display:none"><div class="empty-icon">⚡</div>Sin historial de pares.</div>
+      <table><thead><tr><th>Fecha</th><th>Grupo</th><th>Cuentas</th><th>Resultado</th><th>¿Siguen?</th><th>Notas</th><th></th></tr></thead><tbody id="paresHistBody"></tbody></table>
+      <div id="paresHistEmpty" class="empty" style="display:none"><div class="empty-icon">⚡</div>Sin historial de grupos.</div>
     </div>
 
     <!-- CATÁLOGO DE INSTRUMENTOS DE FUTUROS -->
@@ -5421,11 +5421,13 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
 <div class="overlay" id="parModal">
   <div class="modal" style="max-width:500px;">
     <button class="modal-close" onclick="closeModal('parModal')">✕</button>
-    <div class="modal-title">⚡ <span>Configurar Par</span></div>
+    <div class="modal-title">⚡ <span>Configurar Grupo</span></div>
     <div class="form-grid">
-      <div class="form-group full"><label>Nombre del Par</label><input type="text" id="p_name" placeholder="Par A, Principal..."></div>
-      <div class="form-group"><label>Cuenta 1</label><select id="p_acc1"></select></div>
-      <div class="form-group"><label>Cuenta 2</label><select id="p_acc2"></select></div>
+      <div class="form-group full"><label>Nombre del Grupo</label><input type="text" id="p_name" placeholder="Grupo A, Principal..."></div>
+      <div class="form-group full">
+        <label>Cuentas del Grupo</label>
+        <div id="p_accsList" style="display:flex;flex-direction:column;gap:2px;margin-top:4px;max-height:220px;overflow-y:auto;padding:8px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:var(--r);"></div>
+      </div>
       <div class="form-group full"><label>Tipo</label>
         <select id="p_tipo" onchange="document.getElementById('p_dias_wrap').style.display=this.value==='rotativo'?'block':'none'">
           <option value="fijo">Fijo (siempre juntas)</option>
@@ -5459,7 +5461,7 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     </div>
     <div class="form-actions">
       <button class="btn" onclick="closeModal('parModal')">Cancelar</button>
-      <button class="btn primary" onclick="savePar()">Guardar Par</button>
+      <button class="btn primary" onclick="savePar()">Guardar Grupo</button>
     </div>
   </div>
 </div>
@@ -5539,7 +5541,7 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
     <div class="modal-title">📅 <span>Registrar Día</span></div>
     <div class="form-grid">
       <div class="form-group"><label>Fecha</label><input type="date" id="u2_fecha"></div>
-      <div class="form-group"><label>Par utilizado</label><select id="u2_par"></select></div>
+      <div class="form-group"><label>Grupo utilizado</label><select id="u2_par"></select></div>
       <div class="form-group full"><label>Resultado</label>
         <select id="u2_res">
           <option value="tp_ambas">✅ TP ambas cuentas</option>
@@ -6142,6 +6144,11 @@ function armarEstado(){
   };
 }
 
+// Migra pares viejos (acc1/acc2 fijos) al formato nuevo de grupos (accIds: [...])
+function migratePares(){
+  pares=(pares||[]).map(p=>Array.isArray(p.accIds)?p:{...p, accIds:[p.acc1,p.acc2].filter(Boolean)});
+}
+
 // Reparte un blob a las variables globales
 function aplicarEstado(d){
   if(!d) return;
@@ -6152,6 +6159,7 @@ function aplicarEstado(d){
   if(d.pagos)      pagos      = d.pagos;
   if(d.pares)      pares      = d.pares;
   if(d.paresHist)  paresHist  = d.paresHist;
+  migratePares();
   if(d.events)     events     = d.events;
   if(d.reglas)     reglas     = d.reglas;
   if(d.reglasLog)  reglasLog  = d.reglasLog;
@@ -6888,7 +6896,7 @@ function escHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
 // ════════════════════════════════════════════════════════════
-const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Pares',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Historial de Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas',challenges:'Historial de Challenges',perfil:'Mi Perfil',probfondeo:'Probabilidad de Fondeo'};
+const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Grupos',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Historial de Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas',challenges:'Historial de Challenges',perfil:'Mi Perfil',probfondeo:'Probabilidad de Fondeo'};
 const ctaLabels={dashboard:'+ Nuevo Trade',journal:'+ Nuevo Trade',estadisticas:null,backtest:'+ Trade BT',historico:null,pares:'+ Registrar Día',calculadora:null,riesgo:null,semanal:null,reglas:'+ Nueva Regla',cuentas:'+ Nueva Cuenta',pagos:'+ Registrar Pago',diario:null,rutina:null,reportes:null,metas:'+ Nueva Meta',challenges:null,perfil:null};
 const ctaActions={dashboard:'openTradeModal()',journal:'openTradeModal()',estadisticas:null,backtest:"openBtModal()",historico:null,pares:'openUsoModal()',calculadora:null,riesgo:null,semanal:null,reglas:'openReglaModal()',cuentas:'openAccModal()',pagos:'openPagoModal()',diario:null,rutina:null,reportes:null,metas:"openMetaModal('trading')",challenges:null,perfil:null};
 let currentPage='dashboard';
@@ -9663,14 +9671,12 @@ function pickColor(el){
 
 function openParModal(id=null){
   editParId=id;
-  const opts='<option value="">— ninguna —</option>'+accounts.map(a=>`<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
-  document.getElementById('p_acc1').innerHTML=opts;
-  document.getElementById('p_acc2').innerHTML=opts;
-  if(id){
-    const p=pares.find(x=>x.id===id);if(!p) return;
+  const p=id?pares.find(x=>x.id===id):null;
+  const selectedIds=p?(p.accIds||[]):[];
+  const list=document.getElementById('p_accsList');
+  list.innerHTML=accounts.length?accounts.map(a=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;padding:5px 4px;"><input type="checkbox" class="p_acc_cb" value="${a.id}" style="width:auto;" ${selectedIds.includes(a.id)?'checked':''}><span style="flex:1;">${escHtml(a.name)}</span><span style="color:var(--sub);font-size:10px;">${escHtml(a.firm||'')}</span></label>`).join(''):'<div style="font-size:11px;color:var(--sub);padding:4px;">No hay cuentas creadas todavía.</div>';
+  if(p){
     document.getElementById('p_name').value=p.name||'';
-    document.getElementById('p_acc1').value=p.acc1||'';
-    document.getElementById('p_acc2').value=p.acc2||'';
     document.getElementById('p_tipo').value=p.tipo||'fijo';
     document.getElementById('p_dias_wrap').style.display=p.tipo==='rotativo'?'block':'none';
     document.getElementById('p_notes').value=p.notes||'';
@@ -9678,7 +9684,7 @@ function openParModal(id=null){
     document.querySelectorAll('#colorPicker .color-swatch').forEach(el=>{el.classList.toggle('selected',el.dataset.c===p.color);});
     document.getElementById('p_color').value=p.color||'#22d3ee';
   } else {
-    document.getElementById('p_name').value='';document.getElementById('p_acc1').value='';document.getElementById('p_acc2').value='';
+    document.getElementById('p_name').value='';
     document.getElementById('p_tipo').value='fijo';document.getElementById('p_dias_wrap').style.display='none';
     document.getElementById('p_notes').value='';
     document.querySelectorAll('#p_dias_wrap input').forEach(cb=>cb.checked=false);
@@ -9690,16 +9696,14 @@ function openParModal(id=null){
 
 function savePar(){
   const name=document.getElementById('p_name').value.trim();
-  const acc1=parseInt(document.getElementById('p_acc1').value)||null;
-  const acc2=parseInt(document.getElementById('p_acc2').value)||null;
   if(!name){toast('Ingresá un nombre','err');return;}
-  if(acc1&&acc1===acc2){toast('Las dos cuentas no pueden ser la misma','err');return;}
+  const accIds=[...document.querySelectorAll('.p_acc_cb:checked')].map(cb=>parseInt(cb.value));
   const dias=[...document.querySelectorAll('#p_dias_wrap input:checked')].map(c=>+c.value);
-  const par={id:editParId||Date.now(),name,acc1,acc2,tipo:document.getElementById('p_tipo').value,dias,color:document.getElementById('p_color').value,notes:document.getElementById('p_notes').value};
+  const par={id:editParId||Date.now(),name,accIds,tipo:document.getElementById('p_tipo').value,dias,color:document.getElementById('p_color').value,notes:document.getElementById('p_notes').value};
   if(editParId){const idx=pares.findIndex(p=>p.id===editParId);pares[idx]=par;}
   else pares.push(par);
   markDirty();save();closeModal('parModal');renderPares();
-  toast(editParId?'Par actualizado':'Par creado','ok');editParId=null;
+  toast(editParId?'Grupo actualizado':'Grupo creado','ok');editParId=null;
 }
 
 function deletePar(id){pares=pares.filter(p=>p.id!==id);markDirty();save();renderPares();}
@@ -9708,7 +9712,7 @@ function openUsoModal(){
   document.getElementById('u2_fecha').value=todayStr();
   const sel=document.getElementById('u2_par');
   sel.innerHTML=pares.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('');
-  if(!sel.innerHTML) sel.innerHTML='<option>Sin pares</option>';
+  if(!sel.innerHTML) sel.innerHTML='<option>Sin grupos</option>';
   document.getElementById('u2_notes').value='';
   openModal('usoModal');
 }
@@ -9723,7 +9727,7 @@ function saveUso(){
   const siguenJuntas=sigue==='auto'?res==='tp_ambas':sigue==='si';
   paresHist.unshift({id:Date.now(),parId,fecha,res,siguenJuntas,notes:document.getElementById('u2_notes').value,parName:par?.name||''});
   const rl={tp_ambas:'TP ambas',tp_una:'TP una/SL otra',sl_ambas:'SL ambas',be:'BE',sin_operar:'Sin operar'};
-  addEvent(res==='tp_ambas'?'win':res==='sl_ambas'?'loss':'phase',`Par ${par?.name||''}: ${rl[res]}${siguenJuntas?' — siguen juntas':' — cambio'}`);
+  addEvent(res==='tp_ambas'?'win':res==='sl_ambas'?'loss':'phase',`Grupo ${par?.name||''}: ${rl[res]}${siguenJuntas?' — siguen juntas':' — cambio'}`);
   markDirty();save();closeModal('usoModal');renderPares();
   toast('Día registrado','ok');
 }
@@ -9884,16 +9888,16 @@ function renderPares(){
     todayEl.innerHTML=`<div class="alert info" style="font-size:13px;">Sin pares configurados para hoy (${weekDays[wn]})</div>`;
   } else {
     todayEl.innerHTML=`<div class="pairs-today">`+parsHoy.map(par=>{
-      const a1=accObj(par.acc1),a2=accObj(par.acc2);
+      const accsPar=(par.accIds||[]).map(accObj).filter(Boolean);
       const lastUso=paresHist.find(h=>h.parId===par.id);
       const sigTag=lastUso===undefined?'':lastUso.siguenJuntas?`<span class="badge b-funded" style="font-size:9px;">✓ Siguen juntas</span>`:`<span class="badge" style="background:rgba(249,115,22,.1);color:var(--orange);border:1px solid rgba(249,115,22,.2);font-size:9px;">↻ Cambio pendiente</span>`;
-      return`<div class="pair-card" data-help="Par de cuentas que operás en paralelo el mismo día para evitar correlación. Muestra firma, nombre, saldo y fase de cada cuenta del par, y si mantuvieron el pareo (Siguen juntas) o hay un cambio pendiente." style="border-color:${par.color}55;">
+      return`<div class="pair-card" data-help="Grupo de cuentas que operás en paralelo el mismo día para evitar correlación. Muestra firma, nombre, saldo y fase de cada cuenta del grupo, y si mantuvieron el grupo (Siguen juntas) o hay un cambio pendiente." style="border-color:${par.color}55;">
         <div class="pair-card-top" style="background:${par.color}10;border-bottom:1px solid ${par.color}33;">
           <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:2px;">HOY — ${weekDays[wn]}</div><div style="font-size:16px;font-weight:700;color:${par.color};">${par.name}</div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);background:var(--bg4);border:1px solid var(--border);padding:2px 6px;border-radius:4px;">${par.tipo}</span>${sigTag}</div>
         </div>
         <div class="pair-card-body">
-          ${[a1,a2].map(a=>a?`<div class="pair-acc-mini"><div class="pair-acc-firm">${a.firm||'Sin firma'}</div><div class="pair-acc-name">${a.name}</div><div class="pair-acc-bal" style="color:${(a.balance-a.size)>=0?'var(--green)':'var(--red)'};">${fmtUSD(a.balance||0)}</div>${phaseBadge(a.phase)}</div>`:`<div class="pair-acc-mini" style="display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:12px;">Sin cuenta</div>`).join('')}
+          ${accsPar.length?accsPar.map(a=>`<div class="pair-acc-mini"><div class="pair-acc-firm">${a.firm||'Sin firma'}</div><div class="pair-acc-name">${a.name}</div><div class="pair-acc-bal" style="color:${(a.balance-a.size)>=0?'var(--green)':'var(--red)'};">${fmtUSD(a.balance||0)}</div>${phaseBadge(a.phase)}</div>`).join(''):`<div class="pair-acc-mini" style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:12px;">Sin cuentas</div>`}
         </div>
       </div>`;
     }).join('')+`</div>`;
@@ -9924,11 +9928,11 @@ function renderPares(){
 
   // pares list
   document.getElementById('paresList').innerHTML=pares.length?pares.map(p=>{
-    const n1=p.acc1?accName(p.acc1):'—',n2=p.acc2?accName(p.acc2):'—';
+    const accsLabel=(p.accIds||[]).map(id=>accName(id)).join(' · ')||'Sin cuentas';
     const dls=['','Lun','Mar','Mié','Jue','Vie'];
     const ds=p.tipo==='fijo'?'Todos los días':(p.dias||[]).map(d=>dls[d]).join(', ')||'Sin días';
     return`<div style="background:var(--bg3);border:1px solid ${p.color}33;border-radius:var(--r);padding:.7rem .9rem;margin-bottom:6px;display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
-      <div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><div style="width:7px;height:7px;background:${p.color};border-radius:50%;"></div><span style="font-size:13px;font-weight:700;color:${p.color};">${p.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);">${p.tipo}</span></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);">${n1} · ${n2}<br>${ds}</div></div>
+      <div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><div style="width:7px;height:7px;background:${p.color};border-radius:50%;"></div><span style="font-size:13px;font-weight:700;color:${p.color};">${p.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);">${p.tipo}</span></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);">${accsLabel}<br>${ds}</div></div>
       <div style="display:flex;gap:4px;flex-shrink:0;"><button class="btn sm ghost" onclick="openParModal(${p.id})">✎</button><button class="btn sm danger" onclick="deletePar(${p.id})">✕</button></div>
     </div>`;
   }).join(''):`<div class="empty" style="padding:2rem;"><div class="empty-icon">⚡</div>Creá tu primer par →</div>`;
@@ -9940,8 +9944,9 @@ function renderPares(){
   const rc={tp_ambas:'var(--green)',tp_una:'var(--orange)',sl_ambas:'var(--red)',be:'var(--sub)',sin_operar:'var(--dim)'};
   paresHist.slice(0,60).forEach(h=>{
     const par=pares.find(p=>p.id===h.parId);const c=par?.color||'var(--sub)';
+    const accsCell=par?(par.accIds||[]).map(id=>accObj(id)?.name).filter(Boolean).join(' · ')||'—':'—';
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="muted">${h.fecha||'—'}</td><td style="color:${c};font-weight:700;">${h.parName||'—'}</td><td class="muted" style="font-size:10px;">${h.parId?[accObj(pares.find(p=>p.id===h.parId)?.acc1)?.name,accObj(pares.find(p=>p.id===h.parId)?.acc2)?.name].filter(Boolean).join(' · '):'—'}</td><td style="color:${rc[h.res]||'var(--sub)'};">${rl[h.res]||h.res}</td><td style="color:${h.siguenJuntas?'var(--green)':'var(--orange)'};">${h.siguenJuntas?'✓ Sí':'↻ No'}</td><td class="muted">${h.notes||'—'}</td><td><button class="btn sm danger" onclick="deleteUso(${h.id})">✕</button></td>`;
+    tr.innerHTML=`<td class="muted">${h.fecha||'—'}</td><td style="color:${c};font-weight:700;">${h.parName||'—'}</td><td class="muted" style="font-size:10px;">${accsCell}</td><td style="color:${rc[h.res]||'var(--sub)'};">${rl[h.res]||h.res}</td><td style="color:${h.siguenJuntas?'var(--green)':'var(--orange)'};">${h.siguenJuntas?'✓ Sí':'↻ No'}</td><td class="muted">${h.notes||'—'}</td><td><button class="btn sm danger" onclick="deleteUso(${h.id})">✕</button></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -9957,7 +9962,7 @@ function renderCalDetail(){
   const label=`${dNames[d.getDay()]} ${d.getDate()} ${mNames[d.getMonth()]}`;
   const wd=d.getDay()===0?7:d.getDay();
   const parsDia=pares.filter(p=>p.tipo==='fijo'||(p.dias||[]).includes(wd));
-  const accIdsDia=[...new Set(parsDia.flatMap(p=>[p.acc1,p.acc2]).filter(Boolean))];
+  const accIdsDia=[...new Set(parsDia.flatMap(p=>p.accIds||[]).filter(Boolean))];
   const isToday=ds===todayISO;
   if(!accIdsDia.length){
     el.innerHTML=`<div style="margin-top:10px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;gap:8px;"><span style="font-size:13px;color:var(--gold);font-weight:700;">${label}</span><span style="font-size:11px;color:var(--sub);">Sin cuentas configuradas para este día.</span></div>`;
@@ -10750,6 +10755,7 @@ function importData(e){
       if(d.trades) trades=d.trades;if(d.btTrades) btTrades=d.btTrades;
       if(d.accounts) accounts=d.accounts;if(d.pagos) pagos=d.pagos;
       if(d.pares) pares=d.pares;if(d.paresHist) paresHist=d.paresHist;
+      migratePares();
       if(d.events) events=d.events;
       if(d.reglas){ reglas=d.reglas; saveReglas(); }
       if(d.reglasLog){ reglasLog=d.reglasLog; saveReglasLog(); }
@@ -10862,6 +10868,7 @@ function undoImportConfirmar(){
     if(prev.trades) trades=prev.trades; if(prev.btTrades) btTrades=prev.btTrades;
     if(prev.accounts) accounts=prev.accounts; if(prev.pagos) pagos=prev.pagos;
     if(prev.pares) pares=prev.pares; if(prev.paresHist) paresHist=prev.paresHist;
+    migratePares();
     if(prev.events) events=prev.events;
     if(prev.reglas){ reglas=prev.reglas; saveReglas(); }
     if(prev.reglasLog){ reglasLog=prev.reglasLog; saveReglasLog(); }
@@ -17646,25 +17653,24 @@ function exportFullPDF(){
       `<span style="color:#34d399;font-weight:700;">${_exU(_num(p.amount!=null?p.amount:p.monto))}</span>`, _esc(p.notes||p.notas||'')
     ]), C.pagos);
 
-  // ── PARES ──
-  body += sectionTitle('⚡','Sistema de Pares', C.pares);
-  body += table(['Par','Cuenta A','Cuenta B','Tipo','Días','Notas'],
+  // ── GRUPOS ──
+  body += sectionTitle('⚡','Sistema de Grupos', C.pares);
+  body += table(['Grupo','Cuentas','Tipo','Días','Notas'],
     d.PR.map(p=>{
-      const a1 = accObj(p.acc1), a2 = accObj(p.acc2);
+      const accsNames = (p.accIds||[]).map(id=>accObj(id)?.name).filter(Boolean).join(', ');
       const dias = (p.dias||[]).map(d=>['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ');
       return [
         _esc(p.name||'—'),
-        _esc(a1 ? a1.name : '—'),
-        _esc(a2 ? a2.name : '—'),
+        _esc(accsNames||'—'),
         _esc(p.tipo||'—'),
         _esc(dias||'—'),
         _esc(p.notes||'')
       ];
     }), C.pares);
-  // Historial de usos de pares
+  // Historial de usos de grupos
   if(d.PH.length){
     body += `<div style="font-size:11px;font-weight:700;color:${C.pares};margin:10px 0 6px;">Historial de usos</div>`;
-    body += table(['Fecha','Par','Resultado','¿Siguen?','Notas'],
+    body += table(['Fecha','Grupo','Resultado','¿Siguen?','Notas'],
       [...d.PH].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).slice(0,40).map(h=>[
         _esc(h.fecha||'—'), _esc(h.parName||'—'), _esc(h.res||'—'),
         _esc(h.siguenJuntas==='si'?'Sí':'No'), _esc(h.notes||'')
@@ -17799,23 +17805,23 @@ function exportFullExcel(){
     ...d.PG.map(p=>[p.date||p.fecha||'', p.account||p.cuenta||'', _num(p.amount!=null?p.amount:p.monto), p.notes||p.notas||''])
   ], 'FBBF24');
 
-  // PARES
-  addSheet('Pares', [
-    ['Par','Cuenta A','Cuenta B','Tipo','Días','Notas'],
+  // GRUPOS
+  addSheet('Grupos', [
+    ['Grupo','Cuentas','Tipo','Días','Notas'],
     ...d.PR.map(p=>{
-      const a1=accObj(p.acc1), a2=accObj(p.acc2);
+      const accsNames=(p.accIds||[]).map(id=>accObj(id)?.name).filter(Boolean).join(', ');
       const dias=(p.dias||[]).map(d=>['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ');
-      return [p.name||'', a1?a1.name:'—', a2?a2.name:'—', p.tipo||'', dias, p.notes||''];
+      return [p.name||'', accsNames||'—', p.tipo||'', dias, p.notes||''];
     })
   ], 'FB923C');
 
-  // HISTORIAL PARES
-  addSheet('Historial Pares', [
-    ['Fecha','Par','Cuenta A','Cuenta B','Resultado','¿Siguen?','Notas'],
+  // HISTORIAL GRUPOS
+  addSheet('Historial Grupos', [
+    ['Fecha','Grupo','Cuentas','Resultado','¿Siguen?','Notas'],
     ...d.PH.map(h=>{
       const par=d.PR.find(p=>p.id===h.parId);
-      const a1=par?accObj(par.acc1):null, a2=par?accObj(par.acc2):null;
-      return [h.fecha||'', h.parName||'', a1?a1.name:'—', a2?a2.name:'—',
+      const accsNames=par?(par.accIds||[]).map(id=>accObj(id)?.name).filter(Boolean).join(', '):'';
+      return [h.fecha||'', h.parName||'', accsNames||'—',
         h.res||'', h.siguenJuntas==='si'?'Sí':'No', h.notes||''];
     })
   ], 'FB923C');
@@ -18594,8 +18600,8 @@ const SECTION_HELP = {
     b:'Registrá y consultá el <b>historial de splits cobrados</b> de tus cuentas fondeadas. Cada pago tiene fecha, monto, cuenta asociada y notas opcionales.<br><br>Esto te permite llevar un registro claro de <b>cuánto dinero real generaron</b> tus cuentas a lo largo del tiempo, separado del P&L que maneja la prop firm.<br><br>Muy útil para calcular la <b>rentabilidad real</b> de tu actividad: lo que ganaste en splits vs. lo que invertiste en evaluaciones.'
   },
   pares:{
-    t:'⚡ Pares de Cuentas',
-    b:'Coordiná cuentas que <b>operan en paralelo</b> para evitar correlación y proteger el drawdown cruzado. Muchas prop firms prohíben operar el mismo instrumento en dos cuentas hermanas al mismo tiempo.<br><br>Acá podés agrupar cuentas en pares y ver en cuáles tenés posiciones activas simultáneas, ayudándote a gestionar el <b>riesgo agregado</b> cuando manejás múltiples cuentas.<br><br>Importante para traders que gestionan varias cuentas fondeadas en paralelo.'
+    t:'⚡ Grupos de Cuentas',
+    b:'Coordiná cuentas que <b>operan en paralelo</b> para evitar correlación y proteger el drawdown cruzado. Muchas prop firms prohíben operar el mismo instrumento en dos cuentas hermanas al mismo tiempo.<br><br>Acá podés agrupar cuentas — dos, tres o las que necesites — y ver en cuáles tenés posiciones activas simultáneas, ayudándote a gestionar el <b>riesgo agregado</b> cuando manejás múltiples cuentas.<br><br>Importante para traders que gestionan varias cuentas fondeadas en paralelo.'
   },
   diario:{
     t:'🧠 Diario Mental',
