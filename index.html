@@ -6254,7 +6254,7 @@ const TELEGRAM_SESION_PRESETS = {
 };
 const TELEGRAM_SESION_AVISO_MIN = 30;
 // Valores por defecto de los umbrales que disparan cada tipo de aviso. Editables desde
-// el Perfil y replicados en scripts/telegram-daily-digest.js (mismos nombres de campo).
+// el Perfil y replicados en scripts/lib/alertas.js (mismos nombres de campo).
 const TELEGRAM_THRESHOLD_DEFAULTS = { inactividadDias: 7, drawdownPct: 80, metasDias: 7, cooldownDias: 3 };
 const TELEGRAM_THRESHOLD_FIELDS = [
   { key: 'inactividadDias', label: 'Avisar por inactividad cuando falten (días)', min: 1, max: 30 },
@@ -6293,11 +6293,12 @@ function renderTelegramSection(){
           <button class="btn sm ghost" style="align-self:flex-start;margin-top:.2rem;" onclick="guardarTelegramThresholds()">Guardar umbrales</button>
         </div>
       </details>
-      <details style="margin-bottom:1.2rem;">
-        <summary style="font-size:12px;color:var(--sub);cursor:pointer;font-weight:600;">⏰ Horario del aviso de sesión</summary>
+      <details style="margin-bottom:1.2rem;" open>
+        <summary style="font-size:12px;color:var(--sub);cursor:pointer;font-weight:600;">⏰ Horario del aviso (obligatorio para recibir avisos)</summary>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:.9rem;">
+          <div style="font-size:11px;color:var(--sub);">Todas las alertas de arriba (inactividad, drawdown, rutina, metas) viajan juntas en el mensaje que te mandamos a este horario — no hay un aviso aparte a hora fija.</div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <label for="tg_sesion_modo" style="font-size:12px;color:var(--sub);" data-help="Elegí tu sesión de trading para que te avisemos 30 minutos antes de que empiece, o poné vos el horario en 'Personalizado'.">Sesión</label>
+            <label for="tg_sesion_modo" style="font-size:12px;color:var(--sub);" data-help="Elegí tu sesión de trading para que te avisemos 30 minutos antes de que empiece, o poné vos el horario en 'Personalizado'. Este es el único momento en que llegan todos los avisos.">Sesión</label>
             <select id="tg_sesion_modo" onchange="onCambioSesionModo()" style="font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 8px;">
               ${Object.keys(TELEGRAM_SESION_PRESETS).map(k=>`<option value="${k}" ${(sesionCfg.modo||'personalizado')===k?'selected':''}>${TELEGRAM_SESION_PRESETS[k].label}</option>`).join('')}
             </select>
@@ -6316,7 +6317,7 @@ function renderTelegramSection(){
     const code = perfil.telegramLinkCode;
     box.innerHTML = `
       <p style="font-size:12px;color:var(--sub);margin-bottom:1rem;">
-        Vinculá tu Telegram para recibir por chat las mismas alertas de riesgo que ves en la web (inactividad, drawdown, rutina y metas), aunque no tengas la app abierta.
+        Vinculá tu Telegram para recibir por chat las mismas alertas de riesgo que ves en la web (inactividad, drawdown, rutina y metas), aunque no tengas la app abierta. Todo llega junto en un solo mensaje, al horario de tu sesión — configurá ese horario abajo para empezar a recibir avisos.
       </p>
       ${code ? `
         <div style="background:var(--glass2);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:1rem;text-align:center;">

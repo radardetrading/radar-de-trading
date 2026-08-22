@@ -1,10 +1,14 @@
 // Corre cada 15 minutos via GitHub Actions. Le avisa a cada usuario que activó el
 // recordatorio de sesion (perfil.telegramPrefs.sesion) unos minutos antes de que
 // arranque su sesion configurada (preset Londres/Nueva York/Asia u horario personalizado
-// en hora Argentina). Independiente de telegram-daily-digest.js a proposito, para no
-// mezclar logica ni arriesgar el digest diario ya probado.
+// en hora Argentina). Este es el ÚNICO disparador de avisos por Telegram: el mensaje
+// incluye tanto el aviso de sesión como las alertas de riesgo (inactividad, drawdown,
+// rutina, metas) calculadas con la misma lógica que antes vivía en telegram-daily-digest.js
+// (fusionadas acá para que todo llegue en el horario de sesión elegido, en vez de a una
+// hora fija separada).
 import { fetchAllEstados, updateEstadoData } from './lib/supabaseAdmin.js';
 import { sendMessage } from './lib/telegram.js';
+import { calcularAlertas } from './lib/alertas.js';
 
 // Espejo de TELEGRAM_SESION_AVISO_MIN en index.html.
 const AVISO_MINUTOS_ANTES = 30;
@@ -73,16 +77,27 @@ async function main(){
     const hoy = fechaEnZona(ahora, TZ_ARGENTINA);
     if(data.perfil.telegramLastNotified?.sesion === hoy) continue; // ya avisado hoy
 
+    const { lines, lastNotified, huboCambios } = calcularAlertas(data, hoy);
+
     const nombre = data.perfil?.apodo || data.perfil?.nombre || '';
     const encabezado = nombre ? `📡 Radar de Trading — ${nombre}` : '📡 Radar de Trading';
-    const texto = `${encabezado}\n\n⏰ Tu sesión empieza en ${AVISO_MINUTOS_ANTES} minutos. Preparate.`;
+    const partes = [encabezado, '', `⏰ Tu sesión empieza en ${AVISO_MINUTOS_ANTES} minutos. Preparate.`];
+    if(lines.length) partes.push('', ...lines);
+    const texto = partes.join('\n');
 
     if(await sendMessage(chatId, texto)){
       enviados++;
+      lastNotified.sesion = hoy;
       await updateEstadoData(row.user_id, data, (d) => {
         d.perfil = d.perfil || {};
-        d.perfil.telegramLastNotified = d.perfil.telegramLastNotified || {};
-        d.perfil.telegramLastNotified.sesion = hoy;
+        d.perfil.telegramLastNotified = lastNotified;
+      });
+    } else if(huboCambios){
+      // El envío falló pero igual guardamos el dedupe de las alertas para no reintentar
+      // de más en la próxima corrida (mismo criterio que usaba telegram-daily-digest.js).
+      await updateEstadoData(row.user_id, data, (d) => {
+        d.perfil = d.perfil || {};
+        d.perfil.telegramLastNotified = lastNotified;
       });
     }
   }

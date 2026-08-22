@@ -1,17 +1,9 @@
-// Corre una vez por dia via GitHub Actions. Recorre todos los usuarios vinculados a
-// Telegram y les manda UN mensaje consolidado con las alertas activas segun sus
-// preferencias: inactividad de cuenta, drawdown cerca del limite, rutina pendiente
-// y metas por vencer. Replica en Node la misma logica que ya corre en index.html.
-import { fetchAllEstados, updateEstadoData } from './lib/supabaseAdmin.js';
-import { sendMessage } from './lib/telegram.js';
-
-const DEFAULT_PREFS = { inactividad: true, drawdown: true, rutina: true, metas: true };
+// Calcula las alertas de riesgo (inactividad, drawdown, rutina, metas) de un usuario.
+// Extraido de telegram-daily-digest.js para que telegram-session-reminder.js pueda
+// incluir la misma info en el aviso que se manda a la hora de sesion elegida.
+export const DEFAULT_PREFS = { inactividad: true, drawdown: true, rutina: true, metas: true };
 // Espejo de TELEGRAM_THRESHOLD_DEFAULTS en index.html — mismos nombres de campo.
-const DEFAULT_THRESHOLDS = { inactividadDias: 7, drawdownPct: 80, metasDias: 7, cooldownDias: 3 };
-
-function todayAR(){
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
-}
+export const DEFAULT_THRESHOLDS = { inactividadDias: 7, drawdownPct: 80, metasDias: 7, cooldownDias: 3 };
 
 // true si ya pasaron al menos minDias desde lastDateStr (o si nunca se avisó antes).
 function debeAvisar(lastDateStr, minDias, hoy){
@@ -75,7 +67,7 @@ function nombreCuenta(a){
   return a.name || a.firm || 'Cuenta';
 }
 
-function calcularAlertas(data, hoy){
+export function calcularAlertas(data, hoy){
   const prefs = { ...DEFAULT_PREFS, ...(data.perfil?.telegramPrefs || {}) };
   const thresholds = { ...DEFAULT_THRESHOLDS, ...(data.perfil?.telegramThresholds || {}) };
   const lastNotified = data.perfil?.telegramLastNotified || {};
@@ -160,38 +152,3 @@ function calcularAlertas(data, hoy){
 
   return { lines, lastNotified, huboCambios };
 }
-
-async function main(){
-  const hoy = todayAR();
-  const rows = await fetchAllEstados();
-  let enviados = 0;
-
-  for(const row of rows){
-    const data = row.data;
-    const chatId = data?.perfil?.telegramChatId;
-    if(!chatId) continue;
-
-    const { lines, lastNotified, huboCambios } = calcularAlertas(data, hoy);
-
-    if(lines.length){
-      const nombre = data.perfil?.apodo || data.perfil?.nombre || '';
-      const encabezado = nombre ? `📡 Radar de Trading — ${nombre}` : '📡 Radar de Trading — resumen de alertas';
-      const texto = [encabezado, '', ...lines].join('\n');
-      if(await sendMessage(chatId, texto)) enviados++;
-    }
-
-    if(huboCambios){
-      await updateEstadoData(row.user_id, data, (d) => {
-        d.perfil = d.perfil || {};
-        d.perfil.telegramLastNotified = lastNotified;
-      });
-    }
-  }
-
-  console.log(`Digest enviado a ${enviados} usuario(s) de ${rows.length} fila(s) revisada(s).`);
-}
-
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
