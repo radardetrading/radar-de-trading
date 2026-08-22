@@ -6893,7 +6893,7 @@ async function handleLogin(){
 // ════════════════════════════════════════════════════════════
 // UTILS
 // ════════════════════════════════════════════════════════════
-function escHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function escHtml(s){ return escapeHtml(s==null?'':s); }
 
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
@@ -9049,7 +9049,7 @@ function verChallengeDetalle(id){
     </div>
     <div class="card" data-help="Nota libre sobre este intento: qué hiciste distinto, qué aprendiste, por qué reventó o cómo lo pasaste. Es independiente de las notas de cada trade." style="padding:1rem 1.1rem;margin-bottom:1.2rem;">
       <div class="section-label" style="margin-bottom:.6rem;">📝 Nota del Intento</div>
-      <textarea id="chNotaIntento" rows="2" placeholder="Escribí algo sobre este challenge (opcional)..." style="width:100%;resize:vertical;">${c.nota||''}</textarea>
+      <textarea id="chNotaIntento" rows="2" placeholder="Escribí algo sobre este challenge (opcional)..." style="width:100%;resize:vertical;">${escapeHtml(c.nota||'')}</textarea>
       <div style="display:flex;justify-content:flex-end;margin-top:.5rem;">
         <button class="btn sm primary" onclick="guardarNotaChallenge('${c.id}')">💾 Guardar nota</button>
       </div>
@@ -13671,14 +13671,14 @@ function renderMoodModal(existingAnswers) {
       const qColor = getQColor(q);
       if (q.tipo === 'texto') {
         html += `<div class="mood-q-block">
-          <div class="mood-q-label">${q.titulo}</div>
-          <input type="text" placeholder="Tu nota..." style="font-size:11px;padding:6px 10px;width:100%;" 
+          <div class="mood-q-label">${escapeHtml(q.titulo)}</div>
+          <input type="text" placeholder="Tu nota..." style="font-size:11px;padding:6px 10px;width:100%;"
             id="mq_txt_${q.id}" value="${val.replace(/"/g,'&quot;')}"
             oninput="_moodAnswers['${q.id}']=this.value">
         </div>`;
       } else {
         html += `<div class="mood-q-block">
-          <div class="mood-q-label">${q.titulo} <span class="mood-q-momento">${getMomentLabel(q.momento)}</span></div>
+          <div class="mood-q-label">${escapeHtml(q.titulo)} <span class="mood-q-momento">${getMomentLabel(q.momento)}</span></div>
           <div style="display:flex;gap:7px;flex-wrap:wrap;">
             ${q.opciones.map(op => {
               const active = val === op ? 'active' : '';
@@ -13919,7 +13919,7 @@ function renderDiario() {
     momentoQs.forEach((q,i) => {
       const rows = moodMetricsByQ(q).filter(r => r.n > 0).sort((a,b) => b.wr - a.wr);
       panelsHtml += `<div id="momento_panel_${q.id}" style="display:${i===0?'block':'none'}">
-        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;font-style:italic;">${q.titulo}</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;font-style:italic;">${escapeHtml(q.titulo)}</div>
         ${rows.length ? rows.map(r => `
           <div style="margin-bottom:.7rem;">
             <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
@@ -13944,7 +13944,7 @@ function renderDiario() {
         <div class="moodq-row-drag">⠿</div>
         <div style="width:8px;height:8px;border-radius:50%;background:${getQColor(q)};flex-shrink:0;"></div>
         <div class="moodq-row-info">
-          <div class="moodq-row-titulo">${q.titulo}</div>
+          <div class="moodq-row-titulo">${escapeHtml(q.titulo)}</div>
           <div class="moodq-row-meta">
             <span class="moodq-row-tag" style="color:${getMomentColor(q.momento)};border-color:${getMomentColor(q.momento)}22;">${getMomentLabel(q.momento)}</span>
             <span class="moodq-row-tag">${q.tipo === 'texto' ? 'Texto libre' : q.opciones.length+' opciones'}</span>
@@ -15016,7 +15016,7 @@ function renderRutHistorial(){
         </div>
         <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${pct>=100?'var(--green)':pct>=50?'var(--cyan)':'var(--gold)'};">${pct.toFixed(0)}%</span>
         ${hasTrades?`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:${pnlColor};background:${dayPnl>=0?'rgba(52,211,153,.08)':'rgba(248,113,113,.08)'};border:1px solid ${dayPnl>=0?'rgba(52,211,153,.2)':'rgba(248,113,113,.2)'};padding:1px 7px;border-radius:10px;white-space:nowrap;">${dayPnl>=0?'+':''}${fmtUSD(dayPnl)} · ${dayTrades.length}t</span>`:'<span style="font-size:9px;color:var(--dim);">sin trades</span>'}
-        ${d.nota?`<span style="font-size:10px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.nota}">📝 ${d.nota}</span>`:''}
+        ${d.nota?`<span style="font-size:10px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(d.nota)}">📝 ${escapeHtml(d.nota)}</span>`:''}
       </div>`;
     }).join('') : '<div style="color:var(--sub);font-size:12px;padding:1rem 0;">Sin historial aún.</div>';
   }
