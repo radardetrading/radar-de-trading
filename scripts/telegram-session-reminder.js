@@ -12,9 +12,10 @@ import { calcularAlertas } from './lib/alertas.js';
 
 // Espejo de TELEGRAM_SESION_AVISO_MIN en index.html.
 const AVISO_MINUTOS_ANTES = 30;
-// Un poco más ancha que el intervalo del cron (15 min) para tolerar demoras de cola
-// de GitHub Actions sin perder la ventana del aviso; el dedupe por día evita duplicados.
-const VENTANA_MINUTOS = 20;
+// GitHub tira el cron declarado (cada 15 min) por la borda en repos públicos de poco
+// trafico: en la práctica corre cada 1-3 horas. Ventana ancha para no perder el aviso
+// por esa demora; el dedupe por día evita duplicados si varias corridas caen adentro.
+const VENTANA_MINUTOS = 180;
 
 const TZ_ARGENTINA = 'America/Argentina/Buenos_Aires';
 // Espejo de TELEGRAM_SESION_PRESETS en index.html — mismos horarios y zonas.
@@ -81,7 +82,13 @@ async function main(){
 
     const nombre = data.perfil?.apodo || data.perfil?.nombre || '';
     const encabezado = nombre ? `📡 Radar de Trading — ${nombre}` : '📡 Radar de Trading';
-    const partes = [encabezado, '', `⏰ Tu sesión empieza en ${AVISO_MINUTOS_ANTES} minutos. Preparate.`];
+    // La corrida puede llegar tarde (ver VENTANA_MINUTOS), así que el minutaje es el real
+    // restante y no siempre AVISO_MINUTOS_ANTES fijo.
+    const minutosRestantes = Math.round(AVISO_MINUTOS_ANTES - diffMin);
+    const lineaAviso = minutosRestantes > 0
+      ? `⏰ Tu sesión empieza en ${minutosRestantes} minutos. Preparate.`
+      : `⏰ Tu sesión ya arrancó (hace ${Math.abs(minutosRestantes)} min). ¡Vamos!`;
+    const partes = [encabezado, '', lineaAviso];
     if(lines.length) partes.push('', ...lines);
     const texto = partes.join('\n');
 
