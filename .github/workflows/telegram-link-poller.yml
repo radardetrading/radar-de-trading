@@ -1,9 +1,10 @@
 name: Telegram Link Poller
 
+# Reemplazado por el webhook de Supabase Edge Functions (supabase/functions/telegram-webhook) —
+# el cron de GitHub Actions se demoraba horas en lugar de los 10 min configurados.
+# Se deja workflow_dispatch como herramienta manual de respaldo, ya sin cron automático.
 on:
-  schedule:
-    - cron: '*/10 * * * *'   # cada 10 minutos
-  workflow_dispatch:          # también se puede disparar a mano desde GitHub
+  workflow_dispatch:
 
 jobs:
   poll:
