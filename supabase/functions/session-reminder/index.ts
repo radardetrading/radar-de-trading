@@ -264,7 +264,15 @@ Deno.serve(async (req) => {
     if (diffMin < 0 || diffMin >= VENTANA_MINUTOS) continue;
 
     const hoy = fechaEnZona(ahora, TZ_ARGENTINA);
-    if (data.perfil.telegramLastNotified?.sesion === hoy) continue; // ya avisado hoy
+    if (data.perfil.telegramLastNotified?.sesion === hoy) continue; // ya avisado hoy (atajo rápido)
+
+    // Candado atomico: pg_cron y cron-job.org pueden caer casi juntos (ambos alineados a
+    // minutos redondos). Solo la invocacion que gana este INSERT sigue adelante; la otra
+    // choca contra la unicidad (user_id, dia) y se descarta sin mandar nada.
+    const { error: claimError } = await supabase
+      .from("session_reminder_claim")
+      .insert({ user_id: row.user_id, dia: hoy });
+    if (claimError) continue; // ya reclamado por otra invocacion concurrente
 
     const { lines, lastNotified, huboCambios } = calcularAlertas(data, hoy);
 
@@ -301,9 +309,14 @@ Deno.serve(async (req) => {
       lastNotified.sesion = hoy;
       data.perfil.telegramLastNotified = lastNotified;
       await supabase.from("estado").update({ data }).eq("user_id", row.user_id);
-    } else if (huboCambios || huboCambiosPush) {
-      data.perfil.telegramLastNotified = lastNotified;
-      await supabase.from("estado").update({ data }).eq("user_id", row.user_id);
+    } else {
+      // No se pudo entregar por ningún canal (Telegram caído, sin push): liberamos el
+      // candado de hoy para que una corrida posterior, dentro de la misma ventana, reintente.
+      await supabase.from("session_reminder_claim").delete().eq("user_id", row.user_id).eq("dia", hoy);
+      if (huboCambios || huboCambiosPush) {
+        data.perfil.telegramLastNotified = lastNotified;
+        await supabase.from("estado").update({ data }).eq("user_id", row.user_id);
+      }
     }
   }
 
