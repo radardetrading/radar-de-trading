@@ -1,9 +1,11 @@
 name: Telegram Session Reminder
 
+# Reemplazado por pg_cron + la Edge Function session-reminder (supabase/functions/session-reminder) —
+# el cron de GitHub Actions se demoraba horas en lugar de los 15 min configurados en este repo
+# publico de poco trafico (ver TELEGRAM-WEBHOOK-FIX.md).
+# Se deja workflow_dispatch como herramienta manual de respaldo, ya sin cron automático.
 on:
-  schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch:        # también se puede disparar a mano desde GitHub
+  workflow_dispatch:
 
 jobs:
   reminder:
