@@ -6234,6 +6234,91 @@ function guardarPerfil(){
   toast('Perfil actualizado','ok');
 }
 
+// ── NOTIFICACIONES PUSH DEL NAVEGADOR ───────────────────────────────────────
+// Clave pública VAPID (no es secreta, va emparejada con la privada que solo tiene
+// la Edge Function session-reminder). Par generado el 2026-08-29.
+const VAPID_PUBLIC_KEY = 'BM12JgWwp022tM8WD1WWdVDyLT2HW_ixIRk9uXt0lmPbuz7daFTBIovP2R2Tf8d90yFdfJoJ71o97-UVv1WkXS0';
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW register falló:', e));
+}
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function activarPush(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)){
+    toast('Tu navegador no soporta notificaciones push','err');
+    return;
+  }
+  const permiso = await Notification.requestPermission();
+  if(permiso !== 'granted'){ toast('Permiso de notificaciones denegado','err'); return; }
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const subJson = sub.toJSON();
+    perfil.pushSubscriptions = (perfil.pushSubscriptions || []).filter(s => s.endpoint !== subJson.endpoint);
+    perfil.pushSubscriptions.push({ endpoint: subJson.endpoint, keys: subJson.keys, addedAt: new Date().toISOString() });
+    await save();
+    renderTelegramSection();
+    toast('Notificaciones push activadas en este navegador','ok');
+  }catch(e){
+    console.error(e);
+    toast('No se pudo activar la notificación push','err');
+  }
+}
+
+async function desactivarPush(endpoint){
+  perfil.pushSubscriptions = (perfil.pushSubscriptions || []).filter(s => s.endpoint !== endpoint);
+  await save();
+  try{
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if(sub && sub.endpoint === endpoint) await sub.unsubscribe();
+  }catch(e){}
+  renderTelegramSection();
+  toast('Dispositivo eliminado de las notificaciones push','ok');
+}
+
+async function renderPushStatus(){
+  const el = document.getElementById('pushStatusBox');
+  if(!el) return;
+  const subs = perfil.pushSubscriptions || [];
+  const soportado = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+  if(!soportado){
+    el.innerHTML = `<div style="font-size:11px;color:var(--sub);">Tu navegador no soporta notificaciones push.</div>`;
+    return;
+  }
+  let miEndpoint = null;
+  try{
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    miEndpoint = sub ? sub.endpoint : null;
+  }catch(e){}
+
+  let html = '';
+  if(subs.length){
+    html += `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:.8rem;">` +
+      subs.map(s => `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--sub);">
+          <span>📱 ${s.endpoint===miEndpoint?'Este navegador':'Otro dispositivo'} — desde ${new Date(s.addedAt).toLocaleDateString('es-AR')}</span>
+          <button class="btn sm ghost" style="padding:2px 8px;" onclick="desactivarPush(${JSON.stringify(s.endpoint)})">Quitar</button>
+        </div>`).join('') +
+      `</div>`;
+  }
+  html += miEndpoint
+    ? `<div style="font-size:11px;color:var(--green);">✅ Activado en este navegador.</div>`
+    : `<button class="btn sm primary" onclick="activarPush()">Activar en este navegador</button>`;
+  el.innerHTML = html;
+}
+
 // ── AVISOS POR TELEGRAM ──────────────────────────────────────────────────────
 // Username del bot de Radar en Telegram (actualizar acá cuando se cree con @BotFather).
 const TELEGRAM_BOT_USERNAME = 'radardetrading_bot';
@@ -6311,8 +6396,16 @@ function renderTelegramSection(){
           <button class="btn sm ghost" style="align-self:flex-start;margin-top:.2rem;" onclick="guardarTelegramSesion()">Guardar horario</button>
         </div>
       </details>
+      <details style="margin-bottom:1.2rem;">
+        <summary style="font-size:12px;color:var(--sub);cursor:pointer;font-weight:600;">🔔 Notificación push del navegador (opcional)</summary>
+        <div style="margin-top:.9rem;">
+          <div style="font-size:11px;color:var(--sub);margin-bottom:.8rem;">Sumá este navegador como otro canal para el mismo aviso de arriba (mismo horario y preferencias) — útil como respaldo si Telegram no te llega, o si preferís una notificación nativa del sistema.</div>
+          <div id="pushStatusBox"></div>
+        </div>
+      </details>
       <button class="btn sm ghost" style="color:var(--red);border-color:rgba(248,113,113,.3);" onclick="desvincularTelegram()">Desvincular Telegram</button>
     `;
+    renderPushStatus();
   } else {
     const code = perfil.telegramLinkCode;
     box.innerHTML = `

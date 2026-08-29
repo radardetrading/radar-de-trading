@@ -9,6 +9,7 @@
 // Llamarla de mas no rompe nada: el dedupe por dia (perfil.telegramLastNotified) hace que
 // mandar el mismo chequeo varias veces en la ventana sea un no-op despues del primer envio.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import webpush from "npm:web-push@3.6.7";
 
 const CRON_SECRET = Deno.env.get("CRON_SECRET")!;
 const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
@@ -16,6 +17,25 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
+
+webpush.setVapidDetails(
+  "mailto:jonatanguidobaldi@gmail.com",
+  Deno.env.get("VAPID_PUBLIC_KEY")!,
+  Deno.env.get("VAPID_PRIVATE_KEY")!,
+);
+
+// Manda el push a una suscripción; devuelve false si la suscripción esta vencida/invalida
+// (404/410 — el navegador la dio de baja) para que se pueda limpiar del perfil.
+async function sendPush(sub: any, title: string, body: string) {
+  try {
+    await webpush.sendNotification(sub, JSON.stringify({ title, body }));
+    return true;
+  } catch (err: any) {
+    if (err?.statusCode === 404 || err?.statusCode === 410) return false;
+    console.error("push falló:", err?.statusCode, err?.body || err);
+    return true; // error transitorio: no se descarta la suscripción
+  }
+}
 
 // Espejo de TELEGRAM_SESION_AVISO_MIN en index.html.
 const AVISO_MINUTOS_ANTES = 30;
@@ -233,7 +253,8 @@ Deno.serve(async (req) => {
   for (const row of rows) {
     const data = row.data;
     const chatId = data?.perfil?.telegramChatId;
-    if (!chatId) continue;
+    const pushSubs: any[] = data?.perfil?.pushSubscriptions || [];
+    if (!chatId && !pushSubs.length) continue;
     if (data?.perfil?.telegramPrefs?.sesion !== true) continue; // opt-in explícito
 
     const horaAviso = calcularHoraAviso(data?.perfil?.telegramSesion, ahora);
@@ -257,13 +278,31 @@ Deno.serve(async (req) => {
     if (lines.length) partes.push("", ...lines);
     const texto = partes.join("\n");
 
-    data.perfil.telegramLastNotified = lastNotified;
-    if (await sendMessage(chatId, texto)) {
+    let entregado = false;
+    let huboCambiosPush = false;
+
+    if (chatId && await sendMessage(chatId, texto)) entregado = true;
+
+    if (pushSubs.length) {
+      const cuerpoPush = [lineaAviso, ...lines].join("\n");
+      const subsVivas: any[] = [];
+      for (const sub of pushSubs) {
+        const viva = await sendPush(sub, encabezado, cuerpoPush);
+        if (viva) { subsVivas.push(sub); entregado = true; }
+      }
+      if (subsVivas.length !== pushSubs.length) {
+        data.perfil.pushSubscriptions = subsVivas;
+        huboCambiosPush = true;
+      }
+    }
+
+    if (entregado) {
       enviados++;
       lastNotified.sesion = hoy;
       data.perfil.telegramLastNotified = lastNotified;
       await supabase.from("estado").update({ data }).eq("user_id", row.user_id);
-    } else if (huboCambios) {
+    } else if (huboCambios || huboCambiosPush) {
+      data.perfil.telegramLastNotified = lastNotified;
       await supabase.from("estado").update({ data }).eq("user_id", row.user_id);
     }
   }
