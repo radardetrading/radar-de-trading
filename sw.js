@@ -21,7 +21,7 @@ self.addEventListener('notificationclick', (event) => {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
       const existente = clientsArr.find((c) => 'focus' in c);
       if (existente) return existente.focus();
-      return self.clients.openWindow('/');
+      return self.clients.openWindow(self.registration.scope);
     })
   );
 });
