@@ -935,6 +935,15 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
   font-size:.95rem; font-family:inherit;
 }
 .login-field input::placeholder{color:var(--dim);}
+.login-eye{
+  display:flex; align-items:center; justify-content:center;
+  width:42px; align-self:stretch; flex-shrink:0;
+  background:none; border:none; cursor:pointer;
+  color:var(--sub); transition:color .15s;
+}
+.login-eye:hover{color:var(--text);}
+.login-eye:focus-visible{outline:2px solid var(--cyan); outline-offset:-2px; border-radius:10px;}
+.login-eye.is-on{color:var(--cyan);}
 .login-btn{
   position:relative; width:100%; margin-top:.5rem; padding:.85rem;
   border:none; border-radius:12px; cursor:pointer;
@@ -2691,6 +2700,12 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       <span class="login-ico">&#128274;</span>
       <input id="loginPass" type="password" placeholder="Contraseña" autocomplete="current-password"
         onkeydown="if(event.key==='Enter'){handleLogin();}">
+      <button type="button" id="loginEye" class="login-eye" aria-label="Mostrar contraseña" aria-pressed="false" onclick="toggleLoginPass()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </button>
     </div>
     <button class="login-btn" onclick="handleLogin()">Entrar</button>
     <p id="loginMsg" class="login-msg"></p>
@@ -6986,6 +7001,16 @@ document.querySelectorAll('#landing .lp-enter-btn, #landing .lp-cta-btn, #landin
 });
 
 // Helpers de los botones del login
+function toggleLoginPass(){
+  const inp = document.getElementById('loginPass');
+  const btn = document.getElementById('loginEye');
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.classList.toggle('is-on', show);
+  btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+  btn.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+  inp.focus();
+}
 async function handleLogin(){
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
