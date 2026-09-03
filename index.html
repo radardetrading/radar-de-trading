@@ -801,7 +801,8 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
 #loginOverlay{
   display:none; position:fixed; inset:0; z-index:99999;
   align-items:center; justify-content:center; padding:1.2rem;
-  background:
+  background-color:var(--bg);
+  background-image:
     radial-gradient(ellipse 80% 60% at 20% 10%,rgba(56,189,248,.13),transparent),
     radial-gradient(ellipse 60% 70% at 80% 90%,rgba(167,139,250,.12),transparent),
     radial-gradient(1100px 700px at 50% -15%, #0e1e45 0%, var(--bg) 58%);
@@ -951,6 +952,16 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
 .login-foot{
   position:relative; margin:.6rem 0 0; font-size:.7rem; line-height:1.4;
   color:var(--dim);
+}
+
+/* Modo alto contraste / forced-colors de Windows: el navegador descarta
+   los degradados de fondo, así que forzamos un fondo opaco para que no se
+   transparente la app detrás del login ni de los modales. */
+@media (forced-colors: active){
+  #loginOverlay{ background:Canvas; }
+  .login-card{ background:Canvas; }
+  .overlay{ background:Canvas; }
+  .modal{ background:Canvas; }
 }
 
 /* ═══ LANDING ESTILO JURNA ═══ */
