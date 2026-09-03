@@ -967,6 +967,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6;}
    los degradados de fondo, así que forzamos un fondo opaco para que no se
    transparente la app detrás del login ni de los modales. */
 @media (forced-colors: active){
+  #landing{ background:Canvas; }
   #loginOverlay{ background:Canvas; }
   .login-card{ background:Canvas; }
   .overlay{ background:Canvas; }
@@ -1792,7 +1793,8 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
     radial-gradient(ellipse 65% 75% at 92%  8%,  rgba(56,189,248,.15) 0%, transparent 52%),
     radial-gradient(ellipse 55% 45% at 55% 105%, rgba(52,211,153,.1)  0%, transparent 60%),
     radial-gradient(ellipse 40% 60% at 0%  70%,  rgba(167,139,250,.08) 0%, transparent 55%),
-    linear-gradient(170deg, #0b1a3a 0%, #060d1f 45%, #04091a 100%);
+    linear-gradient(170deg, #0b1a3a 0%, #060d1f 45%, #04091a 100%)
+    #04091a;
   color: var(--lp-text);
 }
 
