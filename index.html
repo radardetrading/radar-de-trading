@@ -2743,7 +2743,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
     <div class="nav-section">Cuentas</div>
     <div class="nav-item" onclick="nav('cuentas')" data-help="Cuentas: gestiona tus prop firms, fases, saldo, drawdown y cuenta regresiva de inactividad (30 dias)."><span class="nav-icon">🏦</span>Cuentas</div>
-    <div class="nav-item" onclick="nav('pagos')" data-help="Pagos: registra y consulta el historial de splits cobrados de tus prop firms."><span class="nav-icon">💰</span>Pagos</div>
+    <div class="nav-item" onclick="nav('pagos')" data-help="Costos y Pagos: consultá el costo de tus cuentas (challenges) y el historial de splits cobrados de tus prop firms."><span class="nav-icon">💰</span>Costos y Pagos</div>
     <div class="nav-item" onclick="nav('pares')" data-help="Grupos: coordina cuentas que operan en paralelo para evitar correlacion y proteger el drawdown cruzado."><span class="nav-icon">⚡</span>Grupos</div>
 
     <div class="nav-section">Psicología</div>
@@ -3670,7 +3670,12 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
   <!-- PAGOS -->
   <div id="page-pagos" class="page">
     <div class="kpi-grid" id="pagosKpis"></div>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
+    <div class="section-row"><div class="section-label">Costos de Cuentas</div></div>
+    <div class="table-wrap" data-help="Costo que pagaste por cada cuenta (challenge o fee de compra). Se carga al crear o editar la cuenta, en Cuentas Prop Firm." style="margin-bottom:1.5rem;">
+      <table><thead><tr><th>Cuenta</th><th>Firma</th><th>Costo</th><th>Fecha inicio</th></tr></thead><tbody id="costosBody"></tbody></table>
+      <div id="costosEmpty" class="empty" style="display:none"><div class="empty-icon">🏦</div>Sin costos cargados.</div>
+    </div>
+    <div class="section-row"><div class="section-label">Historial de Pagos</div>
       <button class="btn primary" onclick="openPagoModal()">+ Registrar Pago</button>
     </div>
     <div class="table-wrap" data-help="Historial de splits cobrados: Monto es lo que te quedó vos, Bruto es la ganancia total antes de aplicar el % de split con la prop firm.">
@@ -5316,6 +5321,7 @@ input[type="range"],input[type="range"]::-webkit-slider-thumb{cursor:url("data:i
       <div class="form-group"><label>Firma / Broker</label><input type="text" id="ac_firm" placeholder="Neomaa, FTMO..."></div>
       <div class="form-group"><label>Tamaño / Capital ($)</label><input type="number" id="ac_size"></div>
       <div class="form-group"><label>Balance Actual ($)</label><input type="number" id="ac_balance"></div>
+      <div class="form-group"><label>Costo de la cuenta ($)</label><input type="number" id="ac_cost" step="0.01" placeholder="Lo que pagaste por el challenge"></div>
       <div class="form-group"><label>% Riesgo por Trade</label><input type="number" id="ac_riskPct" value="1" step="0.1" min="0.1"></div>
       <div class="form-group"><label>Fecha inicio</label><input type="date" id="ac_start"></div>
 
@@ -7030,7 +7036,7 @@ function escHtml(s){ return escapeHtml(s==null?'':s); }
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
 // ════════════════════════════════════════════════════════════
-const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Grupos',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Historial de Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas',challenges:'Historial de Challenges',perfil:'Mi Perfil',probfondeo:'Probabilidad de Fondeo'};
+const pageTitles={dashboard:'Dashboard',journal:'Trading Journal',estadisticas:'Estadísticas',backtest:'Backtest',historico:'Backtest Histórico',pares:'Sistema de Grupos',calculadora:'Calculadora de Tamaño de Posición',riesgo:'Calculadora de Riesgo',semanal:'Resumen Semanal',reglas:'Mis Reglas de Trading',cuentas:'Cuentas Prop Firm',pagos:'Costos y Pagos',diario:'Diario Mental',rutina:'Rutina Ganadora',reporte:'Reporte de Backtest',reportes:'Reportes PDF',metas:'Mis Metas',challenges:'Historial de Challenges',perfil:'Mi Perfil',probfondeo:'Probabilidad de Fondeo'};
 const ctaLabels={dashboard:'+ Nuevo Trade',journal:'+ Nuevo Trade',estadisticas:null,backtest:'+ Trade BT',historico:null,pares:'+ Registrar Día',calculadora:null,riesgo:null,semanal:null,reglas:'+ Nueva Regla',cuentas:'+ Nueva Cuenta',pagos:'+ Registrar Pago',diario:null,rutina:null,reportes:null,metas:'+ Nueva Meta',challenges:null,perfil:null};
 const ctaActions={dashboard:'openTradeModal()',journal:'openTradeModal()',estadisticas:null,backtest:"openBtModal()",historico:null,pares:'openUsoModal()',calculadora:null,riesgo:null,semanal:null,reglas:'openReglaModal()',cuentas:'openAccModal()',pagos:'openPagoModal()',diario:null,rutina:null,reportes:null,metas:"openMetaModal('trading')",challenges:null,perfil:null};
 let currentPage='dashboard';
@@ -10197,6 +10203,7 @@ function openAccModal(id=null){
     ['ac_name','ac_firm','ac_notes'].forEach(k=>document.getElementById(k).value=a[k.replace('ac_','')]||'');
     document.getElementById('ac_size').value=a.size||'';
     document.getElementById('ac_balance').value=a.initialBalance!=null?a.initialBalance:(a.size||'');
+    document.getElementById('ac_cost').value=a.cost||'';
     document.getElementById('ac_dayOpen').value=a.dayOpen||'';
     document.getElementById('ac_phase').value=a.phase||'challenge';document.getElementById('ac_split').value=a.split||80;
     document.getElementById('ac_riskPct').value=a.riskPct||1;
@@ -10217,7 +10224,7 @@ function openAccModal(id=null){
     toggleFase2();
     document.getElementById('ac_phase').value=a.phase||'challenge';
   } else {
-    ['ac_name','ac_firm','ac_notes','ac_size','ac_balance','ac_next','ac_start','ac_dayOpen'].forEach(k=>document.getElementById(k).value='');
+    ['ac_name','ac_firm','ac_notes','ac_size','ac_balance','ac_cost','ac_next','ac_start','ac_dayOpen'].forEach(k=>document.getElementById(k).value='');
     document.getElementById('ac_phase').value='challenge';document.getElementById('ac_split').value=80;
     document.getElementById('ac_riskPct').value=1;
     document.getElementById('ac_dailyDD').value=5;document.getElementById('ac_maxDD').value=10;
@@ -10251,6 +10258,7 @@ function saveAcc(){
     id:editAccId||Date.now(),
     name,firm:document.getElementById('ac_firm').value,
     size, initialBalance,
+    cost: parseFloat(document.getElementById('ac_cost').value)||0,
     manualBalance: null,
     categoria,
     phase,
@@ -10793,12 +10801,24 @@ function deletePago(id){pagos=pagos.filter(p=>p.id!==id);markDirty();save();rend
 function renderPagos(){
   const total=pagos.reduce((s,p)=>s+p.amount,0);
   const gross=pagos.reduce((s,p)=>s+(p.gross||0),0);
+  const costAccounts=accounts.filter(a=>(a.cost||0)>0);
+  const totalCost=costAccounts.reduce((s,a)=>s+(a.cost||0),0);
+  const neto=total-totalCost;
   document.getElementById('pagosKpis').innerHTML=`
     <div class="kpi-box" style="--accent:var(--green)"><div class="kpi-label">Total Cobrado</div><div class="kpi-value" style="color:var(--green)">${fmtUSD(total)}</div></div>
     <div class="kpi-box" style="--accent:var(--gold)"><div class="kpi-label">Nro de Pagos</div><div class="kpi-value" style="color:var(--gold)">${pagos.length}</div></div>
     <div class="kpi-box" style="--accent:var(--cyan)"><div class="kpi-label">Ganancia Bruta</div><div class="kpi-value" style="color:var(--cyan)">${fmtUSD(gross)}</div></div>
     <div class="kpi-box" style="--accent:var(--purple)"><div class="kpi-label">Promedio/Pago</div><div class="kpi-value" style="color:var(--purple)">${pagos.length?fmtUSD(total/pagos.length):'$0'}</div></div>
+    <div class="kpi-box" style="--accent:var(--red)"><div class="kpi-label">Total en Costos</div><div class="kpi-value" style="color:var(--red)">${fmtUSD(totalCost)}</div></div>
+    <div class="kpi-box" style="--accent:${neto>=0?'var(--green)':'var(--red)'}"><div class="kpi-label">Neto (Pagos − Costos)</div><div class="kpi-value" style="color:${neto>=0?'var(--green)':'var(--red)'}">${fmtUSD(neto)}</div></div>
   `;
+  const cbody=document.getElementById('costosBody'),cempty=document.getElementById('costosEmpty');
+  cbody.innerHTML='';cempty.style.display=costAccounts.length?'none':'block';
+  costAccounts.forEach(a=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="cyan">${escHtml(a.name)}</td><td class="muted">${escHtml(a.firm||'—')}</td><td class="neg">${fmtUSD(a.cost)}</td><td class="muted">${a.startDate||'—'}</td>`;
+    cbody.appendChild(tr);
+  });
   const tbody=document.getElementById('pagosBody'),empty=document.getElementById('pagosEmpty');
   tbody.innerHTML='';empty.style.display=pagos.length?'none':'block';
   [...pagos].sort((a,b)=>b.date>a.date?1:-1).forEach((p,i)=>{
