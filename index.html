@@ -3786,7 +3786,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;">
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;cursor:pointer;padding:3px 0;"><input type="checkbox" id="inc_trades" checked style="cursor:pointer;"> Trades &amp; Stats</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;cursor:pointer;padding:3px 0;"><input type="checkbox" id="inc_cuentas" checked style="cursor:pointer;"> Cuentas Prop Firm</label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;cursor:pointer;padding:3px 0;"><input type="checkbox" id="inc_pagos" checked style="cursor:pointer;"> Pagos</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;cursor:pointer;padding:3px 0;"><input type="checkbox" id="inc_pagos" checked style="cursor:pointer;"> Costos y Pagos</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;cursor:pointer;padding:3px 0;"><input type="checkbox" id="inc_mental" checked style="cursor:pointer;"> Estado Mental</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;cursor:pointer;padding:3px 0;"><input type="checkbox" id="inc_rutina" checked style="cursor:pointer;"> ⚡ Rutina</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;cursor:pointer;padding:3px 0;" id="inc_bt_wrap"><input type="checkbox" id="inc_bt" style="cursor:pointer;"> 🔬 Backtest</label>
@@ -14170,7 +14170,7 @@ function switchMomentoTab(qId, el) {
 const repTxt = {
   es:{
     title:'Radar de Trading — Reporte',monthly:'Reporte Mensual',summary:'Resumen General',compare:'Comparativa Mensual',
-    trades:'Trades',stats:'Estadísticas',accounts:'Cuentas Prop Firm',payments:'Pagos',mental:'Estado Mental',
+    trades:'Trades',stats:'Estadísticas',accounts:'Cuentas Prop Firm',costs:'Costos de Cuentas',payments:'Pagos',mental:'Estado Mental',
     wr:'Win Rate',pnl:'P&L Total',pips:'Pips',avg_win:'Avg WIN',avg_loss:'Avg Loss',pf:'Profit Factor',
     total_trades:'Total Trades',wins:'Wins',losses:'Losses',be:'Breakeven',
     firm:'Firma',phase:'Fase',size:'Tamaño',balance:'Balance',dd:'DD Usado',
@@ -14180,7 +14180,7 @@ const repTxt = {
   },
   en:{
     title:'Radar de Trading — Report',monthly:'Monthly Report',summary:'General Summary',compare:'Monthly Comparison',
-    trades:'Trades',stats:'Statistics',accounts:'Prop Firm Accounts',payments:'Payments',mental:'Mental State',
+    trades:'Trades',stats:'Statistics',accounts:'Prop Firm Accounts',costs:'Account Costs',payments:'Payments',mental:'Mental State',
     wr:'Win Rate',pnl:'Total P&L',pips:'Pips',avg_win:'Avg WIN',avg_loss:'Avg Loss',pf:'Profit Factor',
     total_trades:'Total Trades',wins:'Wins',losses:'Losses',be:'Breakeven',
     firm:'Firm',phase:'Phase',size:'Size',balance:'Balance',dd:'DD Used',
@@ -14380,6 +14380,31 @@ function previewReport(){
         }).join('')}
       </tbody></table>
     </div>`;
+  }
+
+  // Costos section
+  if(incPagos){
+    const costAccounts = accounts.filter(a=>(a.cost||0)>0);
+    if(costAccounts.length){
+      const totalCost = costAccounts.reduce((s,a)=>s+(a.cost||0),0);
+      html += `<div style="background:${TC.glass};border:1px solid ${TC.border};border-radius:12px;padding:1.4rem;margin-bottom:1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${TC.red};">${L.costs}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${TC.red};">Total: ${fmtUSD(totalCost)}</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;">
+          <thead><tr style="background:${TC.glass2};">
+            ${['Cuenta',L.firm,'Costo',L.date].map(h=>`<th style="padding:5px 8px;text-align:left;color:${TC.sub};font-weight:600;">${h}</th>`).join('')}
+          </tr></thead><tbody>
+          ${costAccounts.map((a,i)=>`<tr style="background:${i%2===0?rowEven:'transparent'};">
+            <td style="padding:4px 8px;color:${TC.text};font-weight:600;">${a.name||'—'}</td>
+            <td style="padding:4px 8px;color:${TC.sub};">${a.firm||'—'}</td>
+            <td style="padding:4px 8px;font-weight:700;color:${TC.red};">${fmtUSD(a.cost)}</td>
+            <td style="padding:4px 8px;color:${TC.sub};">${a.startDate||'—'}</td>
+          </tr>`).join('')}
+        </tbody></table>
+      </div>`;
+    }
   }
 
   // Pagos section
@@ -15373,6 +15398,7 @@ function exportExcelReport(){
   const C = {
     trades:  { title:'#1a3a5c', header:'#1e4976', alt:'#eaf3fb' },
     cuentas: { title:'#1a3d2b', header:'#1e5c3a', alt:'#eafaf0' },
+    costos:  { title:'#4a1a1a', header:'#7a2a2a', alt:'#fff0f0' },
     pagos:   { title:'#3d2a00', header:'#7a5200', alt:'#fff8e6' },
     mental:  { title:'#2d1a4a', header:'#4a2a7a', alt:'#f5eeff' },
     rutina:  { title:'#3a1a1a', header:'#6a2a2a', alt:'#fff0f0' },
@@ -15490,6 +15516,25 @@ function exportExcelReport(){
       ], i%2===1, C.cuentas.alt, ['','','','','',pnlS,pnlS,'','',dDS,mDS,'']));
     });
     hasContent = true;
+  }
+
+  // ── COSTOS ──────────────────────────────────────────────────
+  if(incPagos){
+    const costAccounts = accounts.filter(a=>(a.cost||0)>0);
+    if(costAccounts.length){
+      if(hasContent) rows.push(spacer(4));
+      const headers = ['Cuenta','Firma','Costo USD','Inicio'];
+      rows.push(secTitle('💸 Costos de Cuentas', C.costos, headers.length));
+      rows.push(colHeader(headers, C.costos));
+      costAccounts.forEach((a,i)=>{
+        rows.push(dataRow([
+          a.name||'', a.firm||'', a.cost.toFixed(2), a.startDate||''
+        ], i%2===1, C.costos.alt, ['','','color:#b22222;font-weight:bold;','']));
+      });
+      const totalCost = costAccounts.reduce((s,a)=>s+(a.cost||0),0);
+      rows.push(`<tr><td colspan="2" style="font-weight:bold;background:#fff0f0;">TOTAL</td><td style="color:#b22222;font-weight:bold;background:#fff0f0;">${totalCost.toFixed(2)}</td><td style="background:#fff0f0;"></td></tr>`);
+      hasContent = true;
+    }
   }
 
   // ── PAGOS ───────────────────────────────────────────────────
@@ -17686,7 +17731,7 @@ function exportFullPDF(){
   // Paleta para el documento (colores resaltados en títulos)
   const C = {
     journal:'#38bdf8', btc:'#a78bfa', hist:'#f472b6', cuentas:'#34d399',
-    pagos:'#fbbf24', pares:'#fb923c', reglas:'#60a5fa'
+    costos:'#f87171', pagos:'#fbbf24', pares:'#fb923c', reglas:'#60a5fa'
   };
 
   const sectionTitle = (icon, txt, color) =>
@@ -17796,6 +17841,17 @@ function exportFullPDF(){
         colorNum(pnl), _esc(a.status||a.estado||'—')
       ];
     }), C.cuentas);
+
+  // ── COSTOS ──
+  const costAccounts = d.AC.filter(a=>_num(a.cost)>0);
+  body += sectionTitle('💸','Costos de Cuentas', C.costos);
+  const totalCost = costAccounts.reduce((s,a)=>s+_num(a.cost),0);
+  if(costAccounts.length) body += kpiRow([{l:'Total Invertido', v:_exU(totalCost), c:'#f87171'},{l:'Cuentas con Costo', v:costAccounts.length}]);
+  body += table(['Cuenta','Firma','Costo','Inicio'],
+    costAccounts.map(a=>[
+      _esc(a.name||'—'), _esc(a.firm||'—'),
+      `<span style="color:#f87171;font-weight:700;">${_exU(_num(a.cost))}</span>`, _esc(a.startDate||'—')
+    ]), C.costos);
 
   // ── PAGOS ──
   body += sectionTitle('💰','Historial de Pagos', C.pagos);
@@ -17952,6 +18008,12 @@ function exportFullExcel(){
       a.status||a.estado||''
     ])
   ], '34D399');
+
+  // COSTOS
+  addSheet('Costos', [
+    ['Cuenta','Firma','Costo','Inicio'],
+    ...d.AC.filter(a=>_num(a.cost)>0).map(a=>[a.name||'', a.firm||'', +_num(a.cost).toFixed(2), a.startDate||''])
+  ], 'F87171');
 
   // PAGOS
   addSheet('Pagos', [
