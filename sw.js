@@ -1,6 +1,13 @@
 // Service worker minimo: solo recibe pushes (avisos de sesion y alertas de riesgo,
 // mismo contenido que ya se manda por Telegram) y los muestra como notificacion nativa
 // del navegador, aunque la pestaña este cerrada.
+
+// Sin esto, al actualizar este archivo las pestañas ya abiertas siguen controladas
+// por la version vieja del service worker hasta que se cierran todas: la notificacion
+// puede quedar mostrada por un SW desactualizado que no maneja bien el click.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+
 self.addEventListener('push', (event) => {
   let payload = { title: '📡 Radar de Trading', body: 'Tenés un aviso nuevo.' };
   try { payload = { ...payload, ...event.data.json() }; } catch (e) {}
