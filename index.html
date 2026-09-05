@@ -4077,6 +4077,55 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
           <div id="sfAllLegend" style="font-size:10.5px;color:var(--sub);line-height:1.8;"></div>
         </div>
       </div>
+
+      <!-- ════════════════ SIMULADOR DE FONDEO POR GRUPOS DE CUENTAS ════════════════ -->
+      <div class="card" data-help="Reparte tus trades históricos entre varias cuentas rotando de a una (trade 1 → Cuenta 1, trade 2 → Cuenta 2, y así; al terminar la vuelta vuelve a la Cuenta 1). Cada cuenta puede tener su propio % de riesgo y corre su racha contra el mismo objetivo y DD máximo. Sirve para ver cómo una mala racha se reparte entre cuentas en vez de reventar una sola. Abajo se compara contra operar todo en una única cuenta." style="padding:1.4rem;margin-bottom:1.5rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem;">🧩 Simulador de Fondeo por Grupos de Cuentas</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
+          Tomo tus trades históricos en orden cronológico y los <b style="color:var(--text);">reparto entre las cuentas que definas</b> (hasta 25), rotando de a <span id="gsBlockLbl">una</span>: el 1er trade a la Cuenta 1, el 2º a la Cuenta 2… y al terminar la vuelta arranco de nuevo. Cada cuenta empieza en 0% y corre su racha contra el mismo objetivo y DD. Ideal para ver cómo una <b style="color:var(--gold);">mala racha se diluye</b> en vez de tumbar una sola cuenta.
+        </div>
+
+        <!-- REGLAS COMUNES -->
+        <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:.9rem;">
+          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">OBJETIVO (%)</label><input type="number" id="gsTarget" value="8" min="0.1" step="0.5" style="width:90px;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="gsDD" value="10" min="0.5" step="0.5" style="width:90px;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="gsDailyDD" value="0" min="0" step="0.5" style="width:110px;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">TIPO DD</label><select id="gsDDType" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);outline:none;cursor:pointer;"><option value="trailing">Trailing (desde pico)</option><option value="static">Estático (desde inicio)</option></select></div>
+          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">TRADES X CUENTA POR VUELTA</label><input type="number" id="gsBlock" value="1" min="1" max="50" step="1" style="width:90px;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.04em;padding-bottom:4px;"><input type="checkbox" id="gsCiclar" checked style="accent-color:var(--cyan);width:14px;height:14px;">REINICIAR Y SEGUIR AL PASAR/REVENTAR</label>
+        </div>
+
+        <!-- PERÍODO -->
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:1rem;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;">PERÍODO</span>
+          <input type="date" id="gsDateFrom" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;">
+          <span style="color:var(--sub);font-size:12px;">→</span>
+          <input type="date" id="gsDateTo" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;">
+          <button onclick="document.getElementById('gsDateFrom').value='';document.getElementById('gsDateTo').value='';gsChanged();" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">Todo</button>
+        </div>
+
+        <!-- CUENTAS -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.55rem;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;">CUENTAS — <span id="gsCount">0</span>/25 · % de riesgo editable por cuenta</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <button onclick="gsSetAccounts(2)" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">2</button>
+            <button onclick="gsSetAccounts(4)" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">4</button>
+            <button onclick="gsSetAccounts(10)" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">10</button>
+            <button onclick="gsApplyRiskAll()" title="Poner en todas las cuentas el % de riesgo de la Cuenta 1" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">↧ Igualar riesgo</button>
+            <button onclick="gsAddAccount()" style="background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);border-radius:6px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);cursor:pointer;font-weight:700;">＋ Agregar</button>
+          </div>
+        </div>
+        <div id="gsAccList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px;margin-bottom:1.1rem;"></div>
+
+        <button onclick="simularGrupoCuentas()" style="width:100%;padding:9px;background:var(--cyan);color:#000;border:none;border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:1.2rem;letter-spacing:.04em;">▶ SIMULAR REPARTO</button>
+
+        <div id="gsResults" style="display:none;">
+          <div id="gsKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;margin-bottom:1.1rem;"></div>
+          <div id="gsCompare" style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r3);padding:1rem 1.1rem;margin-bottom:1.1rem;font-size:12px;color:var(--sub);line-height:1.6;"></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;margin-bottom:.6rem;">POR CUENTA — cada tarjeta es una cuenta del grupo (la línea es su curva de equity repartida)</div>
+          <div id="gsAccCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;"></div>
+        </div>
+      </div>
       </div>
 
     </div>
@@ -6209,6 +6258,7 @@ function aplicarEstado(d){
   if(d.btRules)    btQuickRules = d.btRules;
   if(d.btZonas)    btZonas    = d.btZonas;
   if(d.fondCfg){ try{ localStorage.setItem('hq_fond_v1', JSON.stringify(d.fondCfg)); }catch(_){} }
+  if(d.grpSimCfg){ try{ localStorage.setItem(GS_KEY, JSON.stringify(d.grpSimCfg)); gsInited=false; }catch(_){} }
   if(d.pfRules){ PF_RULES=d.pfRules; try{ localStorage.setItem('hq_pf_rules_v1', JSON.stringify(PF_RULES)); }catch(_){} }
   if(d.pfCfg){ PF_CFG=Object.assign({}, PF_CFG_DEFAULT, d.pfCfg); try{ localStorage.setItem('hq_pf_cfg_v1', JSON.stringify(PF_CFG)); }catch(_){} }
   if(d.rutHabitos)     rutHabitos     = d.rutHabitos;
@@ -10858,6 +10908,7 @@ function exportData(){
     btRules: btQuickRules,                       // Reglas rápidas del backtest
     btZonas,                                     // Zonas del backtest
     fondCfg: loadFondeoCfg(),                    // Calculadora de Riesgo
+    grpSimCfg: (()=>{ try{ return JSON.parse(localStorage.getItem(GS_KEY)); }catch(_){ return null; } })(), // Simulador de fondeo por grupos de cuentas
     rutHabitos,                                  // Rutina: hábitos
     rutDays,                                     // Rutina: registro diario
     theme: (localStorage.getItem('rdm_theme')||'dark'), // Tema visual
@@ -10926,6 +10977,7 @@ function importData(e){
           fondLoaded = false; // forzar restauración desde la config importada
         }catch(_){}
       }
+      if(d.grpSimCfg){ try{ localStorage.setItem(GS_KEY, JSON.stringify(d.grpSimCfg)); gsInited=false; }catch(_){} }
       if(d.rutHabitos || d.rutDays){
         if(d.rutHabitos) rutHabitos=d.rutHabitos;
         if(d.rutDays) rutDays=d.rutDays;
@@ -17433,6 +17485,7 @@ function renderReporte(){
   renderRepBreakdown('repByDow', uni, 'dow');
   renderRepBreakdown('repByPair', uni, 'par');
   renderRepBreakdown('repByZona', uni, 'zona');
+  try{ renderGrpSim(); }catch(e){ console.error('grpSim', e); }
 }
 
 function setRepView(v){
@@ -18762,6 +18815,322 @@ function abrirSfCicloDetalle(idx){
     + '</table></div>';
 
   openModal('sfCicloModal');
+}
+
+
+// ════════════════════════════════════════════════════════════
+// SIMULADOR DE FONDEO POR GRUPOS DE CUENTAS  (Reporte de Backtest)
+// Reparte los trades históricos entre N cuentas rotando de a bloque,
+// para ver cómo una mala racha se diluye en vez de reventar 1 sola.
+// ════════════════════════════════════════════════════════════
+const GS_KEY = 'hq_grpsim_v1';
+let gsAccounts = [];
+let gsInited = false;
+
+function gsDefaultAccounts(){
+  return [1,2,3,4].map(i=>({name:'Cuenta '+i, risk:1}));
+}
+
+function loadGsCfg(){
+  let cfg = null;
+  try{ cfg = JSON.parse(localStorage.getItem(GS_KEY)); }catch(_){}
+  if(cfg && Array.isArray(cfg.accounts) && cfg.accounts.length){
+    gsAccounts = cfg.accounts.slice(0,25).map((a,i)=>({
+      name: String(a && a.name != null ? a.name : 'Cuenta '+(i+1)),
+      risk: Math.max(0, parseFloat(a && a.risk) || 0)
+    }));
+    if(gsAccounts.length < 2) gsAccounts = gsDefaultAccounts();
+  } else {
+    gsAccounts = gsDefaultAccounts();
+  }
+  return cfg || {};
+}
+
+function saveGsCfg(){
+  try{
+    localStorage.setItem(GS_KEY, JSON.stringify({
+      accounts: gsAccounts,
+      target:  document.getElementById('gsTarget')?.value,
+      dd:      document.getElementById('gsDD')?.value,
+      dailyDD: document.getElementById('gsDailyDD')?.value,
+      ddType:  document.getElementById('gsDDType')?.value,
+      block:   document.getElementById('gsBlock')?.value,
+      ciclar:  document.getElementById('gsCiclar')?.checked
+    }));
+  }catch(_){}
+  if(typeof markDirty === 'function') markDirty();
+}
+
+function renderGrpSim(){
+  const list = document.getElementById('gsAccList');
+  if(!list) return;
+  const cfg = loadGsCfg();
+  if(!gsInited){
+    const set = (id,v)=>{ const el=document.getElementById(id); if(el && v!=null && v!=='') el.value = v; };
+    set('gsTarget', cfg.target); set('gsDD', cfg.dd); set('gsDailyDD', cfg.dailyDD); set('gsBlock', cfg.block);
+    if(cfg.ddType){ const s=document.getElementById('gsDDType'); if(s) s.value = cfg.ddType; }
+    if(typeof cfg.ciclar === 'boolean'){ const c=document.getElementById('gsCiclar'); if(c) c.checked = cfg.ciclar; }
+    ['gsTarget','gsDD','gsDailyDD','gsBlock','gsDDType','gsCiclar'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.addEventListener('change', gsChanged);
+    });
+    gsInited = true;
+  }
+  const b = Math.max(1, Math.round(parseFloat(document.getElementById('gsBlock')?.value) || 1));
+  const lbl = document.getElementById('gsBlockLbl'); if(lbl) lbl.textContent = b===1 ? 'una' : (b+' trades');
+  renderGsAccList();
+  if(typeof histTrades !== 'undefined' && histTrades && histTrades.length) simularGrupoCuentas(true);
+}
+
+function gsChanged(){
+  const b = Math.max(1, Math.round(parseFloat(document.getElementById('gsBlock')?.value) || 1));
+  const lbl = document.getElementById('gsBlockLbl'); if(lbl) lbl.textContent = b===1 ? 'una' : (b+' trades');
+  saveGsCfg();
+  if(document.getElementById('gsResults')?.style.display !== 'none') simularGrupoCuentas(true);
+}
+
+function renderGsAccList(){
+  const list = document.getElementById('gsAccList');
+  if(!list) return;
+  const cnt = document.getElementById('gsCount'); if(cnt) cnt.textContent = gsAccounts.length;
+  list.innerHTML = gsAccounts.map((a,i)=>
+    '<div style="display:flex;align-items:center;gap:5px;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;">'
+    + '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--dim);flex-shrink:0;">'+(i+1)+'</span>'
+    + '<input value="'+escHtml(a.name)+'" onchange="gsUpdate('+i+',\'name\',this.value)" style="flex:1;min-width:0;background:transparent;border:none;color:var(--text);font-size:11px;outline:none;">'
+    + '<input type="number" value="'+a.risk+'" step="0.1" min="0" onchange="gsUpdate('+i+',\'risk\',this.value)" style="width:48px;flex-shrink:0;background:var(--glass2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:11px;padding:3px 4px;outline:none;text-align:right;">'
+    + '<span style="font-size:9px;color:var(--sub);flex-shrink:0;">%</span>'
+    + (gsAccounts.length > 2 ? '<button onclick="gsRemove('+i+')" title="Quitar cuenta" style="flex-shrink:0;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:12px;padding:0 2px;">✕</button>' : '')
+    + '</div>'
+  ).join('');
+}
+
+function gsUpdate(i, field, val){
+  if(!gsAccounts[i]) return;
+  if(field === 'risk'){
+    let v = parseFloat(val); if(isNaN(v) || v < 0) v = 0;
+    gsAccounts[i].risk = v;
+  } else {
+    gsAccounts[i].name = String(val || ('Cuenta '+(i+1)));
+  }
+  saveGsCfg();
+  if(field === 'risk' && document.getElementById('gsResults')?.style.display !== 'none') simularGrupoCuentas(true);
+}
+
+function gsRemove(i){
+  if(gsAccounts.length <= 2){ toast('Mínimo 2 cuentas','err'); return; }
+  gsAccounts.splice(i,1);
+  renderGsAccList(); saveGsCfg(); simularGrupoCuentas(true);
+}
+
+function gsAddAccount(){
+  if(gsAccounts.length >= 25){ toast('Máximo 25 cuentas','err'); return; }
+  const lastRisk = gsAccounts.length ? gsAccounts[gsAccounts.length-1].risk : 1;
+  gsAccounts.push({name:'Cuenta '+(gsAccounts.length+1), risk:lastRisk});
+  renderGsAccList(); saveGsCfg(); simularGrupoCuentas(true);
+}
+
+function gsSetAccounts(n){
+  n = Math.max(2, Math.min(25, n));
+  const baseRisk = gsAccounts[0] ? gsAccounts[0].risk : 1;
+  const next = [];
+  for(let i=0;i<n;i++) next.push(gsAccounts[i] ? gsAccounts[i] : {name:'Cuenta '+(i+1), risk:baseRisk});
+  gsAccounts = next;
+  renderGsAccList(); saveGsCfg(); simularGrupoCuentas(true);
+}
+
+function gsApplyRiskAll(){
+  const r = gsAccounts[0] ? gsAccounts[0].risk : 1;
+  gsAccounts.forEach(a=>{ a.risk = r; });
+  renderGsAccList(); saveGsCfg(); simularGrupoCuentas(true);
+}
+
+// Corre la secuencia de trades de UNA cuenta. pnl por trade = R * riesgo%.
+function gsRunAccount(trades, risk, cfg){
+  let eq=0, peak=0, maxDD=0, dayPnl={};
+  let passes=0, blows=0, curL=0, worstL=0, curW=0, bestW=0;
+  let firstEventAt=null, done=0, stopped=false;
+  const seq=[0];
+  for(let i=0;i<trades.length && !stopped;i++){
+    const t = trades[i];
+    const pnl = (t.r || 0) * risk;
+    done++;
+    if(pnl > 0){ curW++; curL=0; if(curW>bestW) bestW=curW; }
+    else if(pnl < 0){ curL++; curW=0; if(curL>worstL) worstL=curL; }
+    let broke=false, passed=false;
+    if(cfg.dailyDD > 0){
+      const d = t.date || ('_'+i);
+      dayPnl[d] = (dayPnl[d] || 0) + pnl;
+      if(dayPnl[d] <= -cfg.dailyDD) broke = true;
+    }
+    if(!broke){
+      eq += pnl;
+      if(eq > peak) peak = eq;
+      const dd = cfg.ddType === 'trailing' ? (peak - eq) : Math.max(0, -eq);
+      if(dd > maxDD) maxDD = dd;
+      if(dd >= cfg.ddMax) broke = true;
+      else if(eq >= cfg.target) passed = true;
+    }
+    seq.push(eq);
+    if(broke || passed){
+      if(broke) blows++; else passes++;
+      if(firstEventAt == null) firstEventAt = done;
+      if(cfg.ciclar){ eq=0; peak=0; dayPnl={}; seq.push(0); }
+      else stopped = true;
+    }
+  }
+  let status;
+  if(cfg.ciclar) status = passes > blows ? 'pass' : blows > passes ? 'blown' : passes > 0 ? 'pass' : 'curso';
+  else          status = blows > 0 ? 'blown' : passes > 0 ? 'pass' : 'curso';
+  return { n:trades.length, eq, maxDD, worstL, bestW, passes, blows, status, firstEventAt, seq };
+}
+
+function simularGrupoCuentas(silent){
+  const results = document.getElementById('gsResults');
+  if(!Array.isArray(gsAccounts) || gsAccounts.length < 2) loadGsCfg();
+  const hist = (typeof buildHistEnriched === 'function' && typeof histTrades !== 'undefined' && histTrades && histTrades.length)
+    ? buildHistEnriched()
+    : (window._histEnriched || []);
+  if(!hist.length){
+    if(!silent) toast('Cargá trades en Backtest Histórico primero','err');
+    if(results) results.style.display = 'none';
+    return;
+  }
+  const cfg = {
+    target:  parseFloat(document.getElementById('gsTarget').value) || 8,
+    ddMax:   parseFloat(document.getElementById('gsDD').value) || 10,
+    dailyDD: Math.max(0, parseFloat(document.getElementById('gsDailyDD').value) || 0),
+    ddType:  document.getElementById('gsDDType').value,
+    ciclar:  document.getElementById('gsCiclar').checked
+  };
+  const block = Math.max(1, Math.round(parseFloat(document.getElementById('gsBlock').value) || 1));
+  const from  = document.getElementById('gsDateFrom').value;
+  const to    = document.getElementById('gsDateTo').value;
+
+  let sorted = [...hist].sort((a,b)=>{
+    const da=(a.date||''), db=(b.date||'');
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+  if(from) sorted = sorted.filter(t=>(t.date||'') >= from);
+  if(to)   sorted = sorted.filter(t=>(t.date||'') <= to);
+  if(!sorted.length){
+    if(!silent) toast('Sin trades históricos en el período elegido','err');
+    if(results) results.style.display = 'none';
+    return;
+  }
+
+  const N = gsAccounts.length;
+  const buckets = gsAccounts.map(()=>[]);
+  sorted.forEach((t,i)=>{ buckets[Math.floor(i/block) % N].push(t); });
+
+  const accRes = gsAccounts.map((a,idx)=>{
+    const r = Math.max(0, parseFloat(a.risk) || 0);
+    return Object.assign(gsRunAccount(buckets[idx], r, cfg), { name:a.name, risk:r });
+  });
+  const avgRisk = gsAccounts.reduce((s,a)=>s + (parseFloat(a.risk)||0), 0) / N;
+  const baseline = gsRunAccount(sorted, avgRisk, cfg);
+
+  renderGsResults(accRes, baseline, cfg, { block, N, total:sorted.length, avgRisk });
+  saveGsCfg();
+}
+
+function gsSpark(seq, w, h){
+  if(!seq || seq.length < 2) return '';
+  const min = Math.min(...seq), max = Math.max(...seq);
+  const rng = (max - min) || 1;
+  const step = w / (seq.length - 1);
+  const pts = seq.map((v,i)=> (i*step).toFixed(1)+','+(h - ((v-min)/rng)*h).toFixed(1)).join(' ');
+  const zeroY = (h - ((0-min)/rng)*h).toFixed(1);
+  const col = seq[seq.length-1] >= 0 ? '#34d399' : '#f87171';
+  return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="width:100%;height:'+h+'px;display:block;">'
+    + '<line x1="0" y1="'+zeroY+'" x2="'+w+'" y2="'+zeroY+'" stroke="rgba(255,255,255,.12)" stroke-width="1"/>'
+    + '<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="1.5"/>'
+    + '</svg>';
+}
+
+function gsVerdict(baseline, g){
+  const sobreviven = g.N - g.blownAcc;
+  if(baseline.status === 'blown' && sobreviven > 0){
+    return '✅ Repartiendo, la mala racha que <b style="color:var(--red);">tumbaba la cuenta única</b> se diluye: '+sobreviven+' de '+g.N+' cuentas del grupo quedan en pie y suman '+g.totalPasses+' fondeo(s).';
+  }
+  if(baseline.status === 'pass' && g.blownAcc === 0){
+    return '➖ Con esta racha no hacía falta repartir: la cuenta única ya pasaba y ninguna del grupo cae. Repartir sólo baja el ritmo de avance de cada cuenta.';
+  }
+  if(g.blownAcc >= sobreviven){
+    return '⚠️ El reparto no alcanza: '+g.blownAcc+' de '+g.N+' cuentas caen igual. La racha negativa es lo bastante larga como para pegarle a varias cuentas aunque rotes.';
+  }
+  return 'ℹ️ Resultado mixto: '+sobreviven+' de '+g.N+' cuentas en pie, con '+g.totalPasses+' fondeo(s) y '+g.totalBlows+' reventada(s) repartidas en el grupo.';
+}
+
+function renderGsResults(accRes, baseline, cfg, meta){
+  const box = document.getElementById('gsResults');
+  if(!box) return;
+
+  const passedAcc = accRes.filter(a=>a.status === 'pass').length;
+  const blownAcc  = accRes.filter(a=>a.status === 'blown').length;
+  const cursoAcc  = accRes.filter(a=>a.status === 'curso').length;
+  const totalPasses = accRes.reduce((s,a)=>s + a.passes, 0);
+  const totalBlows  = accRes.reduce((s,a)=>s + a.blows, 0);
+  const worstLGroup = Math.max(0, ...accRes.map(a=>a.worstL));
+  const survivRate  = accRes.length ? (accRes.length - blownAcc) / accRes.length * 100 : 0;
+
+  const kpis = [
+    {l:'CUENTAS',            v:meta.N,       c:'var(--text)'},
+    {l:cfg.ciclar?'CUENTAS OK':'PASARON',    v:passedAcc, c:'var(--green)'},
+    {l:cfg.ciclar?'CUENTAS CAÍDAS':'REVENTARON', v:blownAcc, c:'var(--red)'},
+    {l:'FONDEOS TOT.',       v:totalPasses,  c:'var(--green)'},
+    {l:'REVENTADAS TOT.',    v:totalBlows,   c:'var(--red)'},
+    {l:'PEOR RACHA L',       v:worstLGroup,  c:'var(--gold)'},
+    {l:'TRADES REPARTIDOS',  v:meta.total,   c:'var(--cyan)'}
+  ];
+  document.getElementById('gsKpis').innerHTML = kpis.map(k=>
+    '<div style="background:var(--glass2);border-radius:var(--r2);padding:.6rem .85rem;text-align:center;">'
+    + '<div style="font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;">'+k.l+'</div>'
+    + '<div style="font-size:18px;font-weight:800;color:'+k.c+';">'+k.v+'</div></div>'
+  ).join('');
+
+  const bStatusTxt = baseline.status === 'pass'  ? '<b style="color:var(--green);">habría pasado</b>'
+                   : baseline.status === 'blown' ? '<b style="color:var(--red);">habría reventado</b>'
+                   : '<b style="color:var(--sub);">no habría cerrado el ciclo</b>';
+  const firstTxt = baseline.firstEventAt != null ? ('a los <b>'+baseline.firstEventAt+'</b> trades') : 'sin evento en el período';
+
+  document.getElementById('gsCompare').innerHTML =
+      '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.08em;color:var(--gold);margin-bottom:.55rem;">◆ REPARTIDO vs 1 SOLA CUENTA</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">'
+    +   '<div>'
+    +     '<div style="font-size:10px;color:var(--dim);margin-bottom:3px;">1 SOLA CUENTA · riesgo '+meta.avgRisk.toFixed(2)+'% (promedio del grupo) · '+meta.total+' trades</div>'
+    +     '<div>'+bStatusTxt+' — primer evento '+firstTxt+'.</div>'
+    +     '<div style="font-size:11px;color:var(--sub);margin-top:3px;">Fondeos: '+baseline.passes+' · Reventadas: '+baseline.blows+' · Peor racha perdedora: '+baseline.worstL+' · DD máx tocado: '+baseline.maxDD.toFixed(2)+'%</div>'
+    +   '</div>'
+    +   '<div>'
+    +     '<div style="font-size:10px;color:var(--dim);margin-bottom:3px;">REPARTIDO EN '+meta.N+' CUENTAS · rotando de a '+meta.block+'</div>'
+    +     '<div><b style="color:var(--green);">'+(accRes.length - blownAcc)+' de '+meta.N+'</b> cuentas siguen en pie ('+survivRate.toFixed(0)+'%).</div>'
+    +     '<div style="font-size:11px;color:var(--sub);margin-top:3px;">Fondeos sumados: '+totalPasses+' · Reventadas sumadas: '+totalBlows+' · Peor racha en una cuenta: '+worstLGroup+'</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div style="margin-top:.7rem;padding-top:.6rem;border-top:1px solid var(--border2);font-size:11.5px;color:var(--text);">'
+    +   gsVerdict(baseline, { blownAcc, totalPasses, totalBlows, N:meta.N })
+    + '</div>';
+
+  document.getElementById('gsAccCards').innerHTML = accRes.map(a=>{
+    const badge = a.status === 'pass'  ? '<span style="background:rgba(52,211,153,.15);color:var(--green);border-radius:5px;padding:1px 7px;font-size:9px;font-weight:800;">OK</span>'
+                : a.status === 'blown' ? '<span style="background:rgba(248,113,113,.15);color:var(--red);border-radius:5px;padding:1px 7px;font-size:9px;font-weight:800;">CAÍDA</span>'
+                : '<span style="background:rgba(255,255,255,.08);color:var(--sub);border-radius:5px;padding:1px 7px;font-size:9px;font-weight:800;">EN CURSO</span>';
+    const eqCol = a.eq >= 0 ? 'var(--green)' : 'var(--red)';
+    return '<div style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r2);padding:.7rem .8rem;">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:.35rem;">'
+      +   '<span style="font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(a.name)+'</span>'+badge
+      + '</div>'
+      + '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--sub);margin-bottom:.4rem;">riesgo '+a.risk.toFixed(2)+'% · '+a.n+' trades</div>'
+      + gsSpark(a.seq, 120, 30)
+      + '<div style="display:grid;grid-template-columns:1fr auto;gap:3px 8px;margin-top:.45rem;font-size:10px;">'
+      +   '<div style="color:var(--sub);">Racha final</div><div style="text-align:right;color:'+eqCol+';font-weight:700;">'+(a.eq>=0?'+':'')+a.eq.toFixed(2)+'%</div>'
+      +   '<div style="color:var(--sub);">DD máx</div><div style="text-align:right;color:var(--red);">'+a.maxDD.toFixed(2)+'%</div>'
+      +   '<div style="color:var(--sub);">Peor racha L</div><div style="text-align:right;color:var(--text);">'+a.worstL+'</div>'
+      +   '<div style="color:var(--sub);">Fondeos / rev.</div><div style="text-align:right;color:var(--text);">'+a.passes+' / '+a.blows+'</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  box.style.display = 'block';
 }
 
 
