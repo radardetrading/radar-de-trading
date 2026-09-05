@@ -4079,7 +4079,7 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
 
       <!-- ════════════════ SIMULADOR DE FONDEO POR GRUPOS DE CUENTAS ════════════════ -->
-      <div class="card" data-help="Reparte tus trades históricos entre varias cuentas rotando de a una (trade 1 → Cuenta 1, trade 2 → Cuenta 2, y así; al terminar la vuelta vuelve a la Cuenta 1). Cada cuenta puede tener su propio % de riesgo y corre su racha contra las mismas reglas: Fase 1, Fase 2 opcional y Fase Fondeada opcional con % de retiro. Podés filtrar qué trades entran al reparto por sesión, año, mes, día de la semana, par o dirección. Sirve para ver cómo una mala racha se reparte entre cuentas en vez de reventar una sola. Abajo se compara contra operar todo en una única cuenta." style="padding:1.4rem;margin-bottom:1.5rem;">
+      <div class="card" data-help="Reparte tus trades históricos entre varias cuentas rotando de a una (trade 1 → Cuenta 1, trade 2 → Cuenta 2, y así; al terminar la vuelta vuelve a la Cuenta 1). Cada cuenta puede tener su propio tamaño (USD) y su propio % de riesgo, y corre su racha contra las mismas reglas: Fase 1, Fase 2 opcional y Fase Fondeada opcional con % de retiro. Los resultados se muestran también en dólares. Podés filtrar qué trades entran al reparto por sesión, año, mes, día de la semana, par o dirección. Sirve para ver cómo una mala racha se reparte entre cuentas en vez de reventar una sola. Abajo se compara contra operar todo en una única cuenta." style="padding:1.4rem;margin-bottom:1.5rem;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem;">🧩 Simulador de Fondeo por Grupos de Cuentas</div>
         <div style="font-size:11px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
           Tomo tus trades históricos en orden cronológico y los <b style="color:var(--text);">reparto entre las cuentas que definas</b> (hasta 25), rotando de a <span id="gsBlockLbl">una</span>: el 1er trade a la Cuenta 1, el 2º a la Cuenta 2… y al terminar la vuelta arranco de nuevo. Cada cuenta corre su racha contra las mismas reglas (Fase 1 → Fase 2 → Fondeada, las que actives). Ideal para ver cómo una <b style="color:var(--gold);">mala racha se diluye</b> en vez de tumbar una sola cuenta.
@@ -4146,16 +4146,17 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
 
         <!-- CUENTAS -->
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.55rem;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;">CUENTAS — <span id="gsCount">0</span>/25 · % de riesgo editable por cuenta</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;">CUENTAS — <span id="gsCount">0</span>/25 · tamaño ($) y riesgo (%) editables por cuenta</div>
           <div style="display:flex;gap:5px;flex-wrap:wrap;">
-            <button onclick="gsSetAccounts(2)" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">2</button>
-            <button onclick="gsSetAccounts(4)" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">4</button>
-            <button onclick="gsSetAccounts(10)" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">10</button>
-            <button onclick="gsApplyRiskAll()" title="Poner en todas las cuentas el % de riesgo de la Cuenta 1" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">↧ Igualar riesgo</button>
-            <button onclick="gsAddAccount()" style="background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);border-radius:6px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);cursor:pointer;font-weight:700;">＋ Agregar</button>
+            <button type="button" onclick="gsSetAccounts(2)" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">2</button>
+            <button type="button" onclick="gsSetAccounts(4)" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">4</button>
+            <button type="button" onclick="gsSetAccounts(10)" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">10</button>
+            <button type="button" onclick="gsApplySizeAll()" title="Poner en todas las cuentas el tamaño de la Cuenta 1" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">↧ Igualar tamaño</button>
+            <button type="button" onclick="gsApplyRiskAll()" title="Poner en todas las cuentas el % de riesgo de la Cuenta 1" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">↧ Igualar riesgo</button>
+            <button type="button" onclick="gsAddAccount()" style="background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);border-radius:6px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);cursor:pointer;font-weight:700;">＋ Agregar</button>
           </div>
         </div>
-        <div id="gsAccList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px;margin-bottom:1.1rem;"></div>
+        <div id="gsAccList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:7px;margin-bottom:1.1rem;"></div>
 
         <button onclick="simularGrupoCuentas()" style="width:100%;padding:9px;background:var(--cyan);color:#000;border:none;border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:1.2rem;letter-spacing:.04em;">▶ SIMULAR REPARTO</button>
 
@@ -18877,7 +18878,12 @@ const GS_MES_LBL = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oc
 const GS_DOW_LBL = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
 function gsDefaultAccounts(){
-  return [1,2,3,4].map(i=>({name:'Cuenta '+i, risk:1}));
+  return [1,2,3,4].map(i=>({name:'Cuenta '+i, risk:1, size:5000}));
+}
+
+function gsCleanSize(v){
+  const n = parseFloat(v);
+  return (isNaN(n) || n <= 0) ? 5000 : n;
 }
 
 function gsNormFilters(f){
@@ -18894,7 +18900,8 @@ function loadGsCfg(){
   if(cfg && Array.isArray(cfg.accounts) && cfg.accounts.length){
     gsAccounts = cfg.accounts.slice(0,25).map((a,i)=>({
       name: String(a && a.name != null ? a.name : 'Cuenta '+(i+1)),
-      risk: Math.max(0, parseFloat(a && a.risk) || 0)
+      risk: Math.max(0, parseFloat(a && a.risk) || 0),
+      size: gsCleanSize(a && a.size)
     }));
     if(gsAccounts.length < 2) gsAccounts = gsDefaultAccounts();
   } else {
@@ -18978,10 +18985,12 @@ function renderGsAccList(){
   if(!list) return;
   const cnt = document.getElementById('gsCount'); if(cnt) cnt.textContent = gsAccounts.length;
   list.innerHTML = gsAccounts.map((a,i)=>
-    '<div style="display:flex;align-items:center;gap:5px;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;">'
+    '<div style="display:flex;align-items:center;gap:4px;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;">'
     + '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--dim);flex-shrink:0;">'+(i+1)+'</span>'
     + '<input value="'+escHtml(a.name)+'" onchange="gsUpdate('+i+',\'name\',this.value)" style="flex:1;min-width:0;background:transparent;border:none;color:var(--text);font-size:11px;outline:none;">'
-    + '<input type="number" value="'+a.risk+'" step="0.1" min="0" onchange="gsUpdate('+i+',\'risk\',this.value)" style="width:48px;flex-shrink:0;background:var(--glass2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:11px;padding:3px 4px;outline:none;text-align:right;">'
+    + '<span style="font-size:9px;color:var(--sub);flex-shrink:0;">$</span>'
+    + '<input type="number" value="'+a.size+'" step="1000" min="1" title="Tamaño de la cuenta (USD)" onchange="gsUpdate('+i+',\'size\',this.value)" style="width:62px;flex-shrink:0;background:var(--glass2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:11px;padding:3px 4px;outline:none;text-align:right;">'
+    + '<input type="number" value="'+a.risk+'" step="0.1" min="0" title="Riesgo por trade (%)" onchange="gsUpdate('+i+',\'risk\',this.value)" style="width:42px;flex-shrink:0;background:var(--glass2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:11px;padding:3px 4px;outline:none;text-align:right;">'
     + '<span style="font-size:9px;color:var(--sub);flex-shrink:0;">%</span>'
     + (gsAccounts.length > 2 ? '<button onclick="gsRemove('+i+')" title="Quitar cuenta" style="flex-shrink:0;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:12px;padding:0 2px;">✕</button>' : '')
     + '</div>'
@@ -18993,11 +19002,13 @@ function gsUpdate(i, field, val){
   if(field === 'risk'){
     let v = parseFloat(val); if(isNaN(v) || v < 0) v = 0;
     gsAccounts[i].risk = v;
+  } else if(field === 'size'){
+    gsAccounts[i].size = gsCleanSize(val);
   } else {
     gsAccounts[i].name = String(val || ('Cuenta '+(i+1)));
   }
   saveGsCfg();
-  if(field === 'risk' && document.getElementById('gsResults')?.style.display !== 'none') simularGrupoCuentas(true);
+  if((field === 'risk' || field === 'size') && document.getElementById('gsResults')?.style.display !== 'none') simularGrupoCuentas(true);
 }
 
 function gsRemove(i){
@@ -19008,16 +19019,16 @@ function gsRemove(i){
 
 function gsAddAccount(){
   if(gsAccounts.length >= 25){ toast('Máximo 25 cuentas','err'); return; }
-  const lastRisk = gsAccounts.length ? gsAccounts[gsAccounts.length-1].risk : 1;
-  gsAccounts.push({name:'Cuenta '+(gsAccounts.length+1), risk:lastRisk});
+  const last = gsAccounts[gsAccounts.length-1] || { risk:1, size:5000 };
+  gsAccounts.push({name:'Cuenta '+(gsAccounts.length+1), risk:last.risk, size:last.size});
   renderGsAccList(); saveGsCfg(); simularGrupoCuentas(true);
 }
 
 function gsSetAccounts(n){
   n = Math.max(2, Math.min(25, n));
-  const baseRisk = gsAccounts[0] ? gsAccounts[0].risk : 1;
+  const base = gsAccounts[0] || { risk:1, size:5000 };
   const next = [];
-  for(let i=0;i<n;i++) next.push(gsAccounts[i] ? gsAccounts[i] : {name:'Cuenta '+(i+1), risk:baseRisk});
+  for(let i=0;i<n;i++) next.push(gsAccounts[i] ? gsAccounts[i] : {name:'Cuenta '+(i+1), risk:base.risk, size:base.size});
   gsAccounts = next;
   renderGsAccList(); saveGsCfg(); simularGrupoCuentas(true);
 }
@@ -19025,6 +19036,12 @@ function gsSetAccounts(n){
 function gsApplyRiskAll(){
   const r = gsAccounts[0] ? gsAccounts[0].risk : 1;
   gsAccounts.forEach(a=>{ a.risk = r; });
+  renderGsAccList(); saveGsCfg(); simularGrupoCuentas(true);
+}
+
+function gsApplySizeAll(){
+  const s = gsAccounts[0] ? gsAccounts[0].size : 5000;
+  gsAccounts.forEach(a=>{ a.size = s; });
   renderGsAccList(); saveGsCfg(); simularGrupoCuentas(true);
 }
 
@@ -19167,12 +19184,22 @@ function simularGrupoCuentas(silent){
 
   const accRes = gsAccounts.map((a,idx)=>{
     const r = Math.max(0, parseFloat(a.risk) || 0);
-    return Object.assign(gsRunAccount(buckets[idx], r, cfg), { name:a.name, risk:r });
+    const size = gsCleanSize(a.size);
+    const res = gsRunAccount(buckets[idx], r, cfg);
+    return Object.assign(res, {
+      name:a.name, risk:r, size,
+      totalUsd: res.total / 100 * size,
+      maxDDusd: res.maxDD / 100 * size,
+      phasePnlUsd: res.phasePnl / 100 * size
+    });
   });
-  const avgRisk = gsAccounts.reduce((s,a)=>s + (parseFloat(a.risk)||0), 0) / N;
-  const baseline = gsRunAccount(sorted, avgRisk, cfg);
+  const avgRisk    = gsAccounts.reduce((s,a)=>s + (parseFloat(a.risk)||0), 0) / N;
+  const capitalTot = gsAccounts.reduce((s,a)=>s + gsCleanSize(a.size), 0);
+  const baseline   = gsRunAccount(sorted, avgRisk, cfg);
+  baseline.totalUsd  = baseline.total / 100 * capitalTot;
+  baseline.maxDDusd  = baseline.maxDD / 100 * capitalTot;
 
-  renderGsResults(accRes, baseline, cfg, { block, N, total:sorted.length, avgRisk });
+  renderGsResults(accRes, baseline, cfg, { block, N, total:sorted.length, avgRisk, capitalTot });
   saveGsCfg();
 }
 
@@ -19215,10 +19242,14 @@ function renderGsResults(accRes, baseline, cfg, meta){
   const totalBlows  = accRes.reduce((s,a)=>s + a.blows, 0);
   const worstLGroup = Math.max(0, ...accRes.map(a=>a.worstL));
   const survivRate  = accRes.length ? (accRes.length - blownAcc) / accRes.length * 100 : 0;
+  const pnlGrupoUsd = accRes.reduce((s,a)=>s + a.totalUsd, 0);
+  const fmtU = v => (v < 0 ? '-$' : '$') + Math.round(Math.abs(v)).toLocaleString('en-US');
 
   const cycleWord = cfg.funded ? 'RETIROS' : 'FONDEOS';
   const kpis = [
     {l:'CUENTAS',            v:meta.N,       c:'var(--text)'},
+    {l:'CAPITAL GRUPO',      v:fmtU(meta.capitalTot), c:'var(--text)'},
+    {l:'P&L GRUPO',          v:fmtU(pnlGrupoUsd), c:pnlGrupoUsd>=0?'var(--green)':'var(--red)'},
     {l:'CUENTAS EN PIE',     v:passedAcc + cursoAcc, c:'var(--green)'},
     {l:'CUENTAS CAÍDAS',     v:blownAcc,     c:'var(--red)'},
     {l:cycleWord+' TOT.',    v:totalPasses,  c:'var(--green)'},
@@ -19227,8 +19258,8 @@ function renderGsResults(accRes, baseline, cfg, meta){
     {l:'TRADES REPARTIDOS',  v:meta.total,   c:'var(--cyan)'}
   ];
   if(cfg.phases >= 2){
-    kpis.splice(4, 0, {l:'F1 OK (TOT.)', v:accRes.reduce((s,a)=>s+a.f1pass,0), c:'rgba(52,211,153,.85)'});
-    kpis.splice(5, 0, {l:'F2 OK (TOT.)', v:accRes.reduce((s,a)=>s+a.f2pass,0), c:'rgba(52,211,153,.7)'});
+    kpis.splice(6, 0, {l:'F1 OK (TOT.)', v:accRes.reduce((s,a)=>s+a.f1pass,0), c:'rgba(52,211,153,.85)'});
+    kpis.splice(7, 0, {l:'F2 OK (TOT.)', v:accRes.reduce((s,a)=>s+a.f2pass,0), c:'rgba(52,211,153,.7)'});
   }
   document.getElementById('gsKpis').innerHTML = kpis.map(k=>
     '<div style="background:var(--glass2);border-radius:var(--r2);padding:.6rem .85rem;text-align:center;">'
@@ -19245,14 +19276,14 @@ function renderGsResults(accRes, baseline, cfg, meta){
       '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.08em;color:var(--gold);margin-bottom:.55rem;">◆ REPARTIDO vs 1 SOLA CUENTA</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">'
     +   '<div>'
-    +     '<div style="font-size:10px;color:var(--dim);margin-bottom:3px;">1 SOLA CUENTA · riesgo '+meta.avgRisk.toFixed(2)+'% (promedio del grupo) · '+meta.total+' trades</div>'
+    +     '<div style="font-size:10px;color:var(--dim);margin-bottom:3px;">1 SOLA CUENTA · '+fmtU(meta.capitalTot)+' · riesgo '+meta.avgRisk.toFixed(2)+'% (prom. del grupo) · '+meta.total+' trades</div>'
     +     '<div>'+bStatusTxt+' — primer evento '+firstTxt+'.</div>'
-    +     '<div style="font-size:11px;color:var(--sub);margin-top:3px;">'+(cfg.funded?'Retiros: ':'Fondeos: ')+baseline.passes+' · Reventadas: '+baseline.blows+' · Peor racha perdedora: '+baseline.worstL+' · Peor DD de fase: '+baseline.maxDD.toFixed(2)+'%</div>'
+    +     '<div style="font-size:11px;color:var(--sub);margin-top:3px;">P&L: <b style="color:'+(baseline.totalUsd>=0?'var(--green)':'var(--red)')+';">'+fmtU(baseline.totalUsd)+'</b> · '+(cfg.funded?'Retiros: ':'Fondeos: ')+baseline.passes+' · Reventadas: '+baseline.blows+' · Peor racha perdedora: '+baseline.worstL+' · Peor DD de fase: '+baseline.maxDD.toFixed(2)+'% ('+fmtU(baseline.maxDDusd)+')</div>'
     +   '</div>'
     +   '<div>'
-    +     '<div style="font-size:10px;color:var(--dim);margin-bottom:3px;">REPARTIDO EN '+meta.N+' CUENTAS · rotando de a '+meta.block+'</div>'
+    +     '<div style="font-size:10px;color:var(--dim);margin-bottom:3px;">REPARTIDO EN '+meta.N+' CUENTAS · '+fmtU(meta.capitalTot)+' total · rotando de a '+meta.block+'</div>'
     +     '<div><b style="color:var(--green);">'+(accRes.length - blownAcc)+' de '+meta.N+'</b> cuentas siguen en pie ('+survivRate.toFixed(0)+'%).</div>'
-    +     '<div style="font-size:11px;color:var(--sub);margin-top:3px;">Fondeos sumados: '+totalPasses+' · Reventadas sumadas: '+totalBlows+' · Peor racha en una cuenta: '+worstLGroup+'</div>'
+    +     '<div style="font-size:11px;color:var(--sub);margin-top:3px;">P&L grupo: <b style="color:'+(pnlGrupoUsd>=0?'var(--green)':'var(--red)')+';">'+fmtU(pnlGrupoUsd)+'</b> · '+(cfg.funded?'Retiros':'Fondeos')+' sumados: '+totalPasses+' · Reventadas: '+totalBlows+' · Peor racha en una cuenta: '+worstLGroup+'</div>'
     +   '</div>'
     + '</div>'
     + '<div style="margin-top:.7rem;padding-top:.6rem;border-top:1px solid var(--border2);font-size:11.5px;color:var(--text);">'
@@ -19269,11 +19300,11 @@ function renderGsResults(accRes, baseline, cfg, meta){
       + '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:.35rem;">'
       +   '<span style="font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(a.name)+'</span>'+badge
       + '</div>'
-      + '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--sub);margin-bottom:.4rem;">riesgo '+a.risk.toFixed(2)+'% · '+a.n+' trades · en '+(phaseLbl[a.phase]||a.phase)+' ('+(a.phasePnl>=0?'+':'')+a.phasePnl.toFixed(1)+'%)</div>'
+      + '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--sub);margin-bottom:.4rem;">'+fmtU(a.size)+' · riesgo '+a.risk.toFixed(2)+'% · '+a.n+' trades · en '+(phaseLbl[a.phase]||a.phase)+' ('+(a.phasePnl>=0?'+':'')+a.phasePnl.toFixed(1)+'%)</div>'
       + gsSpark(a.seq, 120, 30)
       + '<div style="display:grid;grid-template-columns:1fr auto;gap:3px 8px;margin-top:.45rem;font-size:10px;">'
-      +   '<div style="color:var(--sub);">P&L total</div><div style="text-align:right;color:'+totCol+';font-weight:700;">'+(a.total>=0?'+':'')+a.total.toFixed(2)+'%</div>'
-      +   '<div style="color:var(--sub);">Peor DD de fase</div><div style="text-align:right;color:var(--red);">'+a.maxDD.toFixed(2)+'%</div>'
+      +   '<div style="color:var(--sub);">P&L total</div><div style="text-align:right;color:'+totCol+';font-weight:700;">'+(a.total>=0?'+':'')+a.total.toFixed(2)+'% · '+fmtU(a.totalUsd)+'</div>'
+      +   '<div style="color:var(--sub);">Peor DD de fase</div><div style="text-align:right;color:var(--red);">'+a.maxDD.toFixed(2)+'% · '+fmtU(a.maxDDusd)+'</div>'
       +   '<div style="color:var(--sub);">Peor racha L</div><div style="text-align:right;color:var(--text);">'+a.worstL+'</div>'
       +   '<div style="color:var(--sub);">'+(cfg.funded?'Retiros':'Fondeos')+' / rev.</div><div style="text-align:right;color:var(--text);">'+a.passes+' / '+a.blows+'</div>'
       + '</div>'
