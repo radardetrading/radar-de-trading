@@ -4079,29 +4079,69 @@ tbody tr{transition:background .18s, transform .18s var(--ease-soft);}
       </div>
 
       <!-- ════════════════ SIMULADOR DE FONDEO POR GRUPOS DE CUENTAS ════════════════ -->
-      <div class="card" data-help="Reparte tus trades históricos entre varias cuentas rotando de a una (trade 1 → Cuenta 1, trade 2 → Cuenta 2, y así; al terminar la vuelta vuelve a la Cuenta 1). Cada cuenta puede tener su propio % de riesgo y corre su racha contra el mismo objetivo y DD máximo. Sirve para ver cómo una mala racha se reparte entre cuentas en vez de reventar una sola. Abajo se compara contra operar todo en una única cuenta." style="padding:1.4rem;margin-bottom:1.5rem;">
+      <div class="card" data-help="Reparte tus trades históricos entre varias cuentas rotando de a una (trade 1 → Cuenta 1, trade 2 → Cuenta 2, y así; al terminar la vuelta vuelve a la Cuenta 1). Cada cuenta puede tener su propio % de riesgo y corre su racha contra las mismas reglas: Fase 1, Fase 2 opcional y Fase Fondeada opcional con % de retiro. Podés filtrar qué trades entran al reparto por sesión, año, mes, día de la semana, par o dirección. Sirve para ver cómo una mala racha se reparte entre cuentas en vez de reventar una sola. Abajo se compara contra operar todo en una única cuenta." style="padding:1.4rem;margin-bottom:1.5rem;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem;">🧩 Simulador de Fondeo por Grupos de Cuentas</div>
         <div style="font-size:11px;color:var(--sub);margin-bottom:1rem;line-height:1.5;">
-          Tomo tus trades históricos en orden cronológico y los <b style="color:var(--text);">reparto entre las cuentas que definas</b> (hasta 25), rotando de a <span id="gsBlockLbl">una</span>: el 1er trade a la Cuenta 1, el 2º a la Cuenta 2… y al terminar la vuelta arranco de nuevo. Cada cuenta empieza en 0% y corre su racha contra el mismo objetivo y DD. Ideal para ver cómo una <b style="color:var(--gold);">mala racha se diluye</b> en vez de tumbar una sola cuenta.
+          Tomo tus trades históricos en orden cronológico y los <b style="color:var(--text);">reparto entre las cuentas que definas</b> (hasta 25), rotando de a <span id="gsBlockLbl">una</span>: el 1er trade a la Cuenta 1, el 2º a la Cuenta 2… y al terminar la vuelta arranco de nuevo. Cada cuenta corre su racha contra las mismas reglas (Fase 1 → Fase 2 → Fondeada, las que actives). Ideal para ver cómo una <b style="color:var(--gold);">mala racha se diluye</b> en vez de tumbar una sola cuenta.
         </div>
 
-        <!-- REGLAS COMUNES -->
-        <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:.9rem;">
-          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">OBJETIVO (%)</label><input type="number" id="gsTarget" value="8" min="0.1" step="0.5" style="width:90px;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
-          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="gsDD" value="10" min="0.5" step="0.5" style="width:90px;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
-          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="gsDailyDD" value="0" min="0" step="0.5" style="width:110px;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
-          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">TIPO DD</label><select id="gsDDType" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);outline:none;cursor:pointer;"><option value="trailing">Trailing (desde pico)</option><option value="static">Estático (desde inicio)</option></select></div>
-          <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">TRADES X CUENTA POR VUELTA</label><input type="number" id="gsBlock" value="1" min="1" max="50" step="1" style="width:90px;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+        <!-- CONTROLES SUPERIORES -->
+        <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:1rem;">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;">FASES</div>
+            <div style="display:flex;gap:0;background:var(--glass2);border-radius:8px;padding:3px;">
+              <button type="button" id="gsPhaseBtn1" onclick="gsSetPhases(1)" style="flex:1;background:transparent;color:var(--sub);border:none;border-radius:6px;padding:5px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">1</button>
+              <button type="button" id="gsPhaseBtn2" onclick="gsSetPhases(2)" style="flex:1;background:var(--cyan);color:#000;border:none;border-radius:6px;padding:5px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">2</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;">TIPO DD</div>
+            <select id="gsDDType" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);outline:none;cursor:pointer;"><option value="trailing">Trailing (desde pico)</option><option value="static">Estático (desde inicio)</option></select>
+          </div>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);letter-spacing:.04em;padding-bottom:3px;"><input type="checkbox" id="gsFundedEnabled" onchange="gsSetFunded(this.checked)" style="accent-color:var(--cyan);width:14px;height:14px;">SIMULAR FASE FONDEADA</label>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;">TRADES X CUENTA POR VUELTA</div><input type="number" id="gsBlock" value="1" min="1" max="50" step="1" style="width:90px;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.04em;padding-bottom:4px;"><input type="checkbox" id="gsCiclar" checked style="accent-color:var(--cyan);width:14px;height:14px;">REINICIAR Y SEGUIR AL PASAR/REVENTAR</label>
         </div>
 
+        <!-- PARÁMETROS POR FASE -->
+        <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:165px;background:rgba(56,189,248,.04);border:1px solid rgba(56,189,248,.25);border-radius:var(--r2);padding:.8rem;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--cyan);text-align:center;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(56,189,248,.25);">FASE 1</div>
+            <div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">OBJETIVO (%)</label><input type="number" id="gsF1Target" value="8" min="0.1" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+            <div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="gsF1DD" value="10" min="0.5" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+            <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="gsF1DailyDD" value="0" min="0" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+          </div>
+          <div id="gsF2Box" style="flex:1;min-width:165px;background:rgba(56,189,248,.04);border:1px solid rgba(56,189,248,.25);border-radius:var(--r2);padding:.8rem;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--cyan);text-align:center;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(56,189,248,.25);">FASE 2</div>
+            <div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">OBJETIVO (%)</label><input type="number" id="gsF2Target" value="5" min="0.1" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+            <div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="gsF2DD" value="10" min="0.5" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+            <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="gsF2DailyDD" value="0" min="0" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+          </div>
+          <div id="gsFundedBox" style="display:none;flex:1;min-width:165px;background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:.8rem;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:#f59e0b;text-align:center;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(245,158,11,.3);">FONDEADA</div>
+            <div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">RETIRO OBJ. (%)</label><input type="number" id="gsWithdrawal" value="6" min="0.1" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+            <div style="margin-bottom:.5rem;"><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD MÁX (%)</label><input type="number" id="gsFundedDD" value="10" min="0.5" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+            <div><label style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;display:block;">DD DIARIO (% · 0=off)</label><input type="number" id="gsFundedDailyDD" value="0" min="0" max="99" step="0.5" style="width:100%;box-sizing:border-box;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;"></div>
+          </div>
+        </div>
+
         <!-- PERÍODO -->
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:.8rem;">
           <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);letter-spacing:.06em;">PERÍODO</span>
           <input type="date" id="gsDateFrom" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;">
           <span style="color:var(--sub);font-size:12px;">→</span>
           <input type="date" id="gsDateTo" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none;">
-          <button onclick="document.getElementById('gsDateFrom').value='';document.getElementById('gsDateTo').value='';gsChanged();" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">Todo</button>
+          <button type="button" onclick="document.getElementById('gsDateFrom').value='';document.getElementById('gsDateTo').value='';gsChanged();" style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">Todo</button>
+        </div>
+
+        <!-- FILTROS DE SELECCIÓN DE TRADES -->
+        <div style="border:1px solid var(--border2);border-radius:var(--r2);padding:.7rem .9rem;margin-bottom:1rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:.5rem;flex-wrap:wrap;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:.05em;">🔎 FILTRAR QUÉ TRADES ENTRAN AL REPARTO <span id="gsFilterCount" style="color:var(--sub);font-weight:400;"></span></div>
+            <button type="button" onclick="gsClearFilters()" style="background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:3px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);cursor:pointer;">Limpiar filtros</button>
+          </div>
+          <div id="gsFilters"></div>
+          <div style="font-size:10px;color:var(--dim);margin-top:.35rem;">Sin nada tildado entran todos los trades. Tildá una o varias opciones para quedarte solo con esos.</div>
         </div>
 
         <!-- CUENTAS -->
@@ -18826,9 +18866,26 @@ function abrirSfCicloDetalle(idx){
 const GS_KEY = 'hq_grpsim_v1';
 let gsAccounts = [];
 let gsInited = false;
+let gsRestoring = false;
+let gsPhases = 2;                  // 1 o 2 fases
+let gsFundedOn = false;            // simular fase fondeada
+let gsFilters = { sesion:[], anio:[], mes:[], dow:[], par:[], dir:[] };
+
+const GS_PHASE_INPUTS = ['gsF1Target','gsF1DD','gsF1DailyDD','gsF2Target','gsF2DD','gsF2DailyDD','gsWithdrawal','gsFundedDD','gsFundedDailyDD','gsBlock','gsDateFrom','gsDateTo'];
+const GS_FILTER_KEYS  = ['sesion','anio','mes','dow','par','dir'];
+const GS_MES_LBL = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const GS_DOW_LBL = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
 function gsDefaultAccounts(){
   return [1,2,3,4].map(i=>({name:'Cuenta '+i, risk:1}));
+}
+
+function gsNormFilters(f){
+  const out = { sesion:[], anio:[], mes:[], dow:[], par:[], dir:[] };
+  if(f && typeof f === 'object'){
+    GS_FILTER_KEYS.forEach(k=>{ if(Array.isArray(f[k])) out[k] = f[k].map(String); });
+  }
+  return out;
 }
 
 function loadGsCfg(){
@@ -18848,17 +18905,40 @@ function loadGsCfg(){
 
 function saveGsCfg(){
   try{
+    const vals = {};
+    GS_PHASE_INPUTS.forEach(id=>{ const el = document.getElementById(id); if(el) vals[id] = el.value; });
     localStorage.setItem(GS_KEY, JSON.stringify({
       accounts: gsAccounts,
-      target:  document.getElementById('gsTarget')?.value,
-      dd:      document.getElementById('gsDD')?.value,
-      dailyDD: document.getElementById('gsDailyDD')?.value,
-      ddType:  document.getElementById('gsDDType')?.value,
-      block:   document.getElementById('gsBlock')?.value,
-      ciclar:  document.getElementById('gsCiclar')?.checked
+      phases:   gsPhases,
+      funded:   gsFundedOn,
+      ddType:   document.getElementById('gsDDType')?.value,
+      ciclar:   document.getElementById('gsCiclar')?.checked,
+      vals,
+      filters:  gsFilters
     }));
   }catch(_){}
   if(typeof markDirty === 'function') markDirty();
+}
+
+function gsSyncBlockLabel(){
+  const b = Math.max(1, Math.round(parseFloat(document.getElementById('gsBlock')?.value) || 1));
+  const lbl = document.getElementById('gsBlockLbl'); if(lbl) lbl.textContent = b===1 ? 'una' : (b+' trades');
+}
+
+function gsSetPhases(n){
+  gsPhases = n === 1 ? 1 : 2;
+  const b1 = document.getElementById('gsPhaseBtn1'), b2 = document.getElementById('gsPhaseBtn2');
+  if(b1){ b1.style.background = gsPhases===1 ? 'var(--cyan)' : 'transparent'; b1.style.color = gsPhases===1 ? '#000' : 'var(--sub)'; }
+  if(b2){ b2.style.background = gsPhases===2 ? 'var(--cyan)' : 'transparent'; b2.style.color = gsPhases===2 ? '#000' : 'var(--sub)'; }
+  const box = document.getElementById('gsF2Box'); if(box) box.style.display = gsPhases===2 ? '' : 'none';
+  gsChanged();
+}
+
+function gsSetFunded(on){
+  gsFundedOn = !!on;
+  const box = document.getElementById('gsFundedBox'); if(box) box.style.display = gsFundedOn ? '' : 'none';
+  const chk = document.getElementById('gsFundedEnabled'); if(chk) chk.checked = gsFundedOn;
+  gsChanged();
 }
 
 function renderGrpSim(){
@@ -18866,24 +18946,29 @@ function renderGrpSim(){
   if(!list) return;
   const cfg = loadGsCfg();
   if(!gsInited){
-    const set = (id,v)=>{ const el=document.getElementById(id); if(el && v!=null && v!=='') el.value = v; };
-    set('gsTarget', cfg.target); set('gsDD', cfg.dd); set('gsDailyDD', cfg.dailyDD); set('gsBlock', cfg.block);
-    if(cfg.ddType){ const s=document.getElementById('gsDDType'); if(s) s.value = cfg.ddType; }
-    if(typeof cfg.ciclar === 'boolean'){ const c=document.getElementById('gsCiclar'); if(c) c.checked = cfg.ciclar; }
-    ['gsTarget','gsDD','gsDailyDD','gsBlock','gsDDType','gsCiclar'].forEach(id=>{
-      const el=document.getElementById(id); if(el) el.addEventListener('change', gsChanged);
+    gsRestoring = true;
+    const vals = cfg.vals || {};
+    GS_PHASE_INPUTS.forEach(id=>{ const el = document.getElementById(id); if(el && vals[id] != null && vals[id] !== '') el.value = vals[id]; });
+    if(cfg.ddType){ const s = document.getElementById('gsDDType'); if(s) s.value = cfg.ddType; }
+    const c = document.getElementById('gsCiclar'); if(c) c.checked = cfg.ciclar !== false;
+    gsFilters = gsNormFilters(cfg.filters);
+    gsSetPhases(cfg.phases === 1 ? 1 : 2);
+    gsSetFunded(!!cfg.funded);
+    ['gsDDType','gsCiclar'].concat(GS_PHASE_INPUTS).forEach(id=>{
+      const el = document.getElementById(id); if(el) el.addEventListener('change', gsChanged);
     });
     gsInited = true;
+    gsRestoring = false;
   }
-  const b = Math.max(1, Math.round(parseFloat(document.getElementById('gsBlock')?.value) || 1));
-  const lbl = document.getElementById('gsBlockLbl'); if(lbl) lbl.textContent = b===1 ? 'una' : (b+' trades');
+  gsSyncBlockLabel();
+  renderGsFilters();
   renderGsAccList();
   if(typeof histTrades !== 'undefined' && histTrades && histTrades.length) simularGrupoCuentas(true);
 }
 
 function gsChanged(){
-  const b = Math.max(1, Math.round(parseFloat(document.getElementById('gsBlock')?.value) || 1));
-  const lbl = document.getElementById('gsBlockLbl'); if(lbl) lbl.textContent = b===1 ? 'una' : (b+' trades');
+  if(gsRestoring) return;
+  gsSyncBlockLabel();
   saveGsCfg();
   if(document.getElementById('gsResults')?.style.display !== 'none') simularGrupoCuentas(true);
 }
@@ -18943,44 +19028,92 @@ function gsApplyRiskAll(){
   renderGsAccList(); saveGsCfg(); simularGrupoCuentas(true);
 }
 
-// Corre la secuencia de trades de UNA cuenta. pnl por trade = R * riesgo%.
+// Corre la secuencia de trades de UNA cuenta contra las reglas por fase.
+// pnl por trade = R * riesgo%. cfg: { phases, funded, ddType, ciclar, f1{target,dd,daily}, f2{...}, fn{target,dd,daily} }
 function gsRunAccount(trades, risk, cfg){
-  let eq=0, peak=0, maxDD=0, dayPnl={};
-  let passes=0, blows=0, curL=0, worstL=0, curW=0, bestW=0;
-  let firstEventAt=null, done=0, stopped=false;
-  const seq=[0];
-  for(let i=0;i<trades.length && !stopped;i++){
+  let phase = 'f1';
+  let phasePnl = 0, phasePeak = 0, dayPnl = {};
+  let total = 0;                 // P&L acumulado global (para la curva)
+  let maxPhaseDD = 0;            // peor DD relativo a fase (el que revienta)
+  let passes = 0, blows = 0;     // ciclos completos / reventadas
+  let f1pass = 0, f2pass = 0;
+  let curL = 0, worstL = 0, curW = 0, bestW = 0;
+  let firstEventAt = null, done = 0, stopped = false;
+  const seq = [0];
+
+  const paramsOf = p => p === 'f1' ? cfg.f1 : p === 'f2' ? cfg.f2 : cfg.fn;
+  const goPhase  = p => { phase = p; phasePnl = 0; phasePeak = 0; dayPnl = {}; };
+
+  for(let i=0; i<trades.length && !stopped; i++){
     const t = trades[i];
     const pnl = (t.r || 0) * risk;
-    done++;
-    if(pnl > 0){ curW++; curL=0; if(curW>bestW) bestW=curW; }
-    else if(pnl < 0){ curL++; curW=0; if(curL>worstL) worstL=curL; }
-    let broke=false, passed=false;
-    if(cfg.dailyDD > 0){
+    done++; total += pnl; seq.push(+total.toFixed(4));
+
+    if(pnl > 0){ curW++; curL = 0; if(curW > bestW) bestW = curW; }
+    else if(pnl < 0){ curL++; curW = 0; if(curL > worstL) worstL = curL; }
+
+    const pr = paramsOf(phase);
+    let broke = false;
+    if(pr.daily > 0){
       const d = t.date || ('_'+i);
       dayPnl[d] = (dayPnl[d] || 0) + pnl;
-      if(dayPnl[d] <= -cfg.dailyDD) broke = true;
+      if(dayPnl[d] <= -pr.daily) broke = true;
     }
     if(!broke){
-      eq += pnl;
-      if(eq > peak) peak = eq;
-      const dd = cfg.ddType === 'trailing' ? (peak - eq) : Math.max(0, -eq);
-      if(dd > maxDD) maxDD = dd;
-      if(dd >= cfg.ddMax) broke = true;
-      else if(eq >= cfg.target) passed = true;
+      phasePnl += pnl;
+      if(phasePnl > phasePeak) phasePeak = phasePnl;
+      const dd = cfg.ddType === 'trailing' ? (phasePeak - phasePnl) : Math.max(0, -phasePnl);
+      if(dd > maxPhaseDD) maxPhaseDD = dd;
+      if(dd >= pr.dd) broke = true;
     }
-    seq.push(eq);
-    if(broke || passed){
-      if(broke) blows++; else passes++;
+
+    if(broke){
+      blows++;
       if(firstEventAt == null) firstEventAt = done;
-      if(cfg.ciclar){ eq=0; peak=0; dayPnl={}; seq.push(0); }
-      else stopped = true;
+      if(cfg.ciclar) goPhase('f1'); else stopped = true;
+      continue;
+    }
+
+    // ¿alcanzó el objetivo de la fase actual?
+    if(phase === 'f1' && phasePnl >= cfg.f1.target){
+      f1pass++;
+      if(cfg.phases >= 2) goPhase('f2');
+      else if(cfg.funded) goPhase('fn');
+      else { passes++; if(firstEventAt == null) firstEventAt = done; if(cfg.ciclar) goPhase('f1'); else stopped = true; }
+    } else if(phase === 'f2' && phasePnl >= cfg.f2.target){
+      f2pass++;
+      if(cfg.funded) goPhase('fn');
+      else { passes++; if(firstEventAt == null) firstEventAt = done; if(cfg.ciclar) goPhase('f1'); else stopped = true; }
+    } else if(phase === 'fn' && phasePnl >= cfg.fn.target){
+      passes++; if(firstEventAt == null) firstEventAt = done;
+      if(cfg.ciclar) goPhase('f1'); else stopped = true;
     }
   }
+
   let status;
-  if(cfg.ciclar) status = passes > blows ? 'pass' : blows > passes ? 'blown' : passes > 0 ? 'pass' : 'curso';
-  else          status = blows > 0 ? 'blown' : passes > 0 ? 'pass' : 'curso';
-  return { n:trades.length, eq, maxDD, worstL, bestW, passes, blows, status, firstEventAt, seq };
+  if(cfg.ciclar) status = passes > 0 && passes >= blows ? 'pass' : blows > passes ? 'blown' : passes > 0 ? 'pass' : 'curso';
+  else           status = (stopped && blows > 0) ? 'blown' : passes > 0 ? 'pass' : 'curso';
+
+  return { n:trades.length, total, maxDD:maxPhaseDD, worstL, bestW, passes, blows, f1pass, f2pass, phase, phasePnl, status, firstEventAt, seq };
+}
+
+function gsNum(id, def){ const el = document.getElementById(id); const v = parseFloat(el && el.value); return isNaN(v) ? def : v; }
+
+function gsDowOf(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return isNaN(d) ? '' : String(d.getDay());
+}
+
+function gsPassesFilters(t){
+  const f = gsFilters;
+  if(f.sesion.length && !f.sesion.includes((t.session||'').toString().trim())) return false;
+  if(f.anio.length   && !f.anio.includes((t.date||'').slice(0,4))) return false;
+  if(f.mes.length    && !f.mes.includes((t.date||'').slice(5,7))) return false;
+  if(f.dow.length    && !f.dow.includes(gsDowOf(t.date||''))) return false;
+  if(f.par.length    && !f.par.includes((t.par||'').toString().trim().toUpperCase())) return false;
+  if(f.dir.length    && !f.dir.includes((t.type||'').toString().trim().toUpperCase())) return false;
+  return true;
 }
 
 function simularGrupoCuentas(silent){
@@ -18989,19 +19122,22 @@ function simularGrupoCuentas(silent){
   const hist = (typeof buildHistEnriched === 'function' && typeof histTrades !== 'undefined' && histTrades && histTrades.length)
     ? buildHistEnriched()
     : (window._histEnriched || []);
+  const countEl = document.getElementById('gsFilterCount');
   if(!hist.length){
     if(!silent) toast('Cargá trades en Backtest Histórico primero','err');
     if(results) results.style.display = 'none';
     return;
   }
   const cfg = {
-    target:  parseFloat(document.getElementById('gsTarget').value) || 8,
-    ddMax:   parseFloat(document.getElementById('gsDD').value) || 10,
-    dailyDD: Math.max(0, parseFloat(document.getElementById('gsDailyDD').value) || 0),
-    ddType:  document.getElementById('gsDDType').value,
-    ciclar:  document.getElementById('gsCiclar').checked
+    phases: gsPhases,
+    funded: gsFundedOn,
+    ddType: document.getElementById('gsDDType').value,
+    ciclar: document.getElementById('gsCiclar').checked,
+    f1: { target:gsNum('gsF1Target',8),  dd:gsNum('gsF1DD',10),      daily:Math.max(0,gsNum('gsF1DailyDD',0)) },
+    f2: { target:gsNum('gsF2Target',5),  dd:gsNum('gsF2DD',10),      daily:Math.max(0,gsNum('gsF2DailyDD',0)) },
+    fn: { target:gsNum('gsWithdrawal',6),dd:gsNum('gsFundedDD',10),  daily:Math.max(0,gsNum('gsFundedDailyDD',0)) }
   };
-  const block = Math.max(1, Math.round(parseFloat(document.getElementById('gsBlock').value) || 1));
+  const block = Math.max(1, Math.round(gsNum('gsBlock',1)));
   const from  = document.getElementById('gsDateFrom').value;
   const to    = document.getElementById('gsDateTo').value;
 
@@ -19009,10 +19145,18 @@ function simularGrupoCuentas(silent){
     const da=(a.date||''), db=(b.date||'');
     return da < db ? -1 : da > db ? 1 : 0;
   });
+  const totalHist = sorted.length;
   if(from) sorted = sorted.filter(t=>(t.date||'') >= from);
   if(to)   sorted = sorted.filter(t=>(t.date||'') <= to);
-  if(!sorted.length){
-    if(!silent) toast('Sin trades históricos en el período elegido','err');
+  const anyFilter = GS_FILTER_KEYS.some(k=>gsFilters[k].length);
+  if(anyFilter) sorted = sorted.filter(gsPassesFilters);
+
+  if(countEl) countEl.textContent = (anyFilter || from || to)
+    ? '· ' + sorted.length + ' de ' + totalHist + ' trades'
+    : '· ' + totalHist + ' trades';
+
+  if(sorted.length < gsAccounts.length){
+    if(!silent) toast('Muy pocos trades para repartir con ese filtro/período','err');
     if(results) results.style.display = 'none';
     return;
   }
@@ -19072,22 +19216,27 @@ function renderGsResults(accRes, baseline, cfg, meta){
   const worstLGroup = Math.max(0, ...accRes.map(a=>a.worstL));
   const survivRate  = accRes.length ? (accRes.length - blownAcc) / accRes.length * 100 : 0;
 
+  const cycleWord = cfg.funded ? 'RETIROS' : 'FONDEOS';
   const kpis = [
     {l:'CUENTAS',            v:meta.N,       c:'var(--text)'},
-    {l:cfg.ciclar?'CUENTAS OK':'PASARON',    v:passedAcc, c:'var(--green)'},
-    {l:cfg.ciclar?'CUENTAS CAÍDAS':'REVENTARON', v:blownAcc, c:'var(--red)'},
-    {l:'FONDEOS TOT.',       v:totalPasses,  c:'var(--green)'},
+    {l:'CUENTAS EN PIE',     v:passedAcc + cursoAcc, c:'var(--green)'},
+    {l:'CUENTAS CAÍDAS',     v:blownAcc,     c:'var(--red)'},
+    {l:cycleWord+' TOT.',    v:totalPasses,  c:'var(--green)'},
     {l:'REVENTADAS TOT.',    v:totalBlows,   c:'var(--red)'},
     {l:'PEOR RACHA L',       v:worstLGroup,  c:'var(--gold)'},
     {l:'TRADES REPARTIDOS',  v:meta.total,   c:'var(--cyan)'}
   ];
+  if(cfg.phases >= 2){
+    kpis.splice(4, 0, {l:'F1 OK (TOT.)', v:accRes.reduce((s,a)=>s+a.f1pass,0), c:'rgba(52,211,153,.85)'});
+    kpis.splice(5, 0, {l:'F2 OK (TOT.)', v:accRes.reduce((s,a)=>s+a.f2pass,0), c:'rgba(52,211,153,.7)'});
+  }
   document.getElementById('gsKpis').innerHTML = kpis.map(k=>
     '<div style="background:var(--glass2);border-radius:var(--r2);padding:.6rem .85rem;text-align:center;">'
     + '<div style="font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;">'+k.l+'</div>'
     + '<div style="font-size:18px;font-weight:800;color:'+k.c+';">'+k.v+'</div></div>'
   ).join('');
 
-  const bStatusTxt = baseline.status === 'pass'  ? '<b style="color:var(--green);">habría pasado</b>'
+  const bStatusTxt = baseline.status === 'pass'  ? '<b style="color:var(--green);">habría '+(cfg.funded?'cobrado retiro':'pasado')+'</b>'
                    : baseline.status === 'blown' ? '<b style="color:var(--red);">habría reventado</b>'
                    : '<b style="color:var(--sub);">no habría cerrado el ciclo</b>';
   const firstTxt = baseline.firstEventAt != null ? ('a los <b>'+baseline.firstEventAt+'</b> trades') : 'sin evento en el período';
@@ -19098,7 +19247,7 @@ function renderGsResults(accRes, baseline, cfg, meta){
     +   '<div>'
     +     '<div style="font-size:10px;color:var(--dim);margin-bottom:3px;">1 SOLA CUENTA · riesgo '+meta.avgRisk.toFixed(2)+'% (promedio del grupo) · '+meta.total+' trades</div>'
     +     '<div>'+bStatusTxt+' — primer evento '+firstTxt+'.</div>'
-    +     '<div style="font-size:11px;color:var(--sub);margin-top:3px;">Fondeos: '+baseline.passes+' · Reventadas: '+baseline.blows+' · Peor racha perdedora: '+baseline.worstL+' · DD máx tocado: '+baseline.maxDD.toFixed(2)+'%</div>'
+    +     '<div style="font-size:11px;color:var(--sub);margin-top:3px;">'+(cfg.funded?'Retiros: ':'Fondeos: ')+baseline.passes+' · Reventadas: '+baseline.blows+' · Peor racha perdedora: '+baseline.worstL+' · Peor DD de fase: '+baseline.maxDD.toFixed(2)+'%</div>'
     +   '</div>'
     +   '<div>'
     +     '<div style="font-size:10px;color:var(--dim);margin-bottom:3px;">REPARTIDO EN '+meta.N+' CUENTAS · rotando de a '+meta.block+'</div>'
@@ -19110,27 +19259,92 @@ function renderGsResults(accRes, baseline, cfg, meta){
     +   gsVerdict(baseline, { blownAcc, totalPasses, totalBlows, N:meta.N })
     + '</div>';
 
+  const phaseLbl = { f1:'Fase 1', f2:'Fase 2', fn:'Fondeada' };
   document.getElementById('gsAccCards').innerHTML = accRes.map(a=>{
     const badge = a.status === 'pass'  ? '<span style="background:rgba(52,211,153,.15);color:var(--green);border-radius:5px;padding:1px 7px;font-size:9px;font-weight:800;">OK</span>'
                 : a.status === 'blown' ? '<span style="background:rgba(248,113,113,.15);color:var(--red);border-radius:5px;padding:1px 7px;font-size:9px;font-weight:800;">CAÍDA</span>'
                 : '<span style="background:rgba(255,255,255,.08);color:var(--sub);border-radius:5px;padding:1px 7px;font-size:9px;font-weight:800;">EN CURSO</span>';
-    const eqCol = a.eq >= 0 ? 'var(--green)' : 'var(--red)';
+    const totCol = a.total >= 0 ? 'var(--green)' : 'var(--red)';
     return '<div style="background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r2);padding:.7rem .8rem;">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:.35rem;">'
       +   '<span style="font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(a.name)+'</span>'+badge
       + '</div>'
-      + '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--sub);margin-bottom:.4rem;">riesgo '+a.risk.toFixed(2)+'% · '+a.n+' trades</div>'
+      + '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--sub);margin-bottom:.4rem;">riesgo '+a.risk.toFixed(2)+'% · '+a.n+' trades · en '+(phaseLbl[a.phase]||a.phase)+' ('+(a.phasePnl>=0?'+':'')+a.phasePnl.toFixed(1)+'%)</div>'
       + gsSpark(a.seq, 120, 30)
       + '<div style="display:grid;grid-template-columns:1fr auto;gap:3px 8px;margin-top:.45rem;font-size:10px;">'
-      +   '<div style="color:var(--sub);">Racha final</div><div style="text-align:right;color:'+eqCol+';font-weight:700;">'+(a.eq>=0?'+':'')+a.eq.toFixed(2)+'%</div>'
-      +   '<div style="color:var(--sub);">DD máx</div><div style="text-align:right;color:var(--red);">'+a.maxDD.toFixed(2)+'%</div>'
+      +   '<div style="color:var(--sub);">P&L total</div><div style="text-align:right;color:'+totCol+';font-weight:700;">'+(a.total>=0?'+':'')+a.total.toFixed(2)+'%</div>'
+      +   '<div style="color:var(--sub);">Peor DD de fase</div><div style="text-align:right;color:var(--red);">'+a.maxDD.toFixed(2)+'%</div>'
       +   '<div style="color:var(--sub);">Peor racha L</div><div style="text-align:right;color:var(--text);">'+a.worstL+'</div>'
-      +   '<div style="color:var(--sub);">Fondeos / rev.</div><div style="text-align:right;color:var(--text);">'+a.passes+' / '+a.blows+'</div>'
+      +   '<div style="color:var(--sub);">'+(cfg.funded?'Retiros':'Fondeos')+' / rev.</div><div style="text-align:right;color:var(--text);">'+a.passes+' / '+a.blows+'</div>'
       + '</div>'
       + '</div>';
   }).join('');
 
   box.style.display = 'block';
+}
+
+// ── FILTROS DE SELECCIÓN DE TRADES ──────────────────────────────
+function gsDistinctValues(key){
+  const set = new Set();
+  (typeof histTrades !== 'undefined' ? histTrades : []).forEach(t=>{
+    let v = '';
+    if(key === 'sesion')      v = (t.session || '').toString().trim();
+    else if(key === 'anio')   v = (t.date || '').slice(0,4);
+    else if(key === 'mes')    v = (t.date || '').slice(5,7);
+    else if(key === 'dow')    v = gsDowOf(t.date || '');
+    else if(key === 'par')    v = (t.par || '').toString().trim().toUpperCase();
+    else if(key === 'dir')    v = (t.type || '').toString().trim().toUpperCase();
+    if(v) set.add(v);
+  });
+  const arr = [...set];
+  if(key === 'mes' || key === 'dow' || key === 'anio') arr.sort((a,b)=>(+a)-(+b));
+  else arr.sort();
+  return arr;
+}
+
+function gsFilterValLabel(key, v){
+  if(key === 'mes') return GS_MES_LBL[parseInt(v,10)] || v;
+  if(key === 'dow') return GS_DOW_LBL[parseInt(v,10)] || v;
+  return v;
+}
+
+function renderGsFilters(){
+  const wrap = document.getElementById('gsFilters');
+  if(!wrap) return;
+  const groups = [['sesion','Sesión'],['anio','Año'],['mes','Mes'],['dow','Día'],['par','Par'],['dir','Dirección']];
+  const html = groups.map(([key,lbl])=>{
+    const vals = gsDistinctValues(key);
+    if(!vals.length) return '';
+    if(vals.length < 2 && !gsFilters[key].length) return '';
+    const chips = vals.map(v=>{
+      const on = gsFilters[key].includes(v);
+      return '<button type="button" onclick="gsToggleFilter(\''+key+'\',this.dataset.v)" data-v="'+escHtml(v)+'" '
+        + 'style="background:'+(on?'var(--cyan)':'var(--glass2)')+';color:'+(on?'#000':'var(--sub)')+';'
+        + 'border:1px solid '+(on?'var(--cyan)':'var(--border2)')+';border-radius:5px;padding:3px 8px;'
+        + 'font-family:\'JetBrains Mono\',monospace;font-size:10px;cursor:pointer;font-weight:'+(on?'700':'400')+';">'
+        + escHtml(gsFilterValLabel(key,v)) + '</button>';
+    }).join('');
+    return '<div style="margin-bottom:.5rem;">'
+      + '<div style="font-family:\'JetBrains Mono\',monospace;font-size:8px;color:var(--sub);letter-spacing:.06em;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:5px;">'+chips+'</div></div>';
+  }).join('');
+  wrap.innerHTML = html || '<div style="font-size:10px;color:var(--dim);">Sin datos suficientes para filtrar.</div>';
+}
+
+function gsToggleFilter(key, v){
+  if(!gsFilters[key]) return;
+  const i = gsFilters[key].indexOf(v);
+  if(i >= 0) gsFilters[key].splice(i,1); else gsFilters[key].push(v);
+  saveGsCfg();
+  renderGsFilters();
+  if(document.getElementById('gsResults')?.style.display !== 'none') simularGrupoCuentas(true);
+}
+
+function gsClearFilters(){
+  gsFilters = { sesion:[], anio:[], mes:[], dow:[], par:[], dir:[] };
+  saveGsCfg();
+  renderGsFilters();
+  simularGrupoCuentas(true);
 }
 
 
